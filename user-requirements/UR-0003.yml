@@ -1,0 +1,19 @@
+uid: UR-0003
+type: user_requirement
+status: approved
+title: A source is referenced by origin and pinned to an edition
+text: The consumer shall be able to name each source by where it lives — a git URL
+  it can be fetched from — and pin the exact edition it depends on by a git ref,
+  normally a tag. Composition against a pinned source shall be reproducible run to
+  run and machine to machine, and adopting an upstream revision shall be a matter
+  of moving the pin, never of editing the borrowed graph. A local filesystem path
+  shall remain valid for developing a source and its consumer side by side, but the
+  durable, shareable form of a dependency is an origin plus a pinned ref.
+normative: true
+links:
+- target: BN-0001
+  type: derives_from
+attrs:
+  origin: human
+  priority: must
+  verification: demonstration

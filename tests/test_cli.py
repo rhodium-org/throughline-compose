@@ -4,6 +4,7 @@
 (SR-0003, SR-0005) — bare `tl` fails fast, `tl-compose` resolves and passes."""
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 
 from throughline.cli import main as tl_main
@@ -27,6 +28,27 @@ def test_compose_check_passthrough_without_sources(source_dir):
     # A source project has no [[sources]] — tl-compose check must behave like tl.
     rc = tlc_main(["-C", str(source_dir), "check", "--base", ""])
     assert rc == 0
+
+
+def test_compose_check_resolves_url_source(consumer_dir, source_dir, tmp_path,
+                                           monkeypatch, capsys):
+    # Same composition, but the source is pinned by url+ref (SR-0006): tag the toy
+    # source as a git origin, point the consumer at it by url, and compose.
+    monkeypatch.setenv("TL_COMPOSE_CACHE", str(tmp_path / "cache"))
+
+    def git(*a):
+        subprocess.run(["git", "-c", "user.email=t@t", "-c", "user.name=t", *a],
+                       cwd=str(source_dir), check=True, capture_output=True)
+    git("init", "-b", "main"); git("add", "."); git("commit", "-m", "edition")
+    git("tag", "v4.0.3")
+
+    toml = consumer_dir / "throughline.toml"
+    toml.write_text(toml.read_text().replace(
+        'path = "../toy-source"', f'url = "{source_dir}"\nref = "v4.0.3"'))
+
+    rc = tlc_main(["-C", str(consumer_dir), "check", "--base", ""])
+    assert rc == 0
+    assert "composed graph is sound" in capsys.readouterr().err
 
 
 def test_compose_check_translates_dangling_cross_source(consumer_dir, capsys):

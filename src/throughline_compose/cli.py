@@ -20,6 +20,7 @@ from throughline.cli import build_parser, cmd_check
 from throughline.storage import ProjectError, load_project
 from throughline.validate import ERROR, validate
 
+from .resolve import ResolveError, resolve_source
 from .sources import SourceError, parse_sources
 from .union import ComposeError, build_union, translate_finding
 
@@ -52,9 +53,14 @@ def _compose_check(args) -> int:
     loaded = {}
     for s in sources:
         try:
-            loaded[s.namespace] = load_project(root / s.path)
+            src_dir = resolve_source(s, root)
+        except ResolveError as e:
+            return _err(str(e))
+        try:
+            loaded[s.namespace] = load_project(src_dir)
         except ProjectError as e:
-            return _err(f"source '{s.namespace}' at {s.path}: {e}")
+            where = f"{s.url}@{s.ref}" if s.is_remote else s.path
+            return _err(f"source '{s.namespace}' at {where}: {e}")
 
     try:
         union = build_union(consumer, loaded)
@@ -76,7 +82,10 @@ def _compose_check(args) -> int:
     errs = sum(1 for f in findings if f.severity == ERROR)
     warns = len(findings) - errs
     if not getattr(args, "quiet", False):
-        names = ", ".join(f"{s.namespace} ({s.path})" for s in sources)
+        names = ", ".join(
+            f"{s.namespace} ({s.url}@{s.ref})" if s.is_remote
+            else f"{s.namespace} ({s.path})"
+            for s in sources)
         print(f"\ntl-compose check · {len(sources)} source(s) composed: {names}",
               file=sys.stderr)
     tally = f"\n{errs} error(s), {warns} warning(s)"

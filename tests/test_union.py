@@ -63,6 +63,41 @@ def test_duplicate_namespace_rejected():
         parse_sources(p)
 
 
+def test_url_ref_source_parsed():
+    p = _project({**_SCHEMA, "sources": [
+        {"namespace": "asvs", "url": "https://example.com/x.git", "ref": "v4.0.3"}]}, {})
+    (s,) = parse_sources(p)
+    assert s.is_remote
+    assert (s.url, s.ref, s.path) == ("https://example.com/x.git", "v4.0.3", None)
+
+
+def test_url_without_ref_rejected():
+    p = _project({**_SCHEMA, "sources": [
+        {"namespace": "asvs", "url": "https://example.com/x.git"}]}, {})
+    with pytest.raises(SourceError, match="no 'ref'"):
+        parse_sources(p)
+
+
+def test_path_and_url_mutually_exclusive():
+    p = _project({**_SCHEMA, "sources": [
+        {"namespace": "asvs", "path": "x", "url": "https://e/x", "ref": "v1"}]}, {})
+    with pytest.raises(SourceError, match="mutually exclusive"):
+        parse_sources(p)
+
+
+def test_neither_path_nor_url_rejected():
+    p = _project({**_SCHEMA, "sources": [{"namespace": "asvs"}]}, {})
+    with pytest.raises(SourceError, match="either a 'path' or a 'url'"):
+        parse_sources(p)
+
+
+def test_ref_with_path_rejected():
+    p = _project({**_SCHEMA, "sources": [
+        {"namespace": "asvs", "path": "x", "ref": "v1"}]}, {})
+    with pytest.raises(SourceError, match="ref"):
+        parse_sources(p)
+
+
 # ------------------------------------------------------------------ union merge
 
 def test_qualified_reference_rewritten_and_resolves():

@@ -50,6 +50,14 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 **origin**: human · **priority**: must · **verification**: demonstration
 <!-- tl:end -->
 
+<!-- tl:item UR-0003 -->
+**UR-0003 — A source is referenced by origin and pinned to an edition** — `user_requirement`, status `approved`
+
+> The consumer shall be able to name each source by where it lives — a git URL it can be fetched from — and pin the exact edition it depends on by a git ref, normally a tag. Composition against a pinned source shall be reproducible run to run and machine to machine, and adopting an upstream revision shall be a matter of moving the pin, never of editing the borrowed graph. A local filesystem path shall remain valid for developing a source and its consumer side by side, but the durable, shareable form of a dependency is an origin plus a pinned ref.
+
+**origin**: human · **priority**: must · **verification**: demonstration
+<!-- tl:end -->
+
 ## System requirements
 
 <!-- tl:item SR-0001 -->
@@ -102,6 +110,14 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 **origin**: human · **priority**: must · **verification**: test
 <!-- tl:end -->
 
+<!-- tl:item SR-0006 -->
+**SR-0006 — Sources resolve from a pinned git URL into a local cache** — `system_requirement`, status `approved`
+
+> Each source entry shall accept, in place of a local path, a git URL together with a ref that pins the edition — a tag, branch, or commit — a tag being the normal form, since a source publishes its editions as tags. On check, tl-compose shall materialise each URL-pinned source by fetching that exact ref into a cache that lives outside the consumer's own project tree, keyed by the origin URL and ref, and compose from that checkout. The cache being outside the project tree is load-bearing, not incidental — the consumer's own item scan walks its whole directory, so a resolved source placed inside it would be wrongly ingested as local items; the cache is a shared, per-user store (like a package manager's) that no project scan ever sees. A source already present at the pinned ref shall not be refetched, so resolution is idempotent and offline after the first fetch. A url and a path shall be mutually exclusive for one source, and a url without a ref shall fail fast rather than silently track a moving default.
+
+**origin**: human · **priority**: must · **verification**: test
+<!-- tl:end -->
+
 ## Non-goals
 
 <!-- tl:item NG-0001 -->
@@ -122,4 +138,5 @@ The table is generated from the graph, so it cannot drift from the actual links.
 |---|---|---|
 | UR-0001 | The composer controls source namespaces | SR-0001, SR-0002 |
 | UR-0002 | A composed project is worked as one — one tool, one set of guarantees | SR-0003, SR-0004, SR-0005 |
+| UR-0003 | A source is referenced by origin and pinned to an edition | SR-0006 |
 <!-- tl:end -->
