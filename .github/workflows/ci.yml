@@ -1,0 +1,26 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install throughline
+        run: pip install throughline
+
+      - name: Grounding gate (the graph must stay sound)
+        run: tl check --strict
+
+      - name: Docs freshness gate (docs/spec.md must match the graph)
+        run: tl docs --check

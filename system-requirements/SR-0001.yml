@@ -1,0 +1,30 @@
+uid: SR-0001
+type: system_requirement
+status: approved
+title: Importer-assigned source namespaces in the consumer toml
+text: The consumer project shall declare each source it composes in its own
+  throughline.toml, binding that source to a namespace the consumer chooses — the
+  "import X as Y" model. A reference to a borrowed item is written with that
+  namespace as a qualifier (for example gds:SR-0001); a bare, unqualified UID always
+  denotes a local item. The binding is the single point of control — the blast radius
+  of renaming a namespace, or repointing it at a different source, is confined to the
+  consumer's own configuration and the documents it generates, and touches nothing in
+  any source. Input shall be lenient in that a bare UID that is locally defined is
+  never ambiguous; output — generated documents, exports, matrices — shall always
+  render cross-source references in fully qualified form so a reader can tell at a
+  glance which source an item came from.
+rationale: A consultant standing up a new GDS-compliant service pulls in the GDS
+  standard and a public-facing baseline and wants to name them "gds" and
+  "public-facing" without asking either source's authors for permission. Self-declared
+  source identity would force every source to pick a globally unique name and would
+  break the moment two projects disagreed; importer-assigned namespaces put naming
+  where the authority actually is — with the composer — and keep each source reusable
+  by any number of consumers under any number of local names.
+normative: true
+links:
+- target: UR-0001
+  type: implements
+attrs:
+  origin: human
+  priority: must
+  verification: demonstration

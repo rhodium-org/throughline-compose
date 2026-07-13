@@ -1,0 +1,58 @@
+[project]
+name = "throughline-compose"
+format_version = 2
+
+# throughline-compose's own IDD, self-hosted. Roots are the vision (intent) and
+# the business needs; every user and system requirement must ground upward to one
+# of them. non_goal is a root but NOT a delivery root — recorded negative space,
+# so nothing derives from it and it is never flagged unserved.
+[grounding]
+root_types = ["intent", "business_need", "non_goal"]
+delivery_roots = ["intent", "business_need"]
+ground_link_types = ["derives_from", "implements", "verifies", "mitigates"]
+ai_origins = ["ai", "hybrid"]
+
+[types.user_requirement]
+attrs.priority = { type = "enum", values = ["must", "should", "could"], normative = true }
+attrs.verification = { type = "enum", values = ["test", "demonstration", "inspection", "analysis"] }
+attrs.origin = { type = "enum", values = ["human", "ai", "hybrid"] }
+
+[types.system_requirement]
+attrs.priority = { type = "enum", values = ["must", "should", "could"], normative = true }
+attrs.verification = { type = "enum", values = ["test", "demonstration", "inspection", "analysis"] }
+attrs.origin = { type = "enum", values = ["human", "ai", "hybrid"] }
+
+[types.non_goal]
+attrs.origin = { type = "enum", values = ["human", "ai", "hybrid"] }
+
+[links]
+types = ["refines", "verifies", "satisfies", "implements", "relates",
+         "derives_from", "mitigates", "assumes"]
+
+# Type-level link constraints: an SR implements a UR; a UR/BN derives upward
+# toward the vision. `relates` is left free as a loose "see also".
+[link_rules]
+implements   = { from = ["system_requirement"], to = ["user_requirement"] }
+derives_from = { from = ["business_need", "user_requirement"], to = ["intent", "business_need"] }
+
+[status]
+values = ["proposed", "draft", "deferred", "approved", "ratified", "implemented",
+          "verified", "suspect", "rejected", "deleted"]
+
+[transitions]
+proposed    = ["draft", "approved", "ratified", "deferred", "rejected", "deleted"]
+draft       = ["approved", "deferred", "rejected", "deleted"]
+deferred    = ["draft", "approved", "rejected", "deleted"]
+approved    = ["ratified", "implemented", "deferred", "suspect", "rejected", "deleted"]
+ratified    = ["implemented", "suspect", "rejected", "deleted"]
+implemented = ["verified", "suspect", "rejected", "deleted"]
+verified    = ["implemented", "suspect", "deleted"]
+suspect     = ["approved", "ratified", "implemented", "verified", "rejected", "deleted"]
+rejected    = ["draft", "deleted"]
+
+# Published documents: `tl docs` regenerates these in place from the graph and
+# `tl docs --check` gates their freshness. Configuring this activates the
+# `unpublished` rule — every live normative item must be referenced by one of
+# these documents, or `tl check --strict` fails.
+[docs]
+paths = ["docs/*.md"]

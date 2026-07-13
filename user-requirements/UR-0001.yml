@@ -1,0 +1,19 @@
+uid: UR-0001
+type: user_requirement
+status: approved
+title: The composer controls source namespaces
+text: The consumer project — not the sources — shall decide the short name by which
+  each source is referenced. When a project pulls in two sources it shall be able to
+  bind one to the namespace "gds" and the other to "public-facing" in its own
+  configuration, and thereafter refer to a borrowed item as "gds:SR-0001". Changing
+  a namespace later is the composer's prerogative; they accept that generated
+  documents change to match. Sources shall not need to know, agree on, or coordinate
+  the names their consumers give them.
+normative: true
+links:
+- target: BN-0001
+  type: derives_from
+attrs:
+  origin: human
+  priority: must
+  verification: demonstration

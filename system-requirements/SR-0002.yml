@@ -1,0 +1,30 @@
+uid: SR-0002
+type: system_requirement
+status: approved
+title: Imported items keep their source-native UID
+text: An item pulled in from a source shall retain the exact UID it holds in that
+  source; composition shall never renumber, remint, or copy it. The canonical
+  identity of any item in the combined graph is the pair (source-namespace, UID) —
+  the local project being one source among several. Because identity is a pair, the
+  same bare UID occurring in two different sources (both may legitimately hold an
+  SR-0001) is not a collision; the two are distinguished by their namespaces. A
+  reference that is ambiguous — a bare UID that matches items in more than one source,
+  or a qualified UID whose namespace is unbound — shall fail fast at check time rather
+  than resolve silently to one candidate. Rebuilding the combined graph from unchanged
+  sources shall be idempotent — no identity in the result depends on scan order,
+  register position, or how many items a source has accumulated since.
+rationale: The immutable-UID rule is the foundation the whole tool rests on, and any
+  scheme that re-derived a fresh sequential index across composed sources would break
+  it the instant a source gained an item — the same real requirement would silently
+  change number. Anchoring identity to the source-native UID and qualifying by
+  namespace keeps every borrowed item's identity permanent and makes cross-source
+  same-number coexistence a normal, expected condition rather than an error to
+  reconcile.
+normative: true
+links:
+- target: UR-0001
+  type: implements
+attrs:
+  origin: human
+  priority: must
+  verification: test

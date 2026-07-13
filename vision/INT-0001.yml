@@ -1,0 +1,14 @@
+uid: INT-0001
+type: intent
+status: approved
+title: One project IDD composed from many reusable sources
+text: A project's requirements graph is assembled, not re-authored. A team pulls in
+  one or more existing throughlines — a house style guide, a platform standard, a
+  regulatory baseline — alongside the requirements they write themselves, and works
+  against the combined graph as if it were one. Reuse never copies or renumbers the
+  borrowed items — each keeps the permanent identity it was born with in its own
+  source, so the combined graph is a view over independent, separately versioned
+  sources rather than a fork of them.
+normative: false
+attrs:
+  origin: human

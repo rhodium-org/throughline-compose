@@ -1,0 +1,15 @@
+uid: BN-0001
+type: business_need
+status: approved
+title: Reuse standard IDDs without re-authoring
+text: Standard requirement sets — GDS service standards, a security baseline, a
+  platform's tenancy rules — should be adopted by reference, not by copy-paste. A
+  consumer project must be able to depend on such a source, ground its own items
+  onto items in that source, and receive upstream revisions, without ever forking
+  or re-numbering the borrowed graph.
+normative: false
+links:
+- target: INT-0001
+  type: derives_from
+attrs:
+  origin: human
