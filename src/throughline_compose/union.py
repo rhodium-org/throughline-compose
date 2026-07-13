@@ -21,6 +21,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, replace
 
+from throughline import is_external, is_namespace_qualified
 from throughline.model import Item, Project, Register
 from throughline.uid import UID_RE, parse_uid
 
@@ -28,23 +29,6 @@ from throughline.uid import UID_RE, parse_uid
 _PREFIX_RE = re.compile(r"^[A-Z][A-Z0-9]{1,15}$")
 # Split a namespace-qualified reference into (namespace, uid).
 _NS_REF_RE = re.compile(r"^([a-z][a-z0-9_-]*):(.+)$")
-# A namespace-qualified reference (throughline SR-0107): a namespace name, a colon,
-# and an otherwise-valid UID (``gds:SR-0001``). Kept in step with core's own grammar.
-_NAMESPACE_REF_RE = re.compile(r"^[a-z][a-z0-9_-]*:[A-Z][A-Z0-9]{1,15}-[0-9]+$")
-
-
-def _is_external(target: str) -> bool:
-    """A free-form external pointer — a URL, path, or anchor — that the core leaves
-    opaque (throughline SR-0031). Classified here from throughline's *public* link
-    grammar rather than its private internals, honouring the library contract (SR-0004)."""
-    return "://" in target or "/" in target or "#" in target
-
-
-def _is_namespace_qualified(target: str) -> bool:
-    """A ``<namespace>:<UID>`` reference the core cannot resolve — composition's own
-    syntax (throughline SR-0107). ``_is_external`` runs first, so a URL scheme like
-    ``https:`` (tail starts ``//``) never reaches here."""
-    return bool(_NAMESPACE_REF_RE.match(target))
 
 
 class ComposeError(Exception):
@@ -127,9 +111,9 @@ def _rewrite_target(target: str, current_ns: str | None,
       into that source's namespace; inside the *consumer* it is a local UID and is
       left untouched.
     """
-    if _is_external(target):
+    if is_external(target):
         return target
-    if _is_namespace_qualified(target):
+    if is_namespace_qualified(target):
         m = _NS_REF_RE.match(target)
         ns, uid = m.group(1), m.group(2)
         if ns not in namespaces:
