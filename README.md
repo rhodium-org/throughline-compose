@@ -6,11 +6,18 @@ guide, a platform standard, a regulatory baseline — alongside the requirements
 write yourself, and work the combined graph as one.
 
 This repository is itself a throughline project: its own design is captured as a
-grounded IDD spine under [`vision/`](vision), [`goals/`](goals),
+grounded IDD spine of
+<!-- tl:count type == 'user_requirement' -->
+3
+<!-- tl:end --> user requirements and
+<!-- tl:count type == 'system_requirement' -->
+6
+<!-- tl:end --> system requirements under [`vision/`](vision), [`goals/`](goals),
 [`user-requirements/`](user-requirements),
 [`system-requirements/`](system-requirements), and [`non-goals/`](non-goals), and
 published to [`docs/spec.md`](docs/spec.md). The graph is gated by `tl-compose check
---strict` and the document by `tl-compose docs --check`.
+--strict` and the document by `tl-compose docs --check`; these two counts are
+rendered from the live spine by the `tl:count` directive, so they cannot drift.
 
 > **Status: alpha.** The composition engine is built: `tl-compose check` composes the
 > declared `[[sources]]` into a union graph and validates it, and each source resolves

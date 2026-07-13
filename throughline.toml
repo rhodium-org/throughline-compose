@@ -55,4 +55,4 @@ rejected    = ["draft", "deleted"]
 # `unpublished` rule — every live normative item must be referenced by one of
 # these documents, or `tl check --strict` fails.
 [docs]
-paths = ["docs/*.md"]
+paths = ["docs/*.md", "README.md"]
