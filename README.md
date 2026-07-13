@@ -12,10 +12,12 @@ grounded IDD spine under [`vision/`](vision), [`goals/`](goals),
 published to [`docs/spec.md`](docs/spec.md). The graph is gated by `tl-compose check
 --strict` and the document by `tl-compose docs --check`.
 
-> **Status: pre-alpha.** The design is ratified in the spine; the `tl-compose` CLI is
-> a scaffold that currently forwards every command to throughline. The composition
-> overrides (union `check`/`docs`, source declaration/pinning/update) are not yet
-> implemented.
+> **Status: alpha.** The composition engine is built: `tl-compose check` composes the
+> declared `[[sources]]` into a union graph and validates it, and each source resolves
+> from either a local `path` or a pinned git `url` + `ref` into a per-user cache
+> ([SR-0006](system-requirements/SR-0006.yml)). Still pending: union-aware
+> `tl-compose docs` (a document over the composed union — `docs` today covers the local
+> graph only) and the `tl-compose source add/update/pin` subcommands.
 
 ## The idea
 
@@ -40,10 +42,11 @@ directly ([UR-0002](user-requirements/UR-0002.yml)). The architecture keeps that
 honest:
 
 - **`tl-compose` is a strict superset of `tl`** ([SR-0003](system-requirements/SR-0003.yml)).
-  Local-graph commands are forwarded to the throughline library unchanged; only the
-  union-aware commands (`check`, `docs`) are overridden, and the source commands are
-  added. The core command set is obtained programmatically, so the two surfaces
-  cannot drift apart.
+  Local-graph commands are forwarded to the throughline library unchanged; the
+  union-aware `check` is overridden to compose and validate the combined graph.
+  (Union-aware `docs` and the `source` subcommands are the remaining superset surface —
+  see the status note above.) The core command set is obtained programmatically, so the
+  two surfaces cannot drift apart.
 - **Composition reuses throughline unchanged** ([SR-0004](system-requirements/SR-0004.yml)).
   It merges the sources into one in-memory `Project` and runs throughline's existing
   `validate`, `Index`, and `fingerprint` over that union — no second validation
