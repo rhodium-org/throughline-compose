@@ -35,6 +35,44 @@ make that safe:
   a bare UID is always local. Renaming a namespace is a local-only change with a
   bounded blast radius.
 
+## Declaring sources
+
+A consumer names the sources it composes in an array of `[[sources]]` tables in its
+own `throughline.toml`. Each entry binds a `namespace` to one source, located either
+by a pinned git `url` or by a local `path` ([SR-0006](system-requirements/SR-0006.yml)):
+
+```toml
+# Adopt a published standard by reference, pinned to an edition.
+[[sources]]
+namespace = "asvs"
+url = "https://github.com/rhodium-org/standard-asvs"
+ref = "v4.0.3"                       # a git tag (normal form), branch, or commit SHA
+
+# Develop a source and its consumer side by side.
+[[sources]]
+namespace = "house-style"
+path = "../house-style"              # a directory relative to this project
+```
+
+- **`url` + `ref` is the durable, shareable form.** The `ref` pins the exact edition
+  — normally a release tag, but any git ref (branch or commit SHA) works. `tl-compose`
+  fetches the source from its origin on first use into a per-user cache that lives
+  *outside* any project tree (`$TL_COMPOSE_CACHE`, else `$XDG_CACHE_HOME`, else
+  `~/.cache/throughline-compose/sources/`), keyed by `(url, ref)`. Resolution is
+  idempotent and offline thereafter: a source already cached at the pinned ref is
+  reused, never refetched. Nothing is vendored into your repo, so your own item scan
+  never ingests a borrowed graph.
+- **`path` is for local development.** A directory, relative to the consumer, for
+  working on a source alongside the project that consumes it.
+- **The two are mutually exclusive, and a `url` must carry a `ref`.** Declaring both
+  `path` and `url`, or a `url` with no `ref`, is rejected at check time — a dependency
+  can never silently track a moving default. (A `ref` alongside a `path` is likewise
+  rejected: a ref only pins a `url`.)
+
+Moving to a new upstream edition is a one-line change to the `ref`; the borrowed graph
+is never edited. See [`rhodium-org/idd-example`](https://github.com/rhodium-org/idd-example)
+for a complete worked consumer that adopts `standard-asvs` this way.
+
 ## One tool, one set of guarantees
 
 In a composed project you drive everything through **`tl-compose`**, never `tl`
