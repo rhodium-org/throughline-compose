@@ -24,12 +24,28 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 **origin**: human
 <!-- tl:end -->
 
+<!-- tl:item BN-0002 -->
+**BN-0002 — A composed project is as trustworthy and frictionless as a native one** — `business_need`, status `approved`
+
+> Adoption depends on the composed project feeling like one project, not a toolchain. Working it should carry the same soundness guarantees a single throughline gives — the same validator, the same fail-fast on a broken graph — and should not impose a mental tax of remembering which tool does what or reasoning about the consequences of choosing wrong. If composition is more effort or less trustworthy than working native requirements, teams will copy-paste the sources instead, defeating the whole purpose.
+
+**origin**: human
+<!-- tl:end -->
+
 ## User requirements
 
 <!-- tl:item UR-0001 -->
 **UR-0001 — The composer controls source namespaces** — `user_requirement`, status `approved`
 
 > The consumer project — not the sources — shall decide the short name by which each source is referenced. When a project pulls in two sources it shall be able to bind one to the namespace "gds" and the other to "public-facing" in its own configuration, and thereafter refer to a borrowed item as "gds:SR-0001". Changing a namespace later is the composer's prerogative; they accept that generated documents change to match. Sources shall not need to know, agree on, or coordinate the names their consumers give them.
+
+**origin**: human · **priority**: must · **verification**: demonstration
+<!-- tl:end -->
+
+<!-- tl:item UR-0002 -->
+**UR-0002 — A composed project is worked as one — one tool, one set of guarantees** — `user_requirement`, status `approved`
+
+> In a composed project the composer shall drive everything through a single command surface, never having to decide which of two tools performs a given action or to reason about the consequences of choosing wrong. Every operation available on a standalone throughline shall be available, unchanged, on the composed one; the composed graph shall be validated by exactly the same rules as a standalone graph; and no path shall let the composer receive a false clean result that hides an unresolved cross-source reference.
 
 **origin**: human · **priority**: must · **verification**: demonstration
 <!-- tl:end -->
@@ -56,6 +72,46 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 **origin**: human · **priority**: must · **verification**: test
 <!-- tl:end -->
 
+<!-- tl:item SR-0003 -->
+**SR-0003 — tl-compose is a strict superset of tl** — `system_requirement`, status `approved`
+
+> The composition CLI (`tl-compose`) shall expose every command of the core `tl` CLI, so that a composer in a composed project uses `tl-compose` for everything and never invokes `tl` directly. Commands that concern only the local graph (authoring, ratifying, tracing) shall be forwarded to the throughline library unchanged; only the commands whose meaning changes under composition — chiefly `check` and `docs`, which must operate over the merged graph — shall be overridden, and `tl-compose` shall add the commands composition introduces (declaring, pinning, and updating sources). `tl-compose` shall obtain the core command set programmatically from the throughline library rather than re-declaring it, so a new core subcommand appears in `tl-compose` automatically and the two surfaces cannot drift apart.
+
+*Rationale:* An earlier design split the work — `tl` for local actions, `tl-compose` for source-aware ones — but that forces the composer to learn a mapping and to reason about the consequences of running the wrong one, exactly the friction BN-0002 rejects. Making `tl-compose` a strict superset removes the decision — in a composed repo there is one surface. Composing the core command set programmatically keeps that superset honest as `tl` evolves, at no maintenance cost.
+
+**origin**: human · **priority**: must · **verification**: demonstration
+<!-- tl:end -->
+
+<!-- tl:item SR-0004 -->
+**SR-0004 — Composition reuses the throughline library unchanged** — `system_requirement`, status `approved`
+
+> throughline-compose shall depend on `throughline` as a pinned library and build the composed graph by merging the sources' items and links into one in-memory `Project`, then run throughline's existing `validate`, `Index`, and `fingerprint` over that union without modification. Composition shall add no second validation engine, no forked copy of the graph model, and no divergent notion of soundness — the rules that hold for a standalone throughline are, by construction, the rules that hold for the composed one. Where composition must extend behaviour (resolving a namespace qualifier to a source's item before validation runs) it shall do so by preparing the union that the unchanged core then checks, not by reimplementing the check.
+
+*Rationale:* The single strongest guarantee composition can offer is that a composed graph is exactly as sound as a native one (UR-0002, BN-0002). The cheapest and most durable way to guarantee that is to not reimplement it — reuse the same validator the core already ships and trusts. throughline's public surface (`Project`, `Index`, `validate`, `fingerprint`, `load_project`, the grounding ops) is deliberately shaped for exactly this kind of library consumer, so composition is assembly plus a thin resolution step, not a second engine. This is also what keeps composition out of the core (NG-0001) — core stays the one implementation of the rules.
+
+**origin**: human · **priority**: must · **verification**: test
+<!-- tl:end -->
+
+<!-- tl:item SR-0005 -->
+**SR-0005 — Bare tl check fails fast on unresolved namespace-qualified references** — `system_requirement`, status `approved`
+
+> A namespace-qualified reference (for example `gds:SR-0001`) asserts that its target resolves inside a declared source namespace. The core `tl` does no composition and cannot resolve such a reference, so when `tl check` encounters one it shall fail fast with a message that points the user to `tl-compose`, rather than treat it as an opaque external and report a clean graph. Core shall reach this verdict from the reference's syntax alone — it shall not read the consumer's source configuration and shall remain entirely source-unaware. This rule is scoped to the namespace-qualified form only — a free external target such as a URL or a deliberately out-of-graph pointer (a linked standard, an issue tracker) shall stay opaque and shall not fail the check, because being unresolvable is that form's intended purpose. The resolving `tl-compose check` shall then do the real work — bind the namespace to its pinned source, confirm the target exists, and confirm the link is type-legal over the union.
+
+*Rationale:* Without this rule a composer who ran bare `tl` in a composed repo — by habit or because a hook is wired to it — would get a false clean result that hides a dangling or type-illegal cross-source link, the silent-wrong outcome UR-0002 forbids. Failing fast turns the wrong tool into a signpost to the right one. The scope carve- out matters — a blanket rule of fail on anything unresolvable would break the legitimate and common practice of linking a requirement to an external standard or ticket, so the trigger is the namespace-qualified syntax specifically, which is why that syntax (SR-0001) is kept a distinct first-class token rather than folded into the external-reference form.
+
+**origin**: human · **priority**: must · **verification**: test
+<!-- tl:end -->
+
+## Non-goals
+
+<!-- tl:item NG-0001 -->
+**NG-0001 — Composition is not built into the tl core** — `non_goal`, status `approved`
+
+> Composition — source declaration, pinning, fetching, and merging — is deliberately not added to the `throughline` core or its `tl` command. The core stays a single-purpose, offline-by-default, self-contained tool over one graph; the network, lockfile, untrusted-source, and union concerns live entirely in throughline-compose, which consumes the core as a library. The only concession the core makes to composition is recognising the namespace-qualified reference syntax so it can fail fast on one (SR-0005) — it gains no ability to resolve, fetch, or merge. This is recorded negative space — it exists to keep later design honest, so that a proposal to "just add sources to tl" is measured against a decision already taken rather than reopened by default.
+
+**origin**: human
+<!-- tl:end -->
+
 ## Traceability
 
 Every user requirement maps to the system requirements that `implements` it.
@@ -65,4 +121,5 @@ The table is generated from the graph, so it cannot drift from the actual links.
 | UID | Title | Implements (incoming) |
 |---|---|---|
 | UR-0001 | The composer controls source namespaces | SR-0001, SR-0002 |
+| UR-0002 | A composed project is worked as one — one tool, one set of guarantees | SR-0003, SR-0004, SR-0005 |
 <!-- tl:end -->

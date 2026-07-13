@@ -1,0 +1,32 @@
+uid: SR-0004
+type: system_requirement
+status: approved
+title: Composition reuses the throughline library unchanged
+text: throughline-compose shall depend on `throughline` as a pinned library and build
+  the composed graph by merging the sources' items and links into one in-memory
+  `Project`, then run throughline's existing `validate`, `Index`, and `fingerprint`
+  over that union without modification. Composition shall add no second validation
+  engine, no forked copy of the graph model, and no divergent notion of soundness —
+  the rules that hold for a standalone throughline are, by construction, the rules
+  that hold for the composed one. Where composition must extend behaviour (resolving a
+  namespace qualifier to a source's item before validation runs) it shall do so by
+  preparing the union that the unchanged core then checks, not by reimplementing the
+  check.
+rationale: The single strongest guarantee composition can offer is that a composed
+  graph is exactly as sound as a native one (UR-0002, BN-0002). The cheapest and most
+  durable way to guarantee that is to not reimplement it — reuse the same validator
+  the core already ships and trusts. throughline's public surface (`Project`, `Index`,
+  `validate`, `fingerprint`, `load_project`, the grounding ops) is deliberately shaped
+  for exactly this kind of library consumer, so composition is assembly plus a thin
+  resolution step, not a second engine. This is also what keeps composition out of the
+  core (NG-0001) — core stays the one implementation of the rules.
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: NG-0001
+  type: relates
+attrs:
+  origin: human
+  priority: must
+  verification: test

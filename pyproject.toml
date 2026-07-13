@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "throughline-compose"
+version = "0.0.1"
+description = "Compose one requirements graph from many reusable throughline sources: importer-assigned namespaces, source-native UIDs, and a union checked by throughline's own validator. Ships the tl-compose CLI, a strict superset of tl."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Time Back Solutions Limited" }]
+keywords = [
+  "requirements",
+  "requirements-management",
+  "traceability",
+  "composition",
+  "git-native",
+  "idd",
+  "intent-driven-development",
+  "throughline",
+]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Documentation",
+  "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = ["throughline>=0.3.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.urls]
+Homepage = "https://github.com/rhodium-org/throughline-compose"
+Repository = "https://github.com/rhodium-org/throughline-compose"
+Issues = "https://github.com/rhodium-org/throughline-compose/issues"
+
+[project.scripts]
+tl-compose = "throughline_compose.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

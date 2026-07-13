@@ -1,0 +1,31 @@
+uid: SR-0003
+type: system_requirement
+status: approved
+title: tl-compose is a strict superset of tl
+text: The composition CLI (`tl-compose`) shall expose every command of the core
+  `tl` CLI, so that a composer in a composed project uses `tl-compose` for everything
+  and never invokes `tl` directly. Commands that concern only the local graph
+  (authoring, ratifying, tracing) shall be forwarded to the throughline library
+  unchanged; only the commands whose meaning changes under composition — chiefly
+  `check` and `docs`, which must operate over the merged graph — shall be overridden,
+  and `tl-compose` shall add the commands composition introduces (declaring, pinning,
+  and updating sources). `tl-compose` shall obtain the core command set
+  programmatically from the throughline library rather than re-declaring it, so a new
+  core subcommand appears in `tl-compose` automatically and the two surfaces cannot
+  drift apart.
+rationale: An earlier design split the work — `tl` for local actions, `tl-compose`
+  for source-aware ones — but that forces the composer to learn a mapping and to
+  reason about the consequences of running the wrong one, exactly the friction
+  BN-0002 rejects. Making `tl-compose` a strict superset removes the decision —
+  in a composed repo there is one surface. Composing the core command set
+  programmatically keeps that superset honest as `tl` evolves, at no maintenance cost.
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: NG-0001
+  type: relates
+attrs:
+  origin: human
+  priority: must
+  verification: demonstration

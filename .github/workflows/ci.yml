@@ -16,11 +16,16 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install throughline
-        run: pip install throughline
+      - name: Install throughline-compose (pulls throughline transitively)
+        run: pip install .
+
+      - name: Both console scripts are present (tl-compose is a superset of tl)
+        run: |
+          command -v tl
+          command -v tl-compose
 
       - name: Grounding gate (the graph must stay sound)
-        run: tl check --strict
+        run: tl-compose check --strict
 
       - name: Docs freshness gate (docs/spec.md must match the graph)
-        run: tl docs --check
+        run: tl-compose docs --check

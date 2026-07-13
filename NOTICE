@@ -1,0 +1,12 @@
+throughline-compose
+Copyright 2026 Time Back Solutions Limited
+
+This product includes software developed by Time Back Solutions Limited.
+
+Licensed under the Apache License, Version 2.0. See the LICENSE file for the
+full terms.
+
+throughline-compose builds on throughline (https://pypi.org/project/throughline/),
+which it consumes as an unmodified library. It adds source composition — namespace
+declaration, pinning, fetching, and union merging — over that library and reuses
+throughline's validator without forking it.

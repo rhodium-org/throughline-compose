@@ -1,0 +1,17 @@
+uid: BN-0002
+type: business_need
+status: approved
+title: A composed project is as trustworthy and frictionless as a native one
+text: Adoption depends on the composed project feeling like one project, not a
+  toolchain. Working it should carry the same soundness guarantees a single
+  throughline gives — the same validator, the same fail-fast on a broken graph —
+  and should not impose a mental tax of remembering which tool does what or reasoning
+  about the consequences of choosing wrong. If composition is more effort or less
+  trustworthy than working native requirements, teams will copy-paste the sources
+  instead, defeating the whole purpose.
+normative: false
+links:
+- target: INT-0001
+  type: derives_from
+attrs:
+  origin: human
