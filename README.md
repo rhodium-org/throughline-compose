@@ -11,7 +11,7 @@ grounded IDD spine of
 3
 <!-- tl:end --> user requirements and
 <!-- tl:count type == 'system_requirement' -->
-6
+7
 <!-- tl:end --> system requirements under [`vision/`](vision), [`goals/`](goals),
 [`user-requirements/`](user-requirements),
 [`system-requirements/`](system-requirements), and [`non-goals/`](non-goals), and
@@ -19,12 +19,14 @@ published to [`docs/spec.md`](docs/spec.md). The graph is gated by `tl-compose c
 --strict` and the document by `tl-compose docs --check`; these two counts are
 rendered from the live spine by the `tl:count` directive, so they cannot drift.
 
-> **Status: alpha.** The composition engine is built: `tl-compose check` composes the
-> declared `[[sources]]` into a union graph and validates it, and each source resolves
-> from either a local `path` or a pinned git `url` + `ref` into a per-user cache
-> ([SR-0006](system-requirements/SR-0006.yml)). Still pending: union-aware
-> `tl-compose docs` (a document over the composed union — `docs` today covers the local
-> graph only) and the `tl-compose source add/update/pin` subcommands.
+> **Status: alpha.** The composition engine is built. `tl-compose check` composes the
+> declared `[[sources]]` into a union graph and validates it, and `tl-compose docs`
+> renders the published document over that same union, resolving borrowed
+> (`namespace:UID`) targets ([SR-0007](system-requirements/SR-0007.yml)). Each source
+> resolves from either a local `path` or a pinned git `url` + `ref` into a per-user
+> cache ([SR-0006](system-requirements/SR-0006.yml)). Still pending: the
+> `tl-compose source add/update/pin` subcommands for managing source declarations from
+> the CLI (today you edit the `[[sources]]` tables by hand).
 
 ## The idea
 
@@ -88,10 +90,10 @@ honest:
 
 - **`tl-compose` is a strict superset of `tl`** ([SR-0003](system-requirements/SR-0003.yml)).
   Local-graph commands are forwarded to the throughline library unchanged; the
-  union-aware `check` is overridden to compose and validate the combined graph.
-  (Union-aware `docs` and the `source` subcommands are the remaining superset surface —
-  see the status note above.) The core command set is obtained programmatically, so the
-  two surfaces cannot drift apart.
+  union-aware `check` and `docs` are overridden to compose, validate, and render the
+  combined graph. (The `source` subcommands for editing declarations are the remaining
+  superset surface — see the status note above.) The core command set is obtained
+  programmatically, so the two surfaces cannot drift apart.
 - **Composition reuses throughline unchanged** ([SR-0004](system-requirements/SR-0004.yml)).
   It merges the sources into one in-memory `Project` and runs throughline's existing
   `validate`, `Index`, and `fingerprint` over that union — no second validation
