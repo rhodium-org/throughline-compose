@@ -17,11 +17,12 @@ from __future__ import annotations
 import sys
 from importlib.metadata import PackageNotFoundError, version as _pkg_version
 
-from throughline.cli import build_parser, cmd_check
+from throughline.cli import build_parser, cmd_check, cmd_docs
 from throughline.storage import ProjectError, load_project
 from throughline.validate import ERROR, validate
 
 from .resolve import ResolveError, resolve_source
+from .resolver import UnionResolver
 from .sources import SourceError, parse_sources
 from .union import ComposeError, build_union, translate_finding
 
@@ -46,6 +47,21 @@ def _version_string() -> str:
     return f"tl-compose {_pkg('throughline-compose')} (throughline {_pkg('throughline')})"
 
 
+def _load_sources(sources, root) -> dict:
+    """Resolve and load each declared source into a namespace -> Project map.
+    Raises :class:`ResolveError` / :class:`ProjectError` for the caller to
+    report; a source that will not load is named in the composer's vocabulary."""
+    loaded = {}
+    for s in sources:
+        src_dir = resolve_source(s, root)
+        try:
+            loaded[s.namespace] = load_project(src_dir)
+        except ProjectError as e:
+            where = f"{s.url}@{s.ref}" if s.is_remote else s.path
+            raise ProjectError(f"source '{s.namespace}' at {where}: {e}") from e
+    return loaded
+
+
 def _compose_check(args) -> int:
     from pathlib import Path
 
@@ -63,18 +79,10 @@ def _compose_check(args) -> int:
     if not sources:
         return cmd_check(args)
 
-    root = Path(args.path)
-    loaded = {}
-    for s in sources:
-        try:
-            src_dir = resolve_source(s, root)
-        except ResolveError as e:
-            return _err(str(e))
-        try:
-            loaded[s.namespace] = load_project(src_dir)
-        except ProjectError as e:
-            where = f"{s.url}@{s.ref}" if s.is_remote else s.path
-            return _err(f"source '{s.namespace}' at {where}: {e}")
+    try:
+        loaded = _load_sources(sources, Path(args.path))
+    except (ResolveError, ProjectError) as e:
+        return _err(str(e))
 
     try:
         union = build_union(consumer, loaded)
@@ -109,6 +117,35 @@ def _compose_check(args) -> int:
     return FINDINGS if any(f.severity == ERROR for f in findings) else OK
 
 
+def _compose_docs(args) -> int:
+    """Inject the consumer's documents, resolving tl:matrix target cells over the
+    union of the consumer and its declared sources (SR-0110). Injection is over
+    the *local* consumer project — counts, tables and rows are byte-identical to
+    ``tl docs`` — but a namespace-qualified matrix target can render the borrowed
+    clause's own reference number. With no sources declared this is a pure
+    pass-through to core ``tl docs`` (SR-0003)."""
+    from pathlib import Path
+
+    try:
+        consumer = load_project(args.path)
+    except ProjectError as e:
+        return _err(str(e))
+    try:
+        sources = parse_sources(consumer)
+    except SourceError as e:
+        return _err(str(e))
+
+    if not sources:
+        return cmd_docs(args)
+
+    try:
+        loaded = _load_sources(sources, Path(args.path))
+    except (ResolveError, ProjectError) as e:
+        return _err(str(e))
+
+    return cmd_docs(args, resolver=UnionResolver(consumer, loaded))
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     parser.prog = "tl-compose"
@@ -119,6 +156,11 @@ def main(argv: list[str] | None = None) -> int:
     if getattr(args, "cmd", None) == "check":
         try:
             return _compose_check(args)
+        except KeyboardInterrupt:  # pragma: no cover
+            return USAGE
+    if getattr(args, "cmd", None) == "docs":
+        try:
+            return _compose_docs(args)
         except KeyboardInterrupt:  # pragma: no cover
             return USAGE
     try:

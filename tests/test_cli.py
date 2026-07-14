@@ -71,3 +71,38 @@ def test_compose_check_translates_dangling_cross_source(consumer_dir, capsys):
     out = capsys.readouterr().out
     assert "toy:SR-9999" in out       # the composer's own vocabulary
     assert "TOYSR-9999" not in out    # never the mangled internal form
+
+
+def test_compose_docs_renders_borrowed_target_attribute(consumer_dir):
+    # SR-0007/SR-0110: a matrix cell whose target is a namespace-qualified borrowed
+    # clause renders that clause's own attribute, resolved through the union — not a
+    # UID the reader cannot look up. The toy source's SR-0001 carries priority: must.
+    spec = consumer_dir / "spec.md"
+    spec.write_text(
+        "<!-- tl:matrix outgoing:relates@uid(priority) uid == 'SR-0001' -->\n"
+        "<!-- tl:end -->\n", encoding="utf-8")
+    rc = tlc_main(["-C", str(consumer_dir), "docs", str(spec)])
+    assert rc == 0
+    out = spec.read_text(encoding="utf-8")
+    assert "toy:SR-0001 (must)" in out
+
+
+def test_compose_docs_default_target_is_qualified_uid(consumer_dir):
+    # With no @ suffix the cell is the namespace-qualified UID, exactly as core.
+    spec = consumer_dir / "spec.md"
+    spec.write_text(
+        "<!-- tl:matrix outgoing:relates uid == 'SR-0001' -->\n"
+        "<!-- tl:end -->\n", encoding="utf-8")
+    rc = tlc_main(["-C", str(consumer_dir), "docs", str(spec)])
+    assert rc == 0
+    assert "toy:SR-0001" in spec.read_text(encoding="utf-8")
+
+
+def test_compose_docs_passthrough_without_sources(source_dir):
+    # A source project declares no [[sources]]: tl-compose docs must behave like tl
+    # docs — inject over the local graph with no resolver.
+    spec = source_dir / "spec.md"
+    spec.write_text("<!-- tl:item INT-0001 -->\n<!-- tl:end -->\n", encoding="utf-8")
+    rc = tlc_main(["-C", str(source_dir), "docs", str(spec)])
+    assert rc == 0
+    assert "Toy source purpose" in spec.read_text(encoding="utf-8")
