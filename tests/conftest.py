@@ -61,6 +61,7 @@ links:
   type: implements
 attrs:
   priority: must
+  source_ref: V1.1.1
   origin: human
 """,
 }

@@ -19,7 +19,7 @@ from __future__ import annotations
 import re
 
 from throughline import is_namespace_qualified
-from throughline.inject import TargetResolver
+from throughline.inject import TargetResolver, _render_item
 
 _NS_SPLIT = re.compile(r"^([a-z][a-z0-9_-]*):(.+)$")
 
@@ -47,6 +47,34 @@ class UnionResolver(TargetResolver):
     def attr(self, uid: str, name: str):
         d = self._delegate(uid)
         return d.attr(_local(uid), name) if d else super().attr(uid, name)
+
+    def link_display(self, uid: str) -> str:
+        """Enrich a borrowed clause's link display with its own reference number
+        (SR-0113): ``asvs:SR-0172`` reads ``asvs:SR-0172 (V7.1.1)`` when the source
+        clause carries a ``source_ref``. A local target is the bare UID as before."""
+        if not is_namespace_qualified(uid):
+            return super().link_display(uid)
+        ref = self.attr(uid, "source_ref")
+        return f"{uid} ({ref})" if ref else uid
+
+    def block(self, uid: str) -> str | None:
+        """The borrowed clause's own full block (SR-0114): render the source item a
+        namespace-qualified target names, from its source project. Returns ``None``
+        for a local target or a source that cannot render it, so ``tl:sourced``
+        mirrors only the external clauses a source backs."""
+        src = self._source_for(uid)
+        if src is None:
+            return None
+        local = _local(uid)
+        if src.get(local) is None:
+            return None
+        return _render_item(src, local, TargetResolver(src))
+
+    def _source_for(self, uid: str):
+        """The loaded source project owning a namespace-qualified ``uid``, or None."""
+        if not is_namespace_qualified(uid):
+            return None
+        return self._sources.get(_NS_SPLIT.match(uid).group(1))
 
 
 def _local(uid: str) -> str:

@@ -106,3 +106,40 @@ def test_compose_docs_passthrough_without_sources(source_dir):
     rc = tlc_main(["-C", str(source_dir), "docs", str(spec)])
     assert rc == 0
     assert "Toy source purpose" in spec.read_text(encoding="utf-8")
+
+
+def test_compose_docs_item_block_shows_borrowed_link_reference(consumer_dir):
+    # SR-0113: an item block lists its outgoing links resolver-enriched. The
+    # consumer's SR-0001 relates to toy:SR-0001, whose source_ref is V1.1.1, so the
+    # block shows the reference number a reader could not derive from a UID alone.
+    spec = consumer_dir / "spec.md"
+    spec.write_text("<!-- tl:item SR-0001 -->\n<!-- tl:end -->\n", encoding="utf-8")
+    rc = tlc_main(["-C", str(consumer_dir), "docs", str(spec)])
+    assert rc == 0
+    out = spec.read_text(encoding="utf-8")
+    assert "*Relates:* toy:SR-0001 (V1.1.1)" in out
+    assert "*Derives from:* INT-0001" in out
+
+
+def test_compose_docs_sourced_mirrors_borrowed_clause(consumer_dir):
+    # SR-0114: tl:sourced mirrors, in full, the external clause the consumer's items
+    # reference — toy:SR-0001's own block, drawn from its source.
+    ref = consumer_dir / "reference.md"
+    ref.write_text(
+        "<!-- tl:sourced uid == 'SR-0001' -->\n<!-- tl:end -->\n", encoding="utf-8")
+    rc = tlc_main(["-C", str(consumer_dir), "docs", str(ref)])
+    assert rc == 0
+    out = ref.read_text(encoding="utf-8")
+    assert "A normative clause the source offers" in out
+    assert "The source shall provide one concrete, testable clause." in out
+
+
+def test_compose_docs_sourced_placeholder_without_sources(source_dir):
+    # SR-0114: with no sources, tl:sourced resolves nothing and renders a
+    # placeholder rather than erroring — the passthrough default resolver.
+    ref = source_dir / "reference.md"
+    ref.write_text(
+        "<!-- tl:sourced uid == 'SR-0001' -->\n<!-- tl:end -->\n", encoding="utf-8")
+    rc = tlc_main(["-C", str(source_dir), "docs", str(ref)])
+    assert rc == 0
+    assert "no source-backed external clauses to mirror" in ref.read_text(encoding="utf-8")
