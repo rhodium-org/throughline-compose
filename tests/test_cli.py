@@ -7,8 +7,20 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from throughline.cli import main as tl_main
 from throughline_compose.cli import main as tlc_main
+
+
+def test_version_reports_compose_not_core(capsys):
+    # `--version` must speak as tl-compose, not forward throughline's `tl X` string.
+    with pytest.raises(SystemExit) as exc:
+        tlc_main(["--version"])
+    assert exc.value.code == 0
+    out = capsys.readouterr().out
+    assert out.startswith("tl-compose ")
+    assert "throughline " in out  # names the core it composes over
 
 
 def test_bare_tl_check_fails_fast_on_qualified_reference(consumer_dir, capsys):

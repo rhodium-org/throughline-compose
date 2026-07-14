@@ -15,6 +15,7 @@ findings back into ``<namespace>:<UID>`` vocabulary before printing.
 from __future__ import annotations
 
 import sys
+from importlib.metadata import PackageNotFoundError, version as _pkg_version
 
 from throughline.cli import build_parser, cmd_check
 from throughline.storage import ProjectError, load_project
@@ -30,6 +31,19 @@ OK, FINDINGS, USAGE = 0, 1, 2
 def _err(msg: str) -> int:
     print(f"tl-compose: {msg}", file=sys.stderr)
     return USAGE
+
+
+def _pkg(name: str) -> str:
+    try:
+        return _pkg_version(name)
+    except PackageNotFoundError:  # pragma: no cover - running from a source tree
+        return "0.0.0+unknown"
+
+
+def _version_string() -> str:
+    # tl-compose is its own front door; report its version and the throughline core
+    # it composes over, not throughline's (build_parser wires `--version` to `tl`).
+    return f"tl-compose {_pkg('throughline-compose')} (throughline {_pkg('throughline')})"
 
 
 def _compose_check(args) -> int:
@@ -97,6 +111,10 @@ def _compose_check(args) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
+    parser.prog = "tl-compose"
+    for action in parser._actions:
+        if "--version" in action.option_strings:
+            action.version = _version_string()
     args = parser.parse_args(argv)
     if getattr(args, "cmd", None) == "check":
         try:
