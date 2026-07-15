@@ -1,0 +1,39 @@
+uid: SR-0008
+type: system_requirement
+status: proposed
+title: Audit citations affected by a source edition change
+text: When a source's pinned edition `ref` changes, the identity of a borrowed item is
+  not guaranteed to survive — an edition commonly keeps its own UID space, so one UID
+  (`asvs:SR-0099`, say) can denote an entirely different clause before and after the
+  change. A structural resolve still succeeds, so `tl-compose check` stays green while
+  every affected citation now points at the wrong target. tl-compose shall offer an
+  audit that, given the old and new refs of a changed source, reports for each existing
+  citation into that source whether the target still exists, whether the target's
+  identifying attribute (its `source_ref` clause number) changed, and whether the
+  target's normative text changed materially. The audit shall classify each citation as
+  unchanged, moved (same meaning, new number), changed (review needed), or withdrawn
+  (no successor), so the composer re-points by meaning rather than trusting a
+  structurally-valid resolution. It shall be read-only and shall not rewrite citations.
+rationale: The motivating case is OWASP ASVS v4.0.3 to v5.0.0, a full renumber where
+  `asvs:SR-0099` moves from a session-token rule to a file-path rule; a bare `ref` bump
+  passes every gate yet silently rebinds all citations. `tl check` cannot catch this
+  because the graph stays structurally sound — the failure is one of meaning, not
+  shape, the same blind spot that motivates human ratification elsewhere and the
+  silent-wrong outcome UR-0002 forbids. Surfacing the affected citations turns a
+  repo-wide mis-binding into an explicit, reviewable list, and makes an edition
+  upgrade — an inevitable, recurring event as standards evolve — a controlled migration
+  rather than a leap of faith. It stays firmly on the compose side of NG-0001 because it
+  reasons only over graph data the composer already resolves — two pinned editions of
+  one source — and adds no new detail of its own.
+normative: true
+links:
+- target: UR-0003
+  type: implements
+- target: SR-0006
+  type: relates
+- target: SR-0005
+  type: relates
+attrs:
+  origin: hybrid
+  priority: should
+  verification: test

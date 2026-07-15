@@ -11,7 +11,7 @@ grounded IDD spine of
 3
 <!-- tl:end --> user requirements and
 <!-- tl:count type == 'system_requirement' -->
-7
+8
 <!-- tl:end --> system requirements under [`vision/`](vision), [`goals/`](goals),
 [`user-requirements/`](user-requirements),
 [`system-requirements/`](system-requirements), and [`non-goals/`](non-goals), and
