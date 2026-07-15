@@ -143,6 +143,19 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 **origin**: human · **priority**: must · **verification**: test
 <!-- tl:end -->
 
+<!-- tl:item SR-0009 -->
+**SR-0009 — Render a source's pinned edition into composed documents** — `system_requirement`, status `proposed`
+
+> A source's adopted edition — the git `ref` a consumer pins in `throughline.toml` — is a fact a composed document routinely states in prose ("adopted at ASVS v5.0.0"), yet no injection directive can emit it, because the pin lives in the composition config rather than in any graph item. The value is therefore hand-copied and drifts the moment the pin moves. tl-compose shall provide a document directive that renders a named source's pinned ref from the consumer config, so the rendered edition is re-derived on every `tl-compose docs` run and gated by `tl-compose docs --check`. The directive shall address a source by its consumer-assigned namespace and emit the pinned ref verbatim; where a source carries further identifying edition metadata the directive may surface it, but the ref is the minimum. It shall be read-only over the config and shall fail fast on an unknown namespace rather than emit an empty or stale value.
+
+*Rationale:* The motivating case is the ASVS v4.0.3 to v5.0.0 migration in the attachment-to-link consumer, where the ledger, the pins and the injected counts all advanced but a hand-written README cell kept saying `v4.0.3` — outside every `tl:` marker, so `tl-compose docs --check` stayed green over a false statement. That is the same silent-wrong outcome UR-0002 forbids — a composed project worked as one, with one set of guarantees, should not let its own documentation contradict its configuration. A pin is exactly the kind of single-sourced fact injection exists to keep honest; the only reason it escapes today is that it sits in the toml, not the graph. Surfacing it through a directive closes the last hand-copied edition string, so moving a pin propagates to every published document automatically and a stale edition can no longer pass the freshness gate. It stays firmly on the compose side of NG-0001 because it reasons only over the consumer's own source configuration, which tl-compose already parses, and adds no capability to the tl core.
+
+*Implements:* UR-0002
+*Relates:* SR-0007, SR-0006
+
+**origin**: hybrid · **priority**: should · **verification**: test
+<!-- tl:end -->
+
 ## Non-goals
 
 <!-- tl:item NG-0001 -->
@@ -162,6 +175,6 @@ The table is generated from the graph, so it cannot drift from the actual links.
 | UID | Title | Implements (incoming) |
 |---|---|---|
 | UR-0001 | The composer controls source namespaces | SR-0001, SR-0002 |
-| UR-0002 | A composed project is worked as one — one tool, one set of guarantees | SR-0003, SR-0004, SR-0005, SR-0007 |
+| UR-0002 | A composed project is worked as one — one tool, one set of guarantees | SR-0003, SR-0004, SR-0005, SR-0007, SR-0009 |
 | UR-0003 | A source is referenced by origin and pinned to an edition | SR-0006 |
 <!-- tl:end -->
