@@ -32,7 +32,7 @@ classifiers = [
   "Topic :: Software Development :: Documentation",
   "Topic :: Software Development :: Quality Assurance",
 ]
-dependencies = ["throughline>=0.5.0"]  # is_external / is_namespace_qualified public since 0.4.0 (SR-0004); tl:count badge needs 0.5.0 (SR-0109)
+dependencies = ["throughline>=0.6.0"]  # is_external / is_namespace_qualified public since 0.4.0 (SR-0004); tl:count badge needs 0.5.0 (SR-0109); tl:graph collapse-external needs 0.6.0 (SR-0118)
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
