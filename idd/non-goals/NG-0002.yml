@@ -1,0 +1,22 @@
+uid: NG-0002
+type: non_goal
+status: ratified
+title: Writing back to external authorities is not a compose concern
+text: 'tl-compose resolves and reads external authorities to build and check the
+  union; it does not write to them. Creating, updating, or deleting a link record
+  inside an issue tracker, PM tool, or wiki — for example storing "this ticket implements
+  UR-0005" as a property on the ticket — belongs to the connector deployables built
+  on top of tl-compose, not to composition. The check and union pipeline stays read-only
+  over its sources, preserving the guarantee that a composition can be validated
+  anywhere, with no side effects and without credentials to mutate a third-party
+  system. This is recorded negative space that extends NG-0001''s spirit: the network-write,
+  authentication-to-mutate, and bidirectional-sync concerns live in the connectors,
+  so a proposal to "just have tl-compose update Jira" is measured against a decision
+  already taken.'
+normative: false
+links:
+- target: NG-0001
+  type: relates
+attrs:
+  origin: hybrid
+  ratified_by: henry

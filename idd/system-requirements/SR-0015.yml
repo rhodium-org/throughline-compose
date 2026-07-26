@@ -1,0 +1,43 @@
+uid: SR-0015
+type: system_requirement
+status: implemented
+title: A namespace bound to two editions fails fast, advising the why and the fix
+text: 'When resolving sources tl-compose shall detect the case where one namespace
+  name is bound to two different editions — for example `asvs` reaching the union
+  at ref `v4.0.3` through one source and at `v5.0.0` through another, whether by
+  direct declaration, by re-export, or by any mix — and shall fail fast rather than
+  merge the two graphs or pick an edition on the consumer''s behalf. The failure
+  shall not merely state that a conflict exists. It shall advise the why: it shall
+  name the namespace, name each conflicting edition by its ref, and name where each
+  binding came from — the directly declared source or the intermediate source that
+  re-exported it — so the composer can see the two paths that collided without reading
+  the graph. It shall advise the fix, stating the two remedies the model actually
+  supports: pin the namespace explicitly in the consumer''s own configuration to
+  the single edition intended, so that one binding governs every reference to it;
+  or, when both editions are genuinely required, alias them to distinct namespaces
+  so they compose side by side as the two separate sources they are. The message
+  shall not offer a remedy the model cannot honour — it shall never imply the two
+  editions can be merged into one.'
+rationale: This is the diagnostic half of UR-0005 and the direct answer to the diamond
+  case the re-export feature makes reachable — two sources depending on the same
+  standard at different editions. Silently merging them is unsound — throughline
+  identity is per-source-per-edition, so `SR-0272` at v4.0.3 and at v5.0.0 are different
+  items that must not collapse — and silently picking one is the false-clean outcome
+  UR-0002 and SR-0005 forbid, so fail-fast is the only honest verdict. The stringent
+  part is the message. A bare "namespace conflict" tells the composer they are stuck
+  without telling them out of what or into what — they must then reverse-engineer
+  which sources pull which editions. Naming the editions, their origins, and the
+  two supported remedies turns the error from a wall into a signpost, the same move
+  SR-0005 makes when it points a bare-`tl` user at `tl-compose`. Refusing to suggest
+  a merge keeps the advice inside what the tool can actually do.
+normative: true
+links:
+- target: UR-0005
+  type: implements
+- target: SR-0005
+  type: relates
+attrs:
+  origin: hybrid
+  priority: should
+  verification: test
+  ratified_by: henry

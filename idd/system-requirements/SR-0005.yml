@@ -1,0 +1,37 @@
+uid: SR-0005
+type: system_requirement
+status: ratified
+title: Bare tl check fails fast on unresolved namespace-qualified references
+text: A namespace-qualified reference (for example `gds:SR-0001`) asserts that its
+  target resolves inside a declared source namespace. The core `tl` does no composition
+  and cannot resolve such a reference, so when `tl check` encounters one it shall
+  fail fast with a message that points the user to `tl-compose`, rather than treat
+  it as an opaque external and report a clean graph. Core shall reach this verdict
+  from the reference's syntax alone — it shall not read the consumer's source configuration
+  and shall remain entirely source-unaware. This rule is scoped to the namespace-qualified
+  form only — a free external target such as a URL or a deliberately out-of-graph
+  pointer (a linked standard, an issue tracker) shall stay opaque and shall not fail
+  the check, because being unresolvable is that form's intended purpose. The resolving
+  `tl-compose check` shall then do the real work — bind the namespace to its pinned
+  source, confirm the target exists, and confirm the link is type-legal over the
+  union.
+rationale: Without this rule a composer who ran bare `tl` in a composed repo — by
+  habit or because a hook is wired to it — would get a false clean result that hides
+  a dangling or type-illegal cross-source link, the silent-wrong outcome UR-0002
+  forbids. Failing fast turns the wrong tool into a signpost to the right one. The
+  scope carve- out matters — a blanket rule of fail on anything unresolvable would
+  break the legitimate and common practice of linking a requirement to an external
+  standard or ticket, so the trigger is the namespace-qualified syntax specifically,
+  which is why that syntax (SR-0001) is kept a distinct first-class token rather
+  than folded into the external-reference form.
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0001
+  type: relates
+attrs:
+  origin: human
+  priority: must
+  verification: test
+  ratified_by: Henry Grech-Cini

@@ -1,0 +1,41 @@
+uid: SR-0010
+type: system_requirement
+status: ratified
+title: Trace resolves cross-source references over the union
+text: When tl-compose trace runs over a project that declares sources, it shall walk
+  the composed union graph rather than the bare local graph, so a link whose target
+  is a namespace-qualified borrowed clause (for example gds:SR-0019) is followed
+  into that clause and displayed in the composer's namespace vocabulary — with the
+  borrowed clause's own type, status and title, and its own outgoing grounding chain
+  — instead of dead-ending at the (unresolved) leaf bare tl trace prints for anything
+  outside the local graph. The composer shall be able to trace from either a local
+  UID or a namespace-qualified one as the starting item. A genuinely dangling cross-source
+  reference — a namespace-qualified target with no matching clause at the pinned
+  edition — shall still be reported as unresolved, in that same qualified vocabulary,
+  so the distinction between "resolved into a source" and "points nowhere" is preserved.
+  The walk shall reuse throughline's own graph Index over the union (SR-0004) rather
+  than reimplement traversal, and when the project declares no sources trace shall
+  be a pure pass-through to core tl trace (SR-0003).
+rationale: Trace is how a composer answers "why does this exist" by walking a requirement
+  to its grounding. In a composed project the most valuable edges to follow are exactly
+  the cross-source ones — the satisfies and relates links that tie a local requirement
+  to the borrowed standard it adopts. Forwarding trace to bare tl, which sees only
+  local items, makes precisely those edges dead-end at (unresolved), so the one question
+  composition exists to answer well was the one trace answered worst. Making trace
+  union-aware — while keeping it a pure pass-through when no sources are declared
+  — restores the strict-superset promise (SR-0003) that every operation works unchanged
+  on a composed graph, and reuses the core Index over the union (SR-0004) so the
+  traversal is the very one the core already trusts.
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0003
+  type: refines
+- target: SR-0004
+  type: relates
+attrs:
+  origin: hybrid
+  priority: should
+  verification: test
+  ratified_by: Henry Grech-Cini

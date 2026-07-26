@@ -1,0 +1,18 @@
+uid: SR-0018
+type: system_requirement
+status: ratified
+title: External references resolve by published UID alone
+text: tl-compose shall resolve a namespace-qualified reference solely by the source
+  item's published UID, and shall neither read, store, nor compare any source item's
+  identity or fingerprint datum across the compose boundary. A change to a source's
+  internal identity basis therefore cannot alter, invalidate, or raise as suspect
+  any consumer's references.
+normative: true
+links:
+- target: UR-0003
+  type: implements
+attrs:
+  priority: must
+  verification: test
+  origin: hybrid
+  ratified_by: henry

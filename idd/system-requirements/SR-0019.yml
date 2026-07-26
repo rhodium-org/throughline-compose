@@ -1,0 +1,19 @@
+uid: SR-0019
+type: system_requirement
+status: ratified
+title: Union-aware overrides preserve the core command behaviour
+text: Where tl-compose overrides a core command to resolve it over the union, the
+  override shall preserve that command's interactive behaviour — the same guided
+  prompting and item selection a composer gets from core tl — so the strict-superset
+  promise holds for how a command behaves, not only that the command exists. An omitted
+  item argument is resolved through the same picker, and a new item is born at the
+  schema's initial status role rather than an unset status.
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0003
+  type: refines
+attrs:
+  origin: hybrid
+  ratified_by: henry

@@ -1,0 +1,36 @@
+uid: SR-0007
+type: system_requirement
+status: ratified
+title: Union-aware target display in composed documents
+text: When tl-compose docs runs over a project that declares sources, it shall inject
+  the consumer's documents over the local consumer graph — so counts, tables and
+  matrix rows are byte-identical to core tl docs — while resolving each tl:matrix
+  target cell through a resolver backed by the composed union. A relationship cell
+  whose target is a namespace-qualified reference to a borrowed clause shall then
+  render that clause's own attribute (for example its source_ref) via the SR-0110
+  target-display suffix, instead of a namespace-qualified UID the reader cannot look
+  up. Target liveness and attribute lookup for a borrowed target shall read the loaded
+  source for that namespace; an unqualified local target shall fall through to the
+  consumer graph, so behaviour over local links is identical to core tl docs. When
+  the project declares no sources, tl-compose docs shall be a pure pass-through to
+  core tl docs.
+rationale: Referring to a borrowed clause by its namespace-qualified IDD UID gives
+  the reader a token they cannot resolve against the upstream framework; the useful
+  reference is the framework's own number. Core throughline exposes exactly the seam
+  needed — an optional target resolver on document injection (SR-0110) — so composition
+  supplies a union-backed resolver rather than reimplementing injection, keeping
+  composition a thin resolution step over the unchanged core (SR-0004) and preserving
+  the strict superset (SR-0003).
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0003
+  type: relates
+- target: SR-0004
+  type: relates
+attrs:
+  origin: hybrid
+  priority: should
+  verification: test
+  ratified_by: Henry Grech-Cini

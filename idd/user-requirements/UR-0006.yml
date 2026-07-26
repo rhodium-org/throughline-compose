@@ -1,0 +1,17 @@
+uid: UR-0006
+type: user_requirement
+status: ratified
+title: Composing tolerates a source at an older on-disk format major
+text: The composer shall be able to compose an external source whose on-disk format
+  major is older than the composer's own tooling, without a hard failure, provided
+  the source is only read. Consuming a source shall never force that source to be
+  migrated first.
+normative: true
+links:
+- target: BN-0002
+  type: derives_from
+attrs:
+  priority: must
+  verification: demonstration
+  origin: hybrid
+  ratified_by: henry

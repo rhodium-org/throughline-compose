@@ -1,0 +1,20 @@
+uid: BN-0003
+type: business_need
+status: ratified
+title: Reach the external systems where work and knowledge live
+text: The composed graph earns its keep only if it connects to where work actually
+  happens and where knowledge is written down — issue trackers, project- and work-management
+  tools, and wikis such as Jira, Confluence, Linear, and Monday. A team must be able
+  to reference an item that lives in one of those systems as a first-class source
+  in the union — pinned to an edition, drift-aware, and identity-stable — so that
+  traceability spans tool boundaries without those systems having to become throughlines
+  themselves or fork the graph. Without this the requirements graph is an island;
+  the delivery and documentation that justify and satisfy the requirements stay disconnected
+  from them.
+normative: false
+links:
+- target: INT-0002
+  type: derives_from
+attrs:
+  origin: hybrid
+  ratified_by: henry

@@ -1,0 +1,5 @@
+# The default sdist file set ships test modules matching test*.py but not the
+# shared conftest that defines their fixtures, so the shipped suite errored at
+# collection (fixture 'consumer_dir' not found). Ship it so the suite runs green
+# from the sdist (SR-0021).
+include tests/conftest.py

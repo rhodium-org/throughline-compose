@@ -1,0 +1,31 @@
+uid: SR-0016
+type: system_requirement
+status: ratified
+title: Context brief extends the core agent brief with the composition model
+text: 'When `tl-compose context` (and its alias `agentinfo`) runs over a project
+  that declares sources, it shall emit the unchanged core `tl context` brief first
+  — so the IDD discipline, item types, links, lifecycle and live graph snapshot read
+  byte-for-byte as the core produces them — and then append a composition section
+  the core cannot know about: how sources are declared and pinned in throughline.toml
+  (namespace, url-or-path, ref), what the union-aware commands (check, docs, trace)
+  do differently over the merged graph, and the re-export and alias mechanism (SR-0014,
+  SR-0015) by which a source''s own transitive sources are pulled forward under a
+  chosen namespace. The appended section shall also list the sources this project
+  actually declares, read from its own config, so the brief describes the composition
+  the agent is really working in rather than a generic one. When the project declares
+  no sources the command shall remain a strict superset (SR-0003): the core brief
+  unchanged, with a short note that composition is available but unused. The alias
+  `agentinfo` shall invoke exactly this command.'
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0003
+  type: refines
+- target: SR-0014
+  type: relates
+- target: SR-0006
+  type: relates
+attrs:
+  origin: hybrid
+  ratified_by: Henry Grech-Cini

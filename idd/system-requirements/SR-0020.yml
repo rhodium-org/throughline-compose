@@ -1,0 +1,19 @@
+uid: SR-0020
+type: system_requirement
+status: ratified
+title: Trace renders composed externals and stops at the source boundary
+text: tl-compose trace shall render a borrowed clause reached through a composed
+  source as a first-class node, shown by its namespace-qualified name, so a composer
+  sees where a local item grounds into a source. The walk shall stop at the source
+  boundary — a borrowed node is shown but its own source-internal links are not traversed
+  — so a trace does not expand into the whole borrowed standard. Free external references
+  (URLs, uncomposed links) remain leaves.
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0004
+  type: relates
+attrs:
+  origin: hybrid
+  ratified_by: henry

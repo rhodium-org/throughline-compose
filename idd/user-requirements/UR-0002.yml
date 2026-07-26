@@ -1,0 +1,20 @@
+uid: UR-0002
+type: user_requirement
+status: ratified
+title: A composed project is worked as one — one tool, one set of guarantees
+text: In a composed project the composer shall drive everything through a single
+  command surface, never having to decide which of two tools performs a given action
+  or to reason about the consequences of choosing wrong. Every operation available
+  on a standalone throughline shall be available, unchanged, on the composed one;
+  the composed graph shall be validated by exactly the same rules as a standalone
+  graph; and no path shall let the composer receive a false clean result that hides
+  an unresolved cross-source reference.
+normative: true
+links:
+- target: BN-0002
+  type: derives_from
+attrs:
+  origin: human
+  priority: must
+  verification: demonstration
+  ratified_by: Henry Grech-Cini

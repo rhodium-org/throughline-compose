@@ -1,0 +1,22 @@
+uid: SR-0013
+type: system_requirement
+status: ratified
+title: Resolvers may project inbound links into the consumer graph
+text: Unlike a borrowed standard, whose clauses the consumer grounds up to, an external
+  work item typically points down to the consumer — a delivery ticket satisfies or
+  implements a requirement the consumer owns. A resolver shall therefore be able
+  to project source items whose links target items in the consumer graph, and the
+  union shall admit such inbound edges and validate them under the consumer's own
+  link rules exactly as it does links authored locally. The direction of a link shall
+  be a property of the composed graph, not a constraint imposed by which side a source
+  sits on; an authority's items are first-class nodes in the union whether they are
+  referenced by, or reference, the consumer's items.
+normative: true
+links:
+- target: UR-0004
+  type: implements
+attrs:
+  origin: hybrid
+  priority: must
+  verification: demonstration
+  ratified_by: henry

@@ -1,0 +1,26 @@
+uid: SR-0006
+type: system_requirement
+status: ratified
+title: Sources resolve from a pinned git URL into a local cache
+text: Each source entry shall accept, in place of a local path, a git URL together
+  with a ref that pins the edition — a tag, branch, or commit — a tag being the normal
+  form, since a source publishes its editions as tags. On check, tl-compose shall
+  materialise each URL-pinned source by fetching that exact ref into a cache that
+  lives outside the consumer's own project tree, keyed by the origin URL and ref,
+  and compose from that checkout. The cache being outside the project tree is load-bearing,
+  not incidental — the consumer's own item scan walks its whole directory, so a resolved
+  source placed inside it would be wrongly ingested as local items; the cache is
+  a shared, per-user store (like a package manager's) that no project scan ever sees.
+  A source already present at the pinned ref shall not be refetched, so resolution
+  is idempotent and offline after the first fetch. A url and a path shall be mutually
+  exclusive for one source, and a url without a ref shall fail fast rather than silently
+  track a moving default.
+normative: true
+links:
+- target: UR-0003
+  type: implements
+attrs:
+  origin: human
+  priority: must
+  verification: test
+  ratified_by: Henry Grech-Cini

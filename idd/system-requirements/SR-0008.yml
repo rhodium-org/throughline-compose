@@ -1,0 +1,28 @@
+uid: SR-0008
+type: system_requirement
+status: ratified
+title: A url source may point at a graph in a subdirectory
+text: A url source shall accept an optional subdir key naming a directory, relative
+  to the fetched repository root, that holds the throughline project. When present,
+  tl-compose shall compose from that subdirectory rather than the repository root
+  — so a graph that lives under a subpath of a larger repository (a requirements
+  directory inside an application repo, say) is a first-class source without the
+  graph needing its own standalone repository. The subdir shall be a relative path
+  that stays within the fetched tree; an absolute path or one that escapes the root
+  with a parent segment shall fail fast. Resolution shall validate that the resolved
+  subdirectory is itself a throughline project (it contains a throughline.toml) and
+  otherwise report that the subdirectory is not a throughline project. subdir shall
+  be permitted only alongside a url; combined with a local path it resolves against
+  the path directory the same way. Absent a subdir the behaviour is unchanged — the
+  source composes from the fetched repository root.
+normative: true
+links:
+- target: UR-0003
+  type: implements
+- target: SR-0006
+  type: refines
+attrs:
+  origin: ai
+  priority: should
+  verification: test
+  ratified_by: henry

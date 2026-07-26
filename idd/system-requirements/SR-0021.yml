@@ -1,0 +1,23 @@
+uid: SR-0021
+type: system_requirement
+status: implemented
+title: Shipped test fixtures travel in the published sdist
+text: The published source distribution shall include every fixture the shipped test
+  suite needs to run — in particular the shared conftest that defines the CLI fixtures
+  — so that running the shipped suite from the sdist passes rather than erroring
+  at collection with a missing fixture. Because the default sdist file set ships
+  modules matching test-star but not conftest, the project shall declare the inclusion
+  explicitly (a MANIFEST directive) rather than relying on that default.
+rationale: The published 0.3.0 sdist ships the test modules but not tests/conftest.py,
+  so the shipped suite errors 31 times with fixture 'consumer_dir' not found. The
+  conftest is self-contained (it writes its projects into tmp_path, needs no network
+  and no external data), so shipping it alone makes the suite green.
+normative: true
+links:
+- target: UR-0007
+  type: implements
+attrs:
+  origin: hybrid
+  priority: should
+  verification: test
+  ratified_by: henry

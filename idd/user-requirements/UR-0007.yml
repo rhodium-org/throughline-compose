@@ -1,0 +1,18 @@
+uid: UR-0007
+type: user_requirement
+status: implemented
+title: The published distribution is trustworthy out of the box
+text: A person who installs throughline-compose from its published package shall
+  be able to run the shipped test suite and have it pass, so the package they adopt
+  visibly upholds the tool's own soundness bar rather than presenting failures the
+  moment it is vetted. The published artifact must not ship a test suite it cannot
+  itself run green.
+normative: true
+links:
+- target: BN-0002
+  type: derives_from
+attrs:
+  origin: hybrid
+  priority: should
+  verification: test
+  ratified_by: henry

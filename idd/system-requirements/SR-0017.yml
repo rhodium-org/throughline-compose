@@ -1,0 +1,17 @@
+uid: SR-0017
+type: system_requirement
+status: ratified
+title: External sources load through a tolerant read-only multi-major reader
+text: When resolving an external source, tl-compose shall load it through a read-only
+  path that accepts any on-disk format major the tooling is able to read, rather
+  than requiring an exact-major match. The strict single-major migrate gate applies
+  only to a project being written or edited, never to a read-only composed source.
+normative: true
+links:
+- target: UR-0006
+  type: implements
+attrs:
+  priority: must
+  verification: test
+  origin: hybrid
+  ratified_by: henry

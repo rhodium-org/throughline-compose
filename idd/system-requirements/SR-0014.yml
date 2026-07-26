@@ -1,0 +1,43 @@
+uid: SR-0014
+type: system_requirement
+status: implemented
+title: A source may re-export a transitive namespace, optionally under a consumer
+  alias
+text: 'A source entry in the consumer''s configuration shall accept a declaration
+  that one or more of that source''s own declared namespaces are re-exported into
+  the consuming union. For each re-exported namespace tl-compose shall resolve the
+  transitive source using the origin and ref the intermediate source itself declared
+  for it — the pin is inherited, never restated by the consumer — and fold its items
+  into the union under the same identity and mangling rules a directly declared source
+  receives. A re-export shall be able to carry an alias: the consumer may bind the
+  re-exported source to a namespace name of its own choosing, and thereafter every
+  reference the consumer writes, and every reference the intermediate source wrote
+  against the original name, shall resolve to that one bound source. Re-export shall
+  stay opt-in and per-namespace — tl-compose shall not automatically hoist a source''s
+  sources into the consumer, so the composer''s declared surface remains the complete
+  and only statement of what the union contains (UR-0001, NG-0001 keep resolution
+  the consumer''s decision, not the tool''s). A namespace the consumer both declares
+  directly and receives by re-export, bound to the same edition, shall resolve to
+  a single source; bound to different editions it is the collision SR-0015 governs.'
+rationale: Re-export is the mechanism behind UR-0005 and is built to add convenience
+  without spending the invariants the flat model buys. Inheriting the intermediate
+  source's pin is the load-bearing choice — it is what stops the consumer's copy
+  of a transitive ref from drifting away from the edition the intermediate source
+  was actually authored and validated against. Keeping it opt-in and per-namespace,
+  rather than an automatic transitive hoist, is what preserves "the consumer decides
+  the schema and the pins" — an automatic hoist would let a deep dependency change
+  what a consumer's union contains without the consumer writing anything, which is
+  the silent surprise the whole design refuses. The alias reuses UR-0001's existing
+  rule that the label belongs to the consumer, now extended across depth, and is
+  the tool the composer uses to hold two editions of one standard at once.
+normative: true
+links:
+- target: UR-0005
+  type: implements
+- target: SR-0006
+  type: relates
+attrs:
+  origin: hybrid
+  priority: should
+  verification: test
+  ratified_by: henry

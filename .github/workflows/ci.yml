@@ -1,0 +1,31 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install throughline-compose (pulls throughline transitively)
+        run: pip install .
+
+      - name: Both console scripts are present (tl-compose is a superset of tl)
+        run: |
+          command -v tl
+          command -v tl-compose
+
+      - name: Grounding gate (the graph must stay sound)
+        run: tl-compose -C idd check --strict
+
+      - name: Docs freshness gate (idd/docs/spec.md must match the graph)
+        run: tl-compose -C idd docs --check

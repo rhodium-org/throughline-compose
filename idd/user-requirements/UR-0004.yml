@@ -1,0 +1,23 @@
+uid: UR-0004
+type: user_requirement
+status: ratified
+title: Non-git authorities are composed through pluggable resolvers
+text: 'The consumer shall be able to name a source that is not a git repository of
+  throughline items but an external authority — an issue tracker, a work- or project-management
+  tool, a wiki — and have tl-compose bring items from it into the union through a
+  resolver dedicated to that authority. Whichever authority it is, the source shall
+  carry the same guarantees a git source carries: a stable identity for each borrowed
+  item, an explicit pin to the edition depended on, resolution that is reproducible
+  run to run and machine to machine, and drift detection when an upstream item changes.
+  The set of supported authorities shall be open — adding one shall be a matter of
+  providing a new resolver, not of changing the composition engine, the validator,
+  or the core.'
+normative: true
+links:
+- target: BN-0003
+  type: derives_from
+attrs:
+  origin: hybrid
+  priority: must
+  verification: demonstration
+  ratified_by: henry

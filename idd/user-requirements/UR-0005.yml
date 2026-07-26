@@ -1,0 +1,43 @@
+uid: UR-0005
+type: user_requirement
+status: ratified
+title: Transitive sources are pulled forward by re-export and alias, never silently
+  merged
+text: 'When a source a consumer composes itself references a further source — a source
+  of its sources — the consumer shall be able to bring that transitive source into
+  the union without re-authoring its origin and pin by hand. The consumer shall declare,
+  on the intermediate source it already composes, that a named transitive namespace
+  is re-exported; re-exporting shall inherit that source''s own pinned origin so
+  the edition is not restated and cannot silently diverge from what the intermediate
+  source was authored against. The consumer shall remain in control of the label:
+  a re-exported namespace may be kept under its original name or bound to an alias
+  of the consumer''s choosing, exactly as UR-0001 lets the consumer name a direct
+  source. Two editions of the same underlying standard shall be composable side by
+  side by aliasing them to distinct namespaces — they are two sources, not one merged
+  one. What the consumer shall never get is a silent merge or a silent edition-pick:
+  a transitive namespace that resolves to two different editions with no alias to
+  tell them apart is an error the composer is told about and must resolve, not a
+  coin the tool flips for them.'
+rationale: Composition is deliberately one level deep and flat — a consumer that
+  composes a source which internally cites `asvs:SR-0272` must itself declare `asvs`,
+  or the reference fails as an undeclared namespace. That is honest but it forces
+  the consumer to copy the transitive source's origin and ref by hand and keep them
+  in sync forever, which is the re-authoring BN-0001 exists to abolish and the friction
+  BN-0002 warns turns teams back to copy-paste. Re-export removes the hand-copy while
+  keeping the consumer the owner of the graph (UR-0001) and the pin (UR-0003). The
+  alias is what makes the hard case tractable — the same standard depended on at
+  two editions is a genuine, not a pathological, situation, and the only sound way
+  to hold both is as two distinctly-named sources. The one thing that must not happen
+  is the tool silently choosing an edition, because that is precisely the false-clean,
+  silent-wrong outcome UR-0002 forbids.
+normative: true
+links:
+- target: BN-0001
+  type: derives_from
+- target: UR-0001
+  type: relates
+attrs:
+  origin: hybrid
+  priority: should
+  verification: demonstration
+  ratified_by: henry

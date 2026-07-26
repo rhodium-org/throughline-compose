@@ -1,0 +1,24 @@
+uid: SR-0012
+type: system_requirement
+status: ratified
+title: Non-git sources are pinned and drift-checked by fingerprint
+text: A resolver for a non-git authority shall accept an explicit pin identifying
+  the exact edition of the referenced item — a version, a revision id, or an equivalent
+  immutable marker the authority exposes — and shall fail fast when asked to resolve
+  without one rather than silently tracking a moving head. Each resolved item shall
+  carry a fingerprint of its content at the pinned edition, recorded on the referencing
+  link the same way a git source's stamp is, so that when the upstream item later
+  changes the consumer's link is marked suspect and a human re-confirms it. Resolution
+  against a given pin shall be reproducible and, where the authority permits caching,
+  offline after first fetch — the same guarantees SR-0006 gives git sources.
+normative: true
+links:
+- target: UR-0004
+  type: implements
+- target: SR-0006
+  type: relates
+attrs:
+  origin: hybrid
+  priority: must
+  verification: test
+  ratified_by: henry

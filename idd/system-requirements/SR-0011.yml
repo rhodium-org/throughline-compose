@@ -1,0 +1,24 @@
+uid: SR-0011
+type: system_requirement
+status: implemented
+title: A source-resolver interface abstracts how items are fetched
+text: tl-compose shall define a single resolver interface whose contract is — given
+  a source's coordinates (an authority-specific locator) and a pin (the edition to
+  read), return that source's items projected as a throughline graph together with
+  a fingerprint of what was read. The existing git-plus-ref resolution shall be refactored
+  to be one implementation of this interface, the reference implementation, so that
+  no code path fetches a source except through a resolver. Composition, union-building,
+  validation, and drift detection shall depend only on the interface and never on
+  how a particular authority is reached, so the union and the check are identical
+  whatever a source's origin.
+normative: true
+links:
+- target: UR-0004
+  type: implements
+- target: SR-0006
+  type: relates
+attrs:
+  origin: hybrid
+  priority: must
+  verification: test
+  ratified_by: henry
