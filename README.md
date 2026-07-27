@@ -152,6 +152,6 @@ tl-compose -C idd docs         # regenerate idd/docs/spec.md from the graph
 
 ## License
 
-Created by Henry J Grech-Cini ([ORCID 0009-0007-1565-7530](https://orcid.org/0009-0007-1565-7530)).
+Created by Dr Henry J Grech-Cini ([ORCID 0009-0007-1565-7530](https://orcid.org/0009-0007-1565-7530)).
 Copyright © 2026 Henry J Grech-Cini. Released under the Apache License 2.0 — see
 [`LICENSE`](https://github.com/rhodium-org/throughline-compose/blob/main/LICENSE) and [`NOTICE`](https://github.com/rhodium-org/throughline-compose/blob/main/NOTICE).
