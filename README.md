@@ -149,3 +149,9 @@ tl-compose -C idd check --strict # gate the whole graph
 tl-compose -C idd docs --check # gate published-document freshness
 tl-compose -C idd docs         # regenerate idd/docs/spec.md from the graph
 ```
+
+## License
+
+Copyright © 2026 Time Back Solutions Limited (Company No. 12938914), authored by
+Henry J Grech-Cini. Released under the Apache License 2.0 — see
+[`LICENSE`](https://github.com/rhodium-org/throughline-compose/blob/main/LICENSE) and [`NOTICE`](https://github.com/rhodium-org/throughline-compose/blob/main/NOTICE).
