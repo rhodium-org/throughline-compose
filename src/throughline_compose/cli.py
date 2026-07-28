@@ -39,6 +39,7 @@ from throughline.cli import (
     cmd_new,
     cmd_ratify,
     cmd_trace,
+    force_utf8_io,
     render_trace,
 )
 from throughline.fingerprint import fingerprint
@@ -708,6 +709,7 @@ def _compose_context(args) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    force_utf8_io()
     parser = build_parser()
     parser.prog = "tl-compose"
     for action in parser._actions:
