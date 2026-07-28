@@ -1,0 +1,28 @@
+uid: SR-0023
+type: system_requirement
+status: ratified
+title: The composition CLI is invocable by its full package name as well as tl-compose
+text: The composition CLI shall install two equivalent console entry points — the
+  short `tl-compose` and the full `throughline-compose` — both invoking the same
+  program, so a composer can call it by either name. This mirrors core throughline,
+  which installs both `tl` and `throughline`, and throughline-ratify, which installs
+  both `tl-ratify` and `throughline-ratify`; the composition layer shall not be the
+  one package in the family that answers to only its short name.
+rationale: 'UR-0002 asks that a composed project be worked as one tool that behaves
+  exactly like a standalone throughline. Core is reachable by both its short and
+  full name; a composer who has learned to type `throughline` reasonably expects
+  `throughline-compose` to exist and is met instead with command-not-found — a small
+  but real seam in the "one surface, no surprises" promise. Registering the full-name
+  alias closes the estate-wide inconsistency at the cost of one line in `[project.scripts]`.
+  This is discoverability parity, not collision avoidance: neither `tl-compose` nor
+  `throughline-compose` shadows a standard utility, so the concern SR-0074 raises
+  for the core name does not arise here.'
+normative: true
+links:
+- target: UR-0002
+  type: implements
+attrs:
+  priority: should
+  verification: inspection
+  origin: ai
+  ratified_by: Henry Grech-Cini
