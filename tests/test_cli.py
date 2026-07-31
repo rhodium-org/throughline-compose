@@ -278,6 +278,96 @@ def test_compose_ratify_passthrough_without_sources(source_dir, capsys):
     assert "UR-0001 ratified by tester" in capsys.readouterr().out
 
 
+# ---- migrate: unbound records judged over the union (SR-0003, SR-0004) --------
+
+def _unbound_record(consumer_dir: Path, uid: str, links: list[tuple[str, str]],
+                    by: str = "tester", **attrs) -> Path:
+    """A consumer item in the shape a graph ratified before the fingerprint existed
+    carries on disk: a ratified status and a named ratifier, but no stamp binding
+    that name to what was signed."""
+    p = _write_sr(consumer_dir, uid, links)
+    body = p.read_text(encoding="utf-8").replace(
+        "status: proposed", "status: ratified")
+    body += f"  ratified_by: {by}\n"
+    body += "".join(f"  {k}: {v}\n" for k, v in attrs.items())
+    p.write_text(body, encoding="utf-8")
+    return p
+
+
+def test_bare_tl_migrate_declines_a_record_grounded_through_a_source(consumer_dir):
+    # Grounded only through the source, so bare `tl` sees toy:INT-0001 as unresolved
+    # and the item as orphaned. Declining to complete its record is core working, not
+    # failing — it must not bind what it cannot justify (throughline SR-0152).
+    p = _unbound_record(consumer_dir, "SR-0002", [("toy:INT-0001", "derives_from")])
+    assert tl_main(["-C", str(consumer_dir), "migrate"]) == 0
+    assert "ratified_fingerprint" not in p.read_text(encoding="utf-8")
+
+
+def test_compose_migrate_binds_a_record_grounded_through_a_source(consumer_dir, capsys):
+    # The fix (SR-0004): tl-compose hands the union to the *unchanged* core repair
+    # (throughline SR-0153), which completes the very record it declined without one.
+    p = _unbound_record(consumer_dir, "SR-0002", [("toy:INT-0001", "derives_from")])
+    assert tlc_main(["-C", str(consumer_dir), "migrate"]) == 0
+
+    out = capsys.readouterr().out
+    assert "grounded through a composed source" in out
+    assert "SR-0002 = sha256:" in out
+    text = p.read_text(encoding="utf-8")
+    assert "ratified_fingerprint: sha256:" in text
+    assert "ratified_backfilled: true" in text
+    assert "ratified_by: tester" in text          # reused verbatim, never reattributed
+
+
+def test_compose_migrate_still_declines_what_core_would_refuse(consumer_dir, capsys):
+    # Composition widens what counts as grounded; it does not weaken the rule. An
+    # ambiguous item is refused on the same predicate, union or no union.
+    p = _unbound_record(consumer_dir, "SR-0002", [("toy:INT-0001", "derives_from")],
+                        ambiguous="true")
+    assert tlc_main(["-C", str(consumer_dir), "migrate"]) == 0
+    assert "ratified_fingerprint" not in p.read_text(encoding="utf-8")
+    assert "grounded through a composed source" not in capsys.readouterr().out
+
+
+def test_compose_migrate_is_idempotent(consumer_dir, capsys):
+    # Both passes are idempotent by requirement (throughline SR-0137), so a second
+    # run neither restamps nor re-reports — it cannot bless content that drifted
+    # after sign-off.
+    p = _unbound_record(consumer_dir, "SR-0002", [("toy:INT-0001", "derives_from")])
+    tlc_main(["-C", str(consumer_dir), "migrate"])
+    first = p.read_text(encoding="utf-8")
+    capsys.readouterr()
+
+    assert tlc_main(["-C", str(consumer_dir), "migrate"]) == 0
+    assert "grounded through a composed source" not in capsys.readouterr().out
+    assert p.read_text(encoding="utf-8") == first
+
+
+def test_compose_migrate_upgrades_before_it_can_consult_the_union(consumer_dir, capsys):
+    # The order is forced, not chosen: a project below the current major cannot be
+    # loaded, so its [[sources]] cannot be read and no union exists until the upgrade
+    # has run. One command still does both — core upgrades and binds what it can,
+    # then the union pass completes what only composition can justify.
+    p = _unbound_record(consumer_dir, "SR-0002", [("toy:INT-0001", "derives_from")])
+    cfg = consumer_dir / "throughline.toml"
+    cfg.write_text(cfg.read_text(encoding="utf-8").replace(
+        "format_version = 3", "format_version = 2"), encoding="utf-8")
+
+    assert tlc_main(["-C", str(consumer_dir), "migrate"]) == 0
+    out = capsys.readouterr().out
+    assert "migrated project from format version 2 to 3" in out
+    assert "grounded through a composed source" in out
+    assert "ratified_fingerprint: sha256:" in p.read_text(encoding="utf-8")
+
+
+def test_compose_migrate_passthrough_without_sources(source_dir, capsys):
+    # No [[sources]]: tl-compose migrate behaves exactly like core tl migrate over
+    # the local graph, and says nothing about composition (SR-0003).
+    assert tlc_main(["-C", str(source_dir), "migrate"]) == 0
+    out = capsys.readouterr().out
+    assert "already at format version 3" in out
+    assert "composed source" not in out
+
+
 # ---- link/new: cross-source targets resolve over the union (SR-0004) -----------
 
 def test_bare_tl_link_refuses_cross_source_destination(consumer_dir, capsys):

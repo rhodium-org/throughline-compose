@@ -12,6 +12,11 @@ over an ordinary project behaves exactly like ``tl``.
 (union.py), runs the *unchanged* core validator over it (SR-0004), and translates
 findings back into ``<namespace>:<UID>`` vocabulary before printing.
 
+`migrate` (SR-0004) hands the union to the unchanged core repair as its grounding
+view, so a ratification record whose item is justified only through a composed
+source is completed rather than declined. Core runs first and alone: a project
+below the current major cannot be loaded, so no union exists until it is upgraded.
+
 `trace` (SR-0010) walks that same union so a link into a borrowed clause resolves
 into the source and reads in ``<namespace>:<UID>`` vocabulary, instead of the
 dead-end ``(unresolved)`` bare ``tl`` prints for anything outside the local graph.
@@ -36,6 +41,7 @@ from throughline.cli import (
     cmd_context,
     cmd_docs,
     cmd_link,
+    cmd_migrate,
     cmd_new,
     cmd_ratify,
     cmd_trace,
@@ -46,7 +52,12 @@ from throughline.fingerprint import fingerprint
 from throughline.graph import Index
 from throughline.grounding import reaches_root
 from throughline.model import Item, Link
-from throughline.storage import ProjectError, load_project, write_item
+from throughline.storage import (
+    ProjectError,
+    load_project,
+    migrate_project,
+    write_item,
+)
 from throughline.uid import UidError, next_uid, parse_uid
 from throughline.validate import ERROR, is_namespace_qualified, validate
 
@@ -394,6 +405,73 @@ def _compose_ratify(args) -> int:
     item.attrs["ratified_by"] = by
     write_item(item, consumer.register_of(uid))
     print(f"{uid} ratified by {by}")
+    return OK
+
+
+def _compose_migrate(args) -> int:
+    """Migrate the consumer, judging its ratification records over the union
+    (SR-0003, SR-0004).
+
+    Core `tl migrate` binds a record that names a ratifier but carries no
+    fingerprint, and rightly declines any item it cannot justify: one whose
+    grounding chain reaches a root only *through* a composed source reads as
+    orphaned to the bare tool. throughline 1.6.0 (SR-0153) opened the same seam on
+    the repair that SR-0151 gave `ratify`, so tl-compose supplies the union as the
+    grounding view and the unchanged core repair completes those records too.
+
+    **The order is forced, not chosen.** A project below the current major cannot
+    be loaded at all — which is precisely the state `migrate` exists to leave — so
+    its `[[sources]]` cannot be read and no union can be built until the upgrade
+    has run. Core therefore goes first and does the whole job it can do alone,
+    reporting in its own words; only then is the union available to justify what
+    it declined. The second pass is safe because the repair is idempotent by
+    requirement (SR-0137): a bound record carries a fingerprint and never matches
+    again, so nothing is restamped and the union pass can only *add*. It can only
+    add, too, because a union grounds a superset of what the bare graph grounds —
+    it never withdraws a justification.
+
+    With no sources declared this is a pure pass-through to core `tl migrate`
+    (SR-0003)."""
+    rc = cmd_migrate(args)
+    if rc != OK:
+        return rc
+
+    # The project is loadable from here — core has upgraded it if it needed it.
+    try:
+        consumer = load_project(args.path)
+    except ProjectError as e:  # pragma: no cover - cmd_migrate would have failed first
+        return _err(str(e))
+    try:
+        sources = parse_sources(consumer)
+    except SourceError as e:
+        return _err(str(e))
+    if not sources:
+        return OK
+
+    try:
+        res = _resolve_sources(sources, Path(args.path))
+    except ResolverError as e:
+        return _err(str(e))
+    try:
+        union = build_union(consumer, res.projects(), res.ns_aliases)
+    except ComposeError as e:
+        return _err(str(e))
+
+    try:
+        bound = migrate_project(args.path,
+                                index=Index.build(union.project)).bound
+    except ProjectError as e:  # pragma: no cover - the first pass proved it migrates
+        return _err(str(e))
+
+    # Reported separately, and in tl-compose's own words rather than a copy of
+    # core's: what distinguishes these records is *why* they could be completed —
+    # the composition justified an item the consumer's own graph could not.
+    if bound:
+        print(f"bound {len(bound)} further ratification record(s) whose item is "
+              "grounded through a composed source, and so could not be justified "
+              "by this graph alone:")
+        for uid, stamp in bound.items():
+            print(f"  {uid} = {stamp}")
     return OK
 
 
@@ -747,6 +825,11 @@ def main(argv: list[str] | None = None) -> int:
     if getattr(args, "cmd", None) == "ratify":
         try:
             return _compose_ratify(args)
+        except KeyboardInterrupt:  # pragma: no cover
+            return USAGE
+    if getattr(args, "cmd", None) == "migrate":
+        try:
+            return _compose_migrate(args)
         except KeyboardInterrupt:  # pragma: no cover
             return USAGE
     if getattr(args, "cmd", None) == "link":
