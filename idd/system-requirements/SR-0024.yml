@@ -1,0 +1,37 @@
+uid: SR-0024
+type: system_requirement
+status: ratified
+title: The consumer's label never reaches a borrowed item's fingerprint
+text: Composition shall declare each borrowed item's source-native identity alongside
+  the synthetic one it merges under, so the fingerprint the combined graph computes
+  for that item is the fingerprint it has in the source it came from. The synthetic
+  prefix is an internal device for keeping identity unique within one merged graph;
+  it shall not be observable in anything the combined graph asserts about a borrowed
+  item. A ratification recorded in a source shall therefore read as current in every
+  consumer of that source, and drift shall be reported only where the source's own
+  content has moved.
+rationale: SR-0002 already holds that a borrowed item keeps its source-native UID
+  and that mangling is an internal detail — but the mangled UID was reaching the
+  fingerprint, whose first field is the UID. Every ratification stamped in a source
+  graph then read as stale in every consumer, and the consumer had no way to tell
+  that finding apart from a real one, so the composer's own choice of namespace was
+  invalidating another graph's accountability record. Measured across this estate
+  on the day the tool began stamping records — four consumer graphs, one hundred
+  false stale findings, and two more appearing the moment a human ratified two items
+  in a shared base graph. The correction belongs on the composing side because it
+  is composition that re-labels; the fingerprint rule itself stays in the library,
+  which SR-0004 requires us to reuse rather than restate.
+normative: true
+links:
+- target: UR-0001
+  type: implements
+- target: SR-0002
+  type: relates
+- target: SR-0004
+  type: relates
+attrs:
+  origin: ai
+  priority: must
+  verification: test
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:5b30de800ade29dad5d153e18aa7d6ec717ceaa6d7a8ce5a44882560e46cc743

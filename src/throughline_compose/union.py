@@ -176,8 +176,12 @@ def build_union(consumer: Project, sources: dict[str, Project],
                 mangled_uid = mangler.uid(namespace, uid)
                 mangled_prefix = parse_uid(mangled_uid)[0]
                 rewritten = _rewrite_links(it, namespace, namespaces, mangler, alias)
+                # The synthetic UID is ours; the authored one travels with the
+                # item so its fingerprint — and any ratification stamped against
+                # that fingerprint in the source — survives re-labelling (SR-0024).
                 merged = replace(rewritten, uid=mangled_uid,
-                                 _register_prefix=mangled_prefix)
+                                 _register_prefix=mangled_prefix,
+                                 _authored_uid=uid)
                 target = union.registers.get(mangled_prefix)
                 if target is None:
                     if mangled_prefix in consumer.registers:

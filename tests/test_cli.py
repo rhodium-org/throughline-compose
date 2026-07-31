@@ -238,6 +238,39 @@ def _write_sr(consumer_dir: Path, uid: str, links: list[tuple[str, str]]) -> Pat
     return p
 
 
+def test_source_ratification_is_not_stale_just_because_we_relabelled_it(
+        source_dir, consumer_dir, capsys):
+    # SR-0024: the source's own graph signs SR-0001 and stamps the fingerprint of
+    # the item as *it* holds it. Composition mangles that UID to keep identity
+    # unique in the union, and the UID is the first field the fingerprint covers —
+    # so before this fix every signature in every source read as drifted in every
+    # consumer of it, on content nobody had touched.
+    assert tl_main(["-C", str(source_dir), "ratify", "SR-0001", "--by", "tester"]) == 0
+    capsys.readouterr()
+    rc = tlc_main(["-C", str(consumer_dir), "check", "--base", "", "--strict"])
+    assert "ratified-stale" not in capsys.readouterr().out
+    assert rc == 0
+
+
+def test_drift_in_a_source_is_still_reported_through_composition(
+        source_dir, consumer_dir, capsys):
+    # The seam excuses the label and nothing else: rewrite the signed text in the
+    # source and the consumer must still be told the accepted wording has moved.
+    assert tl_main(["-C", str(source_dir), "ratify", "SR-0001", "--by", "tester"]) == 0
+    capsys.readouterr()
+    clause = source_dir / "system-requirements" / "SR-0001.yml"
+    clause.write_text(
+        clause.read_text(encoding="utf-8")
+        .replace("The source shall provide one concrete, testable clause.",
+                 "The source shall provide something else entirely."),
+        encoding="utf-8")
+    rc = tlc_main(["-C", str(consumer_dir), "check", "--base", "", "--strict"])
+    out = capsys.readouterr().out
+    assert rc == 1
+    # ...and named in the composer's own vocabulary, not the synthetic prefix.
+    assert "toy:SR-0001" in out and "ratified-stale" in out
+
+
 def test_bare_tl_ratify_refuses_cross_source_grounded_item(consumer_dir, capsys):
     # Grounded only through the source: bare `tl` sees toy:INT-0001 as unresolved and
     # refuses to ratify what is, under composition, a properly grounded item (SR-0005).
