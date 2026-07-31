@@ -21,3 +21,5 @@ attrs:
   priority: must
   verification: demonstration
   ratified_by: henry
+  ratified_fingerprint: sha256:297a9f356072d7fb832283776687dd791b2cbcbddd132d0950a728e6d944a94d
+  ratified_backfilled: true

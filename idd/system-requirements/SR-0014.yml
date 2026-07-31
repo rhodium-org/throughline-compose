@@ -41,3 +41,5 @@ attrs:
   priority: should
   verification: test
   ratified_by: henry
+  ratified_fingerprint: sha256:677499365ec4018a7bc45582c78bf93c3ebf973513073597c97e79d9d1aaf471
+  ratified_backfilled: true

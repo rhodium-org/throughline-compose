@@ -29,3 +29,5 @@ links:
 attrs:
   origin: hybrid
   ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:c20dd263b2c58f9ea3be708b49b0886cc578d1f8952dbb136639204b21e9eeae
+  ratified_backfilled: true

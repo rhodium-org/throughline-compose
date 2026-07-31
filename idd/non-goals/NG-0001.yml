@@ -16,3 +16,5 @@ normative: false
 attrs:
   origin: human
   ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:81fa00856e0b72a1b81005b3d7fd1e8997d99c15c50e1186299bbd62c0e59514
+  ratified_backfilled: true

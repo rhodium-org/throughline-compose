@@ -11,7 +11,7 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 
 > A project's requirements graph is assembled, not re-authored. A team pulls in one or more existing sources — a house style guide, a platform standard, a regulatory baseline, most often themselves throughlines — alongside the requirements they write themselves, and works against the combined graph as if it were one. A source need not itself be a throughline — what matters is that it can be presented in throughline shape and kept separately versioned. Reuse never copies or renumbers the borrowed items — each keeps the permanent identity it was born with in its own source, so the combined graph is a view over independent, separately versioned sources rather than a fork of them.
 
-**origin**: human · **ratified_by**: Henry Grech-Cini
+**origin**: human · **ratified_by**: Henry Grech-Cini · **ratified_fingerprint**: sha256:46eafa77e454450e76acf848a8227f98ca6aa108991f2657379cbe8aaadda8b1 · **ratified_backfilled**: True
 <!-- tl:end -->
 
 ## Business need
@@ -23,7 +23,7 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 
 *Derives from:* INT-0001
 
-**origin**: human · **ratified_by**: Henry Grech-Cini
+**origin**: human · **ratified_by**: Henry Grech-Cini · **ratified_fingerprint**: sha256:0da5f16328bf4ba7117e8d60c89397a91a1d814a0557529d9285bd2f9e631d31 · **ratified_backfilled**: True
 <!-- tl:end -->
 
 <!-- tl:item BN-0002 -->
@@ -33,7 +33,7 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 
 *Derives from:* INT-0001
 
-**origin**: human · **ratified_by**: Henry Grech-Cini
+**origin**: human · **ratified_by**: Henry Grech-Cini · **ratified_fingerprint**: sha256:0ba0ff70e6472758c174a7d5331d4b149bcf075f891a4581858d6c93609020db · **ratified_backfilled**: True
 <!-- tl:end -->
 
 ## User requirements
@@ -45,7 +45,7 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 
 *Derives from:* BN-0001
 
-**origin**: human · **priority**: must · **verification**: demonstration · **ratified_by**: Henry Grech-Cini
+**origin**: human · **priority**: must · **verification**: demonstration · **ratified_by**: Henry Grech-Cini · **ratified_fingerprint**: sha256:9795c51b85c78f5c1ec224f3c0ab25df4e1739ffdae250907a61cecba0d8f2a7 · **ratified_backfilled**: True
 <!-- tl:end -->
 
 <!-- tl:item UR-0002 -->
@@ -55,7 +55,7 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 
 *Derives from:* BN-0002
 
-**origin**: human · **priority**: must · **verification**: demonstration · **ratified_by**: Henry Grech-Cini
+**origin**: human · **priority**: must · **verification**: demonstration · **ratified_by**: Henry Grech-Cini · **ratified_fingerprint**: sha256:06a6cc5243475631b13130bccca2d8f287f5a03ad3088e650c642e132159d726 · **ratified_backfilled**: True
 <!-- tl:end -->
 
 <!-- tl:item UR-0003 -->
@@ -65,7 +65,7 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 
 *Derives from:* BN-0001
 
-**origin**: human · **priority**: must · **verification**: demonstration · **ratified_by**: Henry Grech-Cini
+**origin**: human · **priority**: must · **verification**: demonstration · **ratified_by**: Henry Grech-Cini · **ratified_fingerprint**: sha256:9fd43fa2aef06d845f7d74ac4373983fcecab8955343c0db6988366c8a2bbe06 · **ratified_backfilled**: True
 <!-- tl:end -->
 
 ## System requirements
@@ -79,7 +79,7 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 
 *Implements:* UR-0001
 
-**origin**: human · **priority**: must · **verification**: demonstration · **ratified_by**: Henry Grech-Cini
+**origin**: human · **priority**: must · **verification**: demonstration · **ratified_by**: Henry Grech-Cini · **ratified_fingerprint**: sha256:859afe02ce86da271a44cfc95b463a1507ac16cb62c4b41deef05187c91e87f9 · **ratified_backfilled**: True
 <!-- tl:end -->
 
 <!-- tl:item SR-0002 -->
@@ -91,7 +91,7 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 
 *Implements:* UR-0001
 
-**origin**: human · **priority**: must · **verification**: test · **ratified_by**: Henry Grech-Cini
+**origin**: human · **priority**: must · **verification**: test · **ratified_by**: Henry Grech-Cini · **ratified_fingerprint**: sha256:2f49c1a5eecfa987a8478fc79c84e66ac6d93969f03dab275afbf22d27fa6826 · **ratified_backfilled**: True
 <!-- tl:end -->
 
 <!-- tl:item SR-0003 -->
@@ -104,7 +104,7 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 *Implements:* UR-0002
 *Relates:* NG-0001
 
-**origin**: human · **priority**: must · **verification**: demonstration · **ratified_by**: Henry Grech-Cini
+**origin**: human · **priority**: must · **verification**: demonstration · **ratified_by**: Henry Grech-Cini · **ratified_fingerprint**: sha256:2b373a00ffea9407880e36f7a13cafd8cec6ed58c4acf2bb89d8192a66dadc34 · **ratified_backfilled**: True
 <!-- tl:end -->
 
 <!-- tl:item SR-0004 -->
@@ -117,7 +117,7 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 *Implements:* UR-0002
 *Relates:* NG-0001
 
-**origin**: human · **priority**: must · **verification**: test · **ratified_by**: Henry Grech-Cini
+**origin**: human · **priority**: must · **verification**: test · **ratified_by**: Henry Grech-Cini · **ratified_fingerprint**: sha256:f0c0b60e3d61ae9af1439b398941c5501f6829a7b4d2c90d9f18d1b566d77138 · **ratified_backfilled**: True
 <!-- tl:end -->
 
 <!-- tl:item SR-0005 -->
@@ -130,7 +130,7 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 *Implements:* UR-0002
 *Relates:* SR-0001
 
-**origin**: human · **priority**: must · **verification**: test · **ratified_by**: Henry Grech-Cini
+**origin**: human · **priority**: must · **verification**: test · **ratified_by**: Henry Grech-Cini · **ratified_fingerprint**: sha256:d27afad348b2ba169790426f34ba0feec33f4fba41a72d7fa034d454ff3c587c · **ratified_backfilled**: True
 <!-- tl:end -->
 
 <!-- tl:item SR-0006 -->
@@ -140,7 +140,7 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 
 *Implements:* UR-0003
 
-**origin**: human · **priority**: must · **verification**: test · **ratified_by**: Henry Grech-Cini
+**origin**: human · **priority**: must · **verification**: test · **ratified_by**: Henry Grech-Cini · **ratified_fingerprint**: sha256:7fa15eb0be77695296a19ae1b7ca208f4b963234df76a22ba81d551fe4043663 · **ratified_backfilled**: True
 <!-- tl:end -->
 
 ## Non-goals
@@ -150,7 +150,7 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 
 > Composition — source declaration, pinning, fetching, and merging — is deliberately not added to the `throughline` core or its `tl` command. The core stays a single-purpose, offline-by-default, self-contained tool over one graph; the network, lockfile, untrusted-source, and union concerns live entirely in throughline-compose, which consumes the core as a library. The only concession the core makes to composition is recognising the namespace-qualified reference syntax so it can fail fast on one (SR-0005) — it gains no ability to resolve, fetch, or merge. This is recorded negative space — it exists to keep later design honest, so that a proposal to "just add sources to tl" is measured against a decision already taken rather than reopened by default.
 
-**origin**: human · **ratified_by**: Henry Grech-Cini
+**origin**: human · **ratified_by**: Henry Grech-Cini · **ratified_fingerprint**: sha256:81fa00856e0b72a1b81005b3d7fd1e8997d99c15c50e1186299bbd62c0e59514 · **ratified_backfilled**: True
 <!-- tl:end -->
 
 ## Traceability

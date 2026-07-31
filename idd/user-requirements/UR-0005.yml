@@ -41,3 +41,5 @@ attrs:
   priority: should
   verification: demonstration
   ratified_by: henry
+  ratified_fingerprint: sha256:5f4cc5ec65c76604fdab8f5ea7b018756f81596e7b6439b08de89caad793088b
+  ratified_backfilled: true
