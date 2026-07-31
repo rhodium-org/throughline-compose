@@ -260,6 +260,78 @@ def test_compose_ratify_resolves_cross_source_grounding(consumer_dir, capsys):
     assert "ratified_by: tester" in text
 
 
+def test_compose_ratify_binds_the_signature_to_the_content(consumer_dir, capsys):
+    # SR-0004: core `grounding.ratify` writes the whole record, so a composed
+    # sign-off carries the content fingerprint that binds it (core SR-0148) — the
+    # thing the hand-rolled copy this replaced never wrote. Proof it is the real
+    # stamp and not a plausible string: the validator recomputes it and is silent.
+    p = _write_sr(consumer_dir, "SR-0002", [("toy:INT-0001", "derives_from")])
+    assert tlc_main(["-C", str(consumer_dir), "ratify", "SR-0002", "--by", "tester"]) == 0
+    capsys.readouterr()
+    assert "ratified_fingerprint:" in p.read_text(encoding="utf-8")
+    assert tlc_main(["-C", str(consumer_dir), "check", "--base", "", "--strict"]) == 0
+    assert "ratified-stale" not in capsys.readouterr().out
+
+
+def test_compose_ratify_reads_the_configured_ratified_status(consumer_dir, capsys):
+    # The copy hardcoded `item.status = "ratified"`, which happens to be right only
+    # while a project names that status "ratified". Core resolves the *role* against
+    # the project's own [status.roles], so a graph that calls it something else is
+    # ratified into its own vocabulary, not ours.
+    cfg = consumer_dir / "throughline.toml"
+    cfg.write_text(cfg.read_text(encoding="utf-8")
+                   .replace('"ratified", "rejected"', '"accepted", "rejected"')
+                   .replace('ratified = "ratified"', 'ratified = "accepted"'),
+                   encoding="utf-8")
+    p = _write_sr(consumer_dir, "SR-0002", [("toy:INT-0001", "derives_from")])
+    assert tlc_main(["-C", str(consumer_dir), "ratify", "SR-0002", "--by", "tester"]) == 0
+    text = p.read_text(encoding="utf-8")
+    assert "status: accepted" in text
+    assert "status: ratified" not in text
+
+
+def test_compose_ratify_refuses_to_resign_unchanged_item(consumer_dir, capsys):
+    # Core refuses a second signature on content that has not moved (SR-0148):
+    # it would accept nothing while quietly replacing the name of whoever did.
+    # The copy had no such guard, so it overwrote the ratifier without trace.
+    p = _write_sr(consumer_dir, "SR-0002", [("toy:INT-0001", "derives_from")])
+    assert tlc_main(["-C", str(consumer_dir), "ratify", "SR-0002", "--by", "alice"]) == 0
+    capsys.readouterr()
+    rc = tlc_main(["-C", str(consumer_dir), "ratify", "SR-0002", "--by", "mallory"])
+    assert rc == 2
+    assert "nothing to accept" in capsys.readouterr().err
+    text = p.read_text(encoding="utf-8")
+    assert "ratified_by: alice" in text        # the real signatory survives
+    assert "mallory" not in text
+
+
+def test_compose_ratify_restamps_once_the_content_moves(consumer_dir, capsys):
+    # The counterpart: when the words change, the old signature no longer covers
+    # them, so re-ratifying is exactly what should happen — and rebinds the stamp.
+    p = _write_sr(consumer_dir, "SR-0002", [("toy:INT-0001", "derives_from")])
+    assert tlc_main(["-C", str(consumer_dir), "ratify", "SR-0002", "--by", "alice"]) == 0
+    first = [ln for ln in p.read_text(encoding="utf-8").splitlines()
+             if "ratified_fingerprint:" in ln][0]
+    p.write_text(p.read_text(encoding="utf-8").replace(
+        "A consumer clause used to exercise the ratify gate.",
+        "The consumer shall do something materially different."), encoding="utf-8")
+    capsys.readouterr()
+    assert tlc_main(["-C", str(consumer_dir), "ratify", "SR-0002", "--by", "bob"]) == 0
+    text = p.read_text(encoding="utf-8")
+    assert "ratified_by: bob" in text
+    assert first not in text                   # bound to the new wording, not the old
+
+
+def test_compose_ratify_refuses_ambiguous_item(consumer_dir, capsys):
+    # The other half of core's gate, reached through the composed path: an item
+    # flagged ambiguous is not signable however well it grounds over the union.
+    p = _write_sr(consumer_dir, "SR-0002", [("toy:INT-0001", "derives_from")])
+    p.write_text(p.read_text(encoding="utf-8") + "  ambiguous: true\n", encoding="utf-8")
+    rc = tlc_main(["-C", str(consumer_dir), "ratify", "SR-0002", "--by", "tester"])
+    assert rc == 2
+    assert "ambiguous" in capsys.readouterr().err
+
+
 def test_compose_ratify_still_refuses_ungrounded_item(consumer_dir, capsys):
     # The gate is preserved, only relocated to the union: an item that reaches no root
     # anywhere is still refused — composition widens what counts as grounded, it does

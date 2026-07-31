@@ -17,6 +17,11 @@ view, so a ratification record whose item is justified only through a composed
 source is completed rather than declined. Core runs first and alone: a project
 below the current major cannot be loaded, so no union exists until it is upgraded.
 
+`ratify` (SR-0004) does the same for the accountability gate: core's own
+``grounding.ratify`` decides and records, taking the union only as the grounding
+view it judges against, so a composed sign-off is the identical act — same
+refusals, same fingerprint — merely able to see further.
+
 `trace` (SR-0010) walks that same union so a link into a borrowed clause resolves
 into the source and reads in ``<namespace>:<UID>`` vocabulary, instead of the
 dead-end ``(unresolved)`` bare ``tl`` prints for anything outside the local graph.
@@ -50,7 +55,7 @@ from throughline.cli import (
 )
 from throughline.fingerprint import fingerprint
 from throughline.graph import Index
-from throughline.grounding import reaches_root
+from throughline.grounding import GroundingError, ratify
 from throughline.model import Item, Link
 from throughline.storage import (
     ProjectError,
@@ -347,16 +352,28 @@ def _compose_trace(args) -> int:
 
 
 def _compose_ratify(args) -> int:
-    """Ratify an item, resolving its grounding over the composed union (SR-0004).
+    """Ratify an item, handing core's accountability gate the union as its
+    grounding view (SR-0004).
 
     A human takes accountability only for an unambiguous, grounded item. Core
     `tl ratify` enforces that gate over the bare local graph, so it wrongly
     refuses an item whose grounding chain reaches a root only *through* a
     composed source — the namespace-qualified target (`base:RISK-0001`) reads as
-    unresolved and the item looks orphaned. tl-compose runs the same gate over
-    the union, where that chain resolves, then writes the accepted status back to
-    the consumer's own register — the union is a read-only view (NG-0002), never
-    an authority we persist into. With no sources declared this is a pure
+    unresolved and the item looks orphaned. The fix is to widen what the gate can
+    *see*, not to restate it: :func:`~throughline.grounding.ratify` accepts the
+    union index through the seam built for this caller (core SR-0151), judges the
+    consumer's own item against it, and writes the acceptance record itself. We
+    then persist that item to the consumer's own register — the union is a
+    read-only view (NG-0002), never an authority we write into.
+
+    This function used to copy core's body instead, and the copy drifted in
+    precisely the way SR-0004 forbids it for. It recorded `ratified_by` with no
+    `ratified_fingerprint`, so every signature it made was unbound to the content
+    signed (core SR-0148); it hardcoded the status string rather than reading the
+    configured role, and assigned it directly, bypassing the declared transition;
+    and it lacked the guard that refuses to overwrite an existing ratifier
+    without trace. A copy is not covered by the tests of its original, so none of
+    that failed anything here. With no sources declared this is a pure
     pass-through to core `tl ratify` (SR-0003)."""
     try:
         consumer = load_project(args.path)
@@ -373,8 +390,7 @@ def _compose_ratify(args) -> int:
     uid = _resolve_uid(consumer, args.uid, "ratify", "UID")
     if uid is None:
         return USAGE
-    item = consumer.get(uid)
-    if item is None:
+    if consumer.get(uid) is None:  # fail before resolving sources over the network
         return _err(f"{uid} does not exist")
     by = _resolve_value(args.by, "ratifier", "--by", default=getpass.getuser())
     if by is None:
@@ -389,20 +405,10 @@ def _compose_ratify(args) -> int:
     except ComposeError as e:
         return _err(str(e))
 
-    # The accountability gate (grounding.ratify), but evaluated over the union so a
-    # grounding chain that only reaches a root through a source is seen, not orphaned.
-    if item.attrs.get("ambiguous"):
-        return _err(f"{uid} is flagged ambiguous and cannot be ratified until clarified")
-    schema = union.project.schema
-    union_item = union.project.get(uid)
-    if union_item is None:  # pragma: no cover — consumer items are present verbatim
-        return _err(f"{uid} does not exist")
-    if not schema.is_root(union_item) and not reaches_root(Index.build(union.project),
-                                                           schema, uid):
-        return _err(f"{uid} is not grounded to a root and cannot be ratified")
-
-    item.status = "ratified"
-    item.attrs["ratified_by"] = by
+    try:
+        item = ratify(consumer, uid, by, index=Index.build(union.project))
+    except GroundingError as e:
+        return _err(str(e))
     write_item(item, consumer.register_of(uid))
     print(f"{uid} ratified by {by}")
     return OK
