@@ -132,10 +132,40 @@ throughline as an unmodified library.
 
 ```
 python -m venv .venv && . .venv/bin/activate
-pip install -e ".[dev]"        # pulls throughline transitively
+pip install -e ".[dev]"        # NB: resolves throughline from PyPI — see below
 pytest -q
 tl-compose -C idd check --strict   # this repo's own composed graph — keep it green
 ```
+
+### If you are also working on throughline itself — chain the editable installs
+
+`pip install -e ".[dev]"` makes *this* package editable and resolves
+[throughline](https://github.com/rhodium-org/throughline) **from PyPI**. If you are
+changing both, you will be editing compose while running the *published* core, and
+every version string will still agree — so the same command in the same repo can
+give you and a colleague different answers, and the argument that follows will be
+about the graph rather than about the toolchain.
+
+Check both out side by side and chain them in a **single** command, so the resolver
+never reaches the index:
+
+```sh
+pip install -e ../throughline -e ".[dev]"
+```
+
+Then verify rather than assume — the path must be your checkout, not `site-packages`:
+
+```sh
+python -c "import throughline as m; print(m.__file__)"
+```
+
+Composition is especially exposed to this: a change to the seam lands in compose but
+is *judged* by core's validator, so a mismatched pair silently reports findings the
+other build would not. The same applies to
+[throughline-ratify](https://github.com/rhodium-org/throughline-ratify), which
+installs both. throughline's own
+[AGENTS.md](https://github.com/rhodium-org/throughline/blob/main/AGENTS.md#working-on-more-than-one-package-at-once--chain-the-editable-installs)
+carries the full recipe, including the two silent traps in `pipx inject`.
 
 Changes here follow the same IDD discipline: ground the change in an `idd/` item
 (create + ratify if new), cite the UID in your commit, and keep
