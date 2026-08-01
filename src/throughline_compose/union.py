@@ -171,6 +171,7 @@ def build_union(consumer: Project, sources: dict[str, Project],
     # Each source's items are mangled into namespace-derived prefixes and merged.
     for namespace, source in sources.items():
         alias = aliases.get(namespace)
+        source_schema = source.schema
         for reg in source.registers.values():
             for uid, it in reg.items.items():
                 mangled_uid = mangler.uid(namespace, uid)
@@ -179,9 +180,21 @@ def build_union(consumer: Project, sources: dict[str, Project],
                 # The synthetic UID is ours; the authored one travels with the
                 # item so its fingerprint — and any ratification stamped against
                 # that fingerprint in the source — survives re-labelling (SR-0024).
+                #
+                # So does the set of attributes the source's own schema marks
+                # normative (SR-0162). Both are inputs to the fingerprint and both
+                # are otherwise supplied by *this* union — the label we chose and
+                # the consumer's schema we validate under — so without carrying
+                # them the stamp on borrowed content would depend on who was
+                # reading it. It would also leave a consumer no way to compose a
+                # source without mirroring that source's normative flags, which is
+                # the source dictating what counts as a change in the consumer's
+                # own graph.
                 merged = replace(rewritten, uid=mangled_uid,
                                  _register_prefix=mangled_prefix,
-                                 _authored_uid=uid)
+                                 _authored_uid=uid,
+                                 _authored_normative_attrs=tuple(
+                                     source_schema.normative_attrs(it.type)))
                 target = union.registers.get(mangled_prefix)
                 if target is None:
                     if mangled_prefix in consumer.registers:

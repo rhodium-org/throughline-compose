@@ -187,3 +187,36 @@ def test_synthetic_prefix_collision_fails_fast():
     consumer = _project(_SCHEMA, {})
     with pytest.raises(ComposeError, match="distinct namespace"):
         build_union(consumer, {"g-s": src, "gs": _source()})
+
+
+def test_a_borrowed_stamp_survives_a_consumer_with_different_normative_flags():
+    """throughline SR-0162, end to end through the merge.
+
+    The union is validated under the consumer's schema, so before this the set of
+    attributes hashed into a fingerprint changed the moment an item was borrowed.
+    Composing throughline's own graph into throughline-ratify made the consequence
+    plain — leave the consumer's flags alone and every ratified item in the source
+    reads as drifted; mirror the source's flags and every ratified item the
+    *consumer* wrote reads as drifted instead. There is no configuration that
+    satisfies both, so the authoring graph's judgement travels with the item.
+    """
+    from throughline.fingerprint import fingerprint
+
+    source = _project(
+        {"project": {"name": "toy", "format_version": 2},
+         "types": {"system_requirement": {
+             "attrs": {"priority": {"normative": True}}}}},
+        {"SR": [Item(uid="SR-0001", type="system_requirement", status="ratified",
+                     text="The system shall foo.", attrs={"priority": "must"})]})
+    # the stamp as written in the source's own graph
+    authored = source.registers["SR"].items["SR-0001"]
+    stamped = fingerprint(authored, source.schema)
+
+    # a consumer that marks nothing normative — it has its own model and no
+    # reason to adopt the source's
+    consumer = _project(_SCHEMA, {})
+    union = build_union(consumer, {"toy": source})
+
+    borrowed = union.project.get("TOYSR-0001")
+    assert borrowed is not None, "the item was merged under the mangled UID"
+    assert fingerprint(borrowed, union.project.schema) == stamped

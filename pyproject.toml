@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "throughline-compose"
-version = "0.8.0"
+version = "0.9.0"
 description = "Compose one requirements graph from many reusable throughline sources: importer-assigned namespaces, source-native UIDs, and a union checked by throughline's own validator. Ships the tl-compose CLI, a strict superset of tl."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -32,7 +32,7 @@ classifiers = [
   "Topic :: Software Development :: Documentation",
   "Topic :: Software Development :: Quality Assurance",
 ]
-dependencies = ["throughline>=1.8.0"]  # is_external / is_namespace_qualified public since 0.4.0 (SR-0004); tl:count badge needs 0.5.0 (SR-0109); tl:graph collapse-external needs 0.6.0 (SR-0118); format_version 3 + required [status.roles] needs 1.2.0; tl trace tree-rendering fix needs 1.2.1; read_project tolerant read-only multi-major source loader needs 1.2.2 (SR-0017/UR-0006); force_utf8_io public symbol needs 1.3.0 (SR-0003); ratify's prebuilt-index seam, forwarded to composed consumers, needs 1.4.0 (SR-0003); migrate's ratification-record repair needs 1.5.0, or the forwarded `tl-compose migrate` reports "nothing to migrate" over unbound records (SR-0003); the repair's grounding-index seam, which `_compose_migrate` supplies the union through, needs 1.6.0 (SR-0004); the authored-identity a borrowed item keeps through re-labelling, which the union sets so a source's ratification stamp is not read as stale, needs 1.7.0 (SR-0024); the ratifier identity core now offers by default and the optional --by-id it records, which `_compose_ratify` must offer identically or the same command behaves differently with and without sources, needs 1.8.0 (SR-0003)
+dependencies = ["throughline>=1.9.0"]  # is_external / is_namespace_qualified public since 0.4.0 (SR-0004); tl:count badge needs 0.5.0 (SR-0109); tl:graph collapse-external needs 0.6.0 (SR-0118); format_version 3 + required [status.roles] needs 1.2.0; tl trace tree-rendering fix needs 1.2.1; read_project tolerant read-only multi-major source loader needs 1.2.2 (SR-0017/UR-0006); force_utf8_io public symbol needs 1.3.0 (SR-0003); ratify's prebuilt-index seam, forwarded to composed consumers, needs 1.4.0 (SR-0003); migrate's ratification-record repair needs 1.5.0, or the forwarded `tl-compose migrate` reports "nothing to migrate" over unbound records (SR-0003); the repair's grounding-index seam, which `_compose_migrate` supplies the union through, needs 1.6.0 (SR-0004); the authored-identity a borrowed item keeps through re-labelling, which the union sets so a source's ratification stamp is not read as stale, needs 1.7.0 (SR-0024); the ratifier identity core now offers by default and the optional --by-id it records, which `_compose_ratify` must offer identically or the same command behaves differently with and without sources, needs 1.8.0 (SR-0003); the authored normative-attribute set a borrowed item keeps, which the union sets from the source's own schema so a consumer is not forced to mirror a source's normative flags in order to compose it, needs 1.9.0 (SR-0024)
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]

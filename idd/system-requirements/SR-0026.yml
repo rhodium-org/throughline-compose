@@ -1,0 +1,52 @@
+uid: SR-0026
+type: system_requirement
+status: ratified
+title: Adopting a source costs one declaration, never a copy of the source's model
+text: throughline-compose shall report against a borrowed item only what the consumer
+  can act on. A finding whose sole remedy lies in the graph that owns the item —
+  its statuses and transitions, its attributes, its link vocabulary and endpoint
+  rules, whether it grounds, whether it awaits ratification — shall not be raised
+  in a consumer. The consumer's own items shall be judged under the consumer's own
+  model in full, and its seam judged strictly, so that a reference into a source
+  resolves to an item present and not deleted, a stamp recorded on a borrowed target
+  still matches it, and a grounding chain that leaves the consumer and enters a source
+  counts as grounded. Adopting a source, or moving its pin, shall therefore cost
+  the `[[sources]]` block and nothing else, with no restatement of the source's model
+  anywhere in the consumer's configuration. This shall be composition's own work
+  over throughline's unchanged validator and grounding operations (SR-0004, NG-0001).
+rationale: A consumer cannot commit to a source, so a finding about a borrowed item's
+  internals names no act its reader can take — and an unactionable finding is worse
+  than silence, because it teaches the reader to skip the whole class it belongs
+  to. Composing throughline's graph into throughline-ratify measured the cost — 534
+  errors on the first check, not one a defect in either graph, cleared only by hand-copying
+  two dozen declaration lines of throughline's model into a project with no business
+  needs, no NFRs, nothing deferred and no assumes, mitigates or verifies links. Those
+  lines are inert, unattributed, and wrong the moment the pin moves, and they can
+  also be too generous, quietly accepting a borrowed item its own graph would reject.
+  This is what BN-0002 predicts — if composition is more effort or less trustworthy
+  than native work, teams copy-paste the sources instead — arriving one level down,
+  as a copy of the model rather than of the items. None of it needs a change to throughline,
+  which knows one graph (NG-0001). `validate` returns findings tagged by rule and
+  uid and composition knows which uids it borrowed, while `Index.reaches` already
+  takes the root predicate and the grounding link types as arguments, so the one
+  case that grounds through a source is re-put to the core's own walk rather than
+  forked. The seam is kept strict because that is where every finding is actionable
+  — resolve the reference, drop the citation, or move the pin. The stamp a consumer
+  records on a borrowed target is the clearest of them, and is why a borrowed item's
+  fingerprint must stay stable under composition (throughline SR-0162), which this
+  requirement gives its purpose rather than weakens. A per-pin verdict on each source
+  was considered and dropped, so it is not reopened by default — a source is gated
+  by the project that owns it, and a consumer's only remedy for a bad edition is
+  to move the pin or tell the owner, which happens out of band.
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0004
+  type: relates
+- target: NG-0001
+  type: relates
+attrs:
+  origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:4b349448c2e0321b4f4dd76c4cd4061ec38ce1e200c41d653f78db622973a82a
