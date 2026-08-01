@@ -4,9 +4,12 @@ status: ratified
 title: The library reports the version of the distribution installed, never a literal
 text: The version the package exports shall be read from the installed distribution's
   metadata rather than restated in source, so the version a caller imports cannot
-  disagree with the version that was released. Run from a source tree with no distribution
-  installed, it shall report a value that is plainly not a release rather than guess
-  at one.
+  disagree with the version that was released. Where the running code is not that
+  release — a source tree with no distribution installed, or an installation that
+  resolves back to a working tree — it shall report a value that cannot be mistaken
+  for a published edition, rather than silently naming the one it has departed from.
+  Because the composed toolchain reports the versions it is driving alongside its
+  own, each of those shall be reported under the same rule.
 rationale: 0.9.0 was published carrying a hand-written 0.8.0 — the release bumped
   the packaging metadata and left the literal behind. Nothing failed; the wrong answer
   was simply returned to whoever asked, which is the worse outcome, because a version
@@ -14,12 +17,22 @@ rationale: 0.9.0 was published carrying a hand-written 0.8.0 — the release bum
   On a composed project that matters twice over — a source is pinned to an edition,
   and the tool resolving the pin must be able to say truthfully which build did it.
   A distribution that misreports itself is not trustworthy out of the box (UR-0007),
-  whatever its tests say. The alternative — a release-checklist step, or a test pinning
-  the literal to the packaging metadata — keeps both copies and asks a person or
-  a test to catch the divergence; deriving the value deletes the second copy instead.
-  The throughline repository's own graph carries the matching obligation for its
-  library, so the two packages a user installs together answer the question the same
-  way.
+  whatever its tests say. The editable install is the sharper case here, because
+  it carries genuine metadata and so answers with a clean release number for code
+  that may be arbitrarily far from it. A full day was lost to an operator and an
+  agent running editable and published builds side by side, comparing a validator's
+  output against a cockpit's when the two were different software and every version
+  string agreed. This tool reports the versions it is driving as well as its own,
+  so it is the one place the whole toolchain can be read at once — which makes an
+  unmarked editable build in that line the most expensive kind of silence. The marker
+  is read from the install's own metadata (PEP 610 direct_url) rather than guessed,
+  and a local version segment states it in a form the packaging rules forbid on a
+  published artifact, so it can never be confused with one. The alternative — a release-checklist
+  step, or a test pinning the literal to the packaging metadata — keeps both copies
+  and asks a person or a test to catch the divergence; deriving the value deletes
+  the second copy instead. The throughline repository's own graph carries the matching
+  obligation for its library, so the two packages a user installs together answer
+  the question the same way.
 normative: true
 links:
 - target: UR-0007
@@ -29,4 +42,4 @@ attrs:
   priority: should
   verification: test
   ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:0173ecec63668eacff1bdff7274d8be768a4d185e5365cf557d8553608319ab3
+  ratified_fingerprint: sha256:5dd4ce5d3c32d92cbfede13be1c803bfa4fc769a64ee0bd992bd584de8a9c5d5

@@ -34,7 +34,6 @@ import argparse
 import sys
 from collections.abc import Callable
 from dataclasses import replace
-from importlib.metadata import PackageNotFoundError, version as _pkg_version
 from pathlib import Path
 
 from throughline.cli import (
@@ -67,6 +66,7 @@ from throughline.storage import (
 )
 from throughline.uid import UidError, next_uid, parse_uid
 from throughline.validate import ERROR, is_namespace_qualified, validate
+from throughline.version import distribution_version
 
 from . import git_resolver  # noqa: F401 — registers the reference git resolver (SR-0011)
 from .resolve import cache_root
@@ -84,17 +84,19 @@ def _err(msg: str) -> int:
     return USAGE
 
 
-def _pkg(name: str) -> str:
-    try:
-        return _pkg_version(name)
-    except PackageNotFoundError:  # pragma: no cover - running from a source tree
-        return "0.0.0+unknown"
-
-
 def _version_string() -> str:
     # tl-compose is its own front door; report its version and the throughline core
     # it composes over, not throughline's (build_parser wires `--version` to `tl`).
-    return f"tl-compose {_pkg('throughline-compose')} (throughline {_pkg('throughline')})"
+    #
+    # Both are read through throughline's own helper rather than restated here
+    # (SR-0027). A composed run is judged by core's validator, so the pair is what
+    # someone is actually trying to establish when they ask — and a mismatched pair
+    # is invisible while each half reports a clean release number it has departed
+    # from. Whichever of the two is a working tree says so.
+    return (
+        f"tl-compose {distribution_version('throughline-compose')} "
+        f"(throughline {distribution_version('throughline')})"
+    )
 
 
 def _source_location(s: Source) -> str:

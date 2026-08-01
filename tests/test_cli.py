@@ -24,6 +24,36 @@ def test_version_reports_compose_not_core(capsys):
     assert "throughline " in out  # names the core it composes over
 
 
+def test_both_reported_versions_mark_a_working_tree(capsys, monkeypatch):
+    """A composed run is judged by core's validator, so the pair is what someone is
+    trying to establish when they ask. A mismatched pair is invisible while each half
+    reports a clean release number it has departed from (SR-0027), so the marker has
+    to reach the core version too — not just tl-compose's own."""
+    from throughline import version as version_mod
+
+    monkeypatch.setattr(version_mod, "_editable_from_direct_url", lambda _d: True)
+    with pytest.raises(SystemExit):
+        tlc_main(["--version"])
+
+    out = capsys.readouterr().out
+    # Both packages named in the line, both marked — the rule is applied to each.
+    assert out.count("+editable") == 2, out
+
+
+def test_the_version_rule_is_cores_and_is_not_restated_here():
+    """The rule lived in three places — library, CLI, and again here. SR-0027 mirrors
+    SR-0164's objection to that, so this consumes core's helper rather than keeping a
+    fourth copy that can drift on its own."""
+    import inspect
+
+    from throughline.version import distribution_version
+    from throughline_compose import cli
+
+    assert cli.distribution_version is distribution_version
+    # No local re-implementation reading distribution metadata behind our back.
+    assert "PackageNotFoundError" not in inspect.getsource(cli)
+
+
 def test_bare_tl_check_fails_fast_on_qualified_reference(consumer_dir, capsys):
     # The core cannot resolve `toy:SR-0001`; it must signpost tl-compose (SR-0005).
     rc = tl_main(["-C", str(consumer_dir), "check", "--base", ""])
