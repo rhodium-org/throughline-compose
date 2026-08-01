@@ -1,25 +1,25 @@
 uid: SR-0027
 type: system_requirement
-status: proposed
+status: ratified
 title: The library reports the version of the distribution installed, never a literal
 text: The version the package exports shall be read from the installed distribution's
   metadata rather than restated in source, so the version a caller imports cannot
-  disagree with the version that was released. Run from a source tree with no
-  distribution installed, it shall report a value that is plainly not a release
-  rather than guess at one.
+  disagree with the version that was released. Run from a source tree with no distribution
+  installed, it shall report a value that is plainly not a release rather than guess
+  at one.
 rationale: 0.9.0 was published carrying a hand-written 0.8.0 — the release bumped
-  the packaging metadata and left the literal behind. Nothing failed; the wrong
-  answer was simply returned to whoever asked, which is the worse outcome, because
-  a version is consulted precisely when someone is trying to establish what they
-  are running. On a composed project that matters twice over — a source is pinned
-  to an edition, and the tool resolving the pin must be able to say truthfully
-  which build did it. A distribution that misreports itself is not trustworthy out
-  of the box (UR-0007), whatever its tests say. The alternative — a
-  release-checklist step, or a test pinning the literal to the packaging metadata
-  — keeps both copies and asks a person or a test to catch the divergence;
-  deriving the value deletes the second copy instead. The throughline repository's
-  own graph carries the matching obligation for its library, so the two packages a
-  user installs together answer the question the same way.
+  the packaging metadata and left the literal behind. Nothing failed; the wrong answer
+  was simply returned to whoever asked, which is the worse outcome, because a version
+  is consulted precisely when someone is trying to establish what they are running.
+  On a composed project that matters twice over — a source is pinned to an edition,
+  and the tool resolving the pin must be able to say truthfully which build did it.
+  A distribution that misreports itself is not trustworthy out of the box (UR-0007),
+  whatever its tests say. The alternative — a release-checklist step, or a test pinning
+  the literal to the packaging metadata — keeps both copies and asks a person or
+  a test to catch the divergence; deriving the value deletes the second copy instead.
+  The throughline repository's own graph carries the matching obligation for its
+  library, so the two packages a user installs together answer the question the same
+  way.
 normative: true
 links:
 - target: UR-0007
@@ -28,3 +28,5 @@ attrs:
   origin: ai
   priority: should
   verification: test
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:0173ecec63668eacff1bdff7274d8be768a4d185e5365cf557d8553608319ab3

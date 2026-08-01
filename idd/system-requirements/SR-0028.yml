@@ -1,0 +1,40 @@
+uid: SR-0028
+type: system_requirement
+status: ratified
+title: The gate that guards the published distribution runs against the artifact,
+  before it ships
+text: Continuous integration shall run the test suite on every change, and shall
+  run it once more from the built source distribution installed into a clean environment,
+  so that what is verified is the artifact a user receives rather than the working
+  tree it was built from. That second run shall gate publication, so no release reaches
+  the index carrying a suite it cannot pass. A fixture or helper the suite needs
+  but the distribution omits shall therefore fail the build, not the reader who runs
+  it.
+rationale: The suite is what stands between a composition defect and a user's graph,
+  and CI never ran it — 100 tests, green, unwatched on every push, with the grounding
+  and docs gates alone mistaken for the gate. throughline and throughline-ratify
+  both run theirs; this repository was the one that did not. The deeper gap is that
+  UR-0007 makes a claim about the distribution, not the checkout, and a working-tree
+  run cannot test it. tests/conftest.py reaches the sdist only because MANIFEST.in
+  names it (SR-0021), and pytest run from the source tree passes whether or not that
+  line survives. That is not hypothetical — the published 0.3.0 sdist shipped without
+  it and errored 31 times at collection, discovered after release and repaired by
+  hand. Running the shipped suite from the unpacked sdist is the one check that would
+  have caught it beforehand, and it costs a build and a few seconds. Gating the release
+  rather than observing after it follows the same reasoning; a check that runs after
+  the upload names a defect the reader can no longer avoid. A test asserting that
+  MANIFEST.in contains the conftest line was considered and rejected, because it
+  pins the present remedy rather than the obligation and would pass while a newly
+  added helper went unshipped.
+normative: true
+links:
+- target: UR-0007
+  type: implements
+- target: SR-0021
+  type: relates
+attrs:
+  origin: ai
+  priority: should
+  verification: test
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:91ba7979f3ebcd48adb294172062d35d0552debecc419650e48e97a9707c691d
