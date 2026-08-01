@@ -4,9 +4,11 @@
 
 Design intent (SR-0003): ``tl-compose`` is a strict superset of ``tl``. Every
 local-graph command is forwarded to throughline's CLI unchanged; the union-aware
-commands ``check``, ``docs`` and ``trace`` are layered on top. When a project
-declares no ``[[sources]]``, those too are pure pass-throughs, so ``tl-compose``
-over an ordinary project behaves exactly like ``tl``.
+commands are layered on top. Which commands those are is not restated here — the
+one place that knows is :data:`_UNION_COMMANDS`, which both dispatches them and
+supplies the agent brief's description of each (SR-0025). When a project declares
+no ``[[sources]]``, those too are pure pass-throughs, so ``tl-compose`` over an
+ordinary project behaves exactly like ``tl``.
 
 `check` composes the consumer with its declared sources into one union graph
 (union.py), runs the *unchanged* core validator over it (SR-0004), and translates
@@ -30,11 +32,10 @@ from __future__ import annotations
 
 import argparse
 import sys
+from collections.abc import Callable
 from dataclasses import replace
 from importlib.metadata import PackageNotFoundError, version as _pkg_version
 from pathlib import Path
-
-import getpass
 
 from throughline.cli import (
     _by_count,
@@ -56,6 +57,7 @@ from throughline.cli import (
 from throughline.fingerprint import fingerprint
 from throughline.graph import Index
 from throughline.grounding import GroundingError, ratify
+from throughline.identity import RATIFIED_ID_ATTR, IdentityError, default_ratifier
 from throughline.model import Item, Link
 from throughline.storage import (
     ProjectError,
@@ -67,6 +69,7 @@ from throughline.uid import UidError, next_uid, parse_uid
 from throughline.validate import ERROR, is_namespace_qualified, validate
 
 from . import git_resolver  # noqa: F401 — registers the reference git resolver (SR-0011)
+from .resolve import cache_root
 from .resolver import UnionResolver
 from .sources import Source, SourceError, parse_sources
 from .spi import ResolvedSource, ResolverError, resolver_for
@@ -392,7 +395,13 @@ def _compose_ratify(args) -> int:
         return USAGE
     if consumer.get(uid) is None:  # fail before resolving sources over the network
         return _err(f"{uid} does not exist")
-    by = _resolve_value(args.by, "ratifier", "--by", default=getpass.getuser())
+    # The same default core offers (SR-0003): the identity this repository already
+    # signs with, not the operating-system account name. Restating core's choice
+    # here is what let the two drift apart — for a while `tl-compose ratify`
+    # offered a different ratifier depending only on whether the project happened
+    # to declare a source, which is precisely the divergence SR-0003 forbids.
+    by = _resolve_value(args.by, "ratifier", "--by",
+                        default=default_ratifier(args.path))
     if by is None:
         return USAGE
 
@@ -406,11 +415,19 @@ def _compose_ratify(args) -> int:
         return _err(str(e))
 
     try:
-        item = ratify(consumer, uid, by, index=Index.build(union.project))
+        # `by_id` travels with the name for the same reason the union does: core
+        # owns what a ratification record contains (SR-0004), and a composed
+        # sign-off that quietly dropped the identifier would be a weaker record
+        # than the identical bare-`tl` one.
+        item = ratify(consumer, uid, by, index=Index.build(union.project),
+                      by_id=getattr(args, "by_id", None))
+    except IdentityError as e:
+        return _err(str(e))
     except GroundingError as e:
         return _err(str(e))
     write_item(item, consumer.register_of(uid))
-    print(f"{uid} ratified by {by}")
+    identifier = item.attrs.get(RATIFIED_ID_ATTR)
+    print(f"{uid} ratified by {by}" + (f" ({identifier})" if identifier else ""))
     return OK
 
 
@@ -666,11 +683,9 @@ ref = "v5.0.0"                     # REQUIRED for a url — pins the edition
 - **`subdir`** — optional, on either form: the graph lives in this directory relative
   to the repository (or `path`) root.
 
-`[[sources]]` is config, so it is the one part of a composed project you edit in
-`throughline.toml` by hand — there is no CLI subcommand that writes it. Everything
-about the *graph itself* — items, links, statuses, UIDs — is still CLI-only, exactly
-as the core brief says: use `tl-compose new`/`link`/`ratify`, never hand-edit a
-`<UID>.yml` or a `.register.yml`.
+`[[sources]]` is config, so it is the one part of a composed project you edit by
+hand — there is no CLI subcommand that writes it. Everything about the *graph
+itself* stays CLI-only; see **What you may write in a consuming project**, below.
 
 ## Declare every namespace you reference — composition is *not* transitive
 
@@ -705,17 +720,42 @@ one: it fails fast, names both editions and where each came from, and states the
 (pin the namespace explicitly to the one edition you intend, or alias the two apart so
 they compose side by side).
 
-## Union-aware commands
+@@UNION_COMMANDS@@
 
-These operate over the composed union rather than the bare local graph; with **no**
-`[[sources]]` declared they are pure pass-throughs to core `tl` (SR-0003):
+## The source cache — a moved ref is **not** refetched
 
-- **`check`** — composes consumer + sources, validates the union, reports findings in
-  `<namespace>:<UID>` vocabulary.
-- **`docs`** — a `tl:matrix` target cell pointing at a borrowed clause renders that
-  clause's own reference number.
-- **`trace`** — a link into a borrowed clause is followed *into* the source (shown with
-  its own type/status/title) instead of dead-ending at `(unresolved)`.
+A `url` + `ref` source is fetched once into a per-user cache, keyed by that exact
+`(url, ref)` pair, and is offline and unchanged thereafter. That is what makes a
+composed check reproducible, and it has one consequence you must know:
+
+> **If you move a git tag, `tl-compose` will keep using the content it fetched the
+> first time.** The check will pass, and it will have proved nothing about the new
+> content.
+
+To pick up changed content behind a ref you already used, either bump the `ref` to a
+new edition (the intended route — an edition is meant to be immutable), or delete
+that source's cache directory. This project's cache lives at:
+
+```
+@@CACHE_ROOT@@
+```
+
+## What you may write in a consuming project
+
+A source is **read-only** (NG-0002). Composition gives you a wider *view*, never a
+wider *authority*, so in a consuming project:
+
+- **You write only to your own registers.** Every item you create, link, restatus or
+  ratify is yours. A borrowed clause is never edited, never restatused, and **never
+  ratified by you** — its own graph owns its accountability record, and a
+  `<namespace>:<UID>` argument to a writing command is a mistake, not a shortcut.
+- **You may point *at* a source freely.** `--ground base:RISK-0001`, `link SR-0007
+  base:RISK-0001 --type mitigates` — the link is stored on *your* item, namespace-
+  qualified exactly as typed.
+- **`[[sources]]` is the one thing you hand-edit,** because it is config, not graph.
+  Items, links, statuses and UIDs stay CLI-only exactly as the core brief says: use
+  `tl-compose new`/`link`/`ratify`, never hand-edit a `<UID>.yml` or a
+  `.register.yml`.
 
 ## The boundary (NG-0001, NG-0002)
 
@@ -783,13 +823,101 @@ def _compose_context(args) -> int:
             "# Composition (`tl-compose`)\n\n"
             "This project declares no `[[sources]]`, so `tl-compose` behaves exactly "
             "as `tl` here — everything above is the whole brief. Composition "
-            "(`[[sources]]`, union-aware `check`/`docs`/`trace`, re-export) becomes "
-            "available the moment you add a source; run `tl-compose agentinfo` again "
-            "then for the full composition brief.\n")
+            "(`[[sources]]`, re-export, and union-aware "
+            + "/".join(f"`{n}`" for n in sorted(_UNION_COMMANDS))
+            + ") becomes available the moment you add a source; run "
+            "`tl-compose agentinfo` again then for the full composition brief.\n")
     else:
-        sys.stdout.write("\n" + _CTX_COMPOSE + "\n" + _ctx_sources(sources) + "\n")
+        sys.stdout.write("\n" + _compose_brief() + "\n"
+                         + _ctx_sources(sources) + "\n")
     sys.stdout.flush()
     return OK
+
+
+# Every command whose behaviour differs over the composed union, bound in one place
+# to *both* the handler that makes it differ and the sentence the brief tells an
+# agent about it (SR-0025). `main` dispatches through this table and the brief is
+# rendered from it, so a command cannot be given union behaviour without also being
+# described — the two cannot drift, because there is only one of them. What this
+# replaced was an if-chain in `main` beside a hand-written bullet list: the chain
+# had grown to eight commands while the list still named three, and the five it had
+# lost — `ratify` and `new` among them — were the ones an agent most needed, since
+# they are the commands that *write*.
+_UNION_COMMANDS: dict[str, tuple[Callable[[argparse.Namespace], int], str]] = {
+    "check": (
+        _compose_check,
+        "composes consumer + sources, validates the union with core's own "
+        "validator, and reports every finding in `<namespace>:<UID>` vocabulary."),
+    "docs": (
+        _compose_docs,
+        "a `tl:matrix` target cell pointing at a borrowed clause renders that "
+        "clause's own reference number."),
+    "trace": (
+        _compose_trace,
+        "a link into a borrowed clause is followed *into* the source (with its own "
+        "type, status and title) instead of dead-ending at `(unresolved)`."),
+    "new": (
+        _compose_new,
+        "a `--ground` target naming a borrowed clause is validated against the "
+        "union, so an item can be grounded *into* a source at birth. The item is "
+        "written to your project only."),
+    "link": (
+        _compose_link,
+        "a destination inside a source resolves over the union instead of being "
+        "refused as unknown. The link is stored on *your* item, namespace-"
+        "qualified exactly as typed; the source is never written."),
+    "ratify": (
+        _compose_ratify,
+        "core's accountability gate judges your item against the union, so one "
+        "grounded only *through* a source is no longer refused as orphaned. It is "
+        "the identical act — same refusals, same fingerprint — merely able to see "
+        "further, and it signs **your** item, never a borrowed one."),
+    "migrate": (
+        _compose_migrate,
+        "core's repair runs first and alone (a project below the current major "
+        "cannot be loaded, so no union exists yet), then a second pass offers it "
+        "the union so a record it declined as ungrounded can be completed."),
+    "context": (
+        _compose_context,
+        "emits the core brief unchanged, then this composition section and your "
+        "live source listing. `agentinfo` is an alias for it."),
+}
+
+
+def _ctx_union_commands() -> str:
+    """The union-aware command section, rendered from the dispatch table rather than
+    kept by hand (SR-0025)."""
+    return "\n".join([
+        "## Union-aware commands",
+        "",
+        "These operate over the composed union rather than the bare local graph. "
+        "With **no** `[[sources]]` declared every one of them is a pure pass-through "
+        "to core `tl` (SR-0003):",
+        "",
+        *(f"- **`{name}`** — {note}"
+          for name, (_, note) in sorted(_UNION_COMMANDS.items())),
+    ])
+
+
+def _compose_brief() -> str:
+    """The composition section, with its derived parts filled in (SR-0025).
+
+    Substitution is by literal replacement rather than ``str.format`` because the
+    prose contains TOML examples with braces in them; a formatting pass over
+    hand-written documentation is a trap that goes off the next time someone adds an
+    inline table to an example."""
+    return (_CTX_COMPOSE
+            .replace("@@UNION_COMMANDS@@", _ctx_union_commands())
+            .replace("@@CACHE_ROOT@@", str(cache_root())))
+
+
+def _compose_uncovered() -> list[str]:
+    """Union-aware commands the brief would not describe (SR-0025). Empty by
+    construction while the dispatch table is the only route to union behaviour;
+    returned rather than raised so the test that gates it decides how to fail, and
+    kept as a check because 'by construction' is a claim, not a guarantee."""
+    rendered = _ctx_union_commands()
+    return [name for name in _UNION_COMMANDS if f"`{name}`" not in rendered]
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -808,48 +936,9 @@ def main(argv: list[str] | None = None) -> int:
         help="alias for `context` — emit the agent brief (IDD + composition)")
     ai.set_defaults(func=cmd_context, cmd="context")
     args = parser.parse_args(argv)
-    if getattr(args, "cmd", None) in ("context", "agentinfo"):
-        try:
-            return _compose_context(args)
-        except KeyboardInterrupt:  # pragma: no cover
-            return USAGE
-    if getattr(args, "cmd", None) == "check":
-        try:
-            return _compose_check(args)
-        except KeyboardInterrupt:  # pragma: no cover
-            return USAGE
-    if getattr(args, "cmd", None) == "docs":
-        try:
-            return _compose_docs(args)
-        except KeyboardInterrupt:  # pragma: no cover
-            return USAGE
-    if getattr(args, "cmd", None) == "trace":
-        try:
-            return _compose_trace(args)
-        except KeyboardInterrupt:  # pragma: no cover
-            return USAGE
-    if getattr(args, "cmd", None) == "ratify":
-        try:
-            return _compose_ratify(args)
-        except KeyboardInterrupt:  # pragma: no cover
-            return USAGE
-    if getattr(args, "cmd", None) == "migrate":
-        try:
-            return _compose_migrate(args)
-        except KeyboardInterrupt:  # pragma: no cover
-            return USAGE
-    if getattr(args, "cmd", None) == "link":
-        try:
-            return _compose_link(args)
-        except KeyboardInterrupt:  # pragma: no cover
-            return USAGE
-    if getattr(args, "cmd", None) == "new":
-        try:
-            return _compose_new(args)
-        except KeyboardInterrupt:  # pragma: no cover
-            return USAGE
+    entry = _UNION_COMMANDS.get(getattr(args, "cmd", None))
     try:
-        return args.func(args)
+        return entry[0](args) if entry else args.func(args)
     except KeyboardInterrupt:  # pragma: no cover
         return USAGE
 

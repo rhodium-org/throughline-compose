@@ -593,3 +593,53 @@ def test_context_without_sources_is_core_plus_short_note(source_dir, capsys):
     # The full manual's headings are absent.
     assert "Re-export and alias" not in out
     assert "## Sources this project declares" not in out
+
+
+def test_every_union_command_is_described_in_the_brief(consumer_dir, capsys):
+    """SR-0025: a command given union behaviour without being described fails here
+    rather than passing silently.
+
+    The dispatch table is the only route to union behaviour and the brief is
+    rendered from it, so this should hold by construction — but 'by construction'
+    is a claim about today's code, and this is the check that keeps it true. If it
+    fails, the command was routed some other way; put it in `_UNION_COMMANDS` with
+    the sentence an agent needs, rather than describing it twice."""
+    from throughline_compose.cli import _UNION_COMMANDS, _compose_uncovered
+
+    assert _compose_uncovered() == []
+    rc = tlc_main(["-C", str(consumer_dir), "context"])
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "## Union-aware commands" in out
+    for name, (_, note) in _UNION_COMMANDS.items():
+        assert f"- **`{name}`**" in out, f"{name} is not described in the brief"
+        assert note in out
+
+
+def test_brief_states_the_cache_never_refetches_a_moved_ref(consumer_dir, capsys):
+    """SR-0025: an agent that has not been told the cache never refetches a moved
+    ref will report a clean check that proves nothing, because the content it
+    validated is stale. The live cache path is rendered so the fix is actionable."""
+    from throughline_compose.resolve import cache_root
+
+    rc = tlc_main(["-C", str(consumer_dir), "context"])
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "## The source cache — a moved ref is **not** refetched" in out
+    assert "keep using the content it fetched the" in out
+    assert str(cache_root()) in out
+
+
+def test_brief_states_what_a_consumer_may_write(consumer_dir, capsys):
+    """SR-0025: composition widens the view, never the authority. An agent that has
+    not been told may try to ratify a borrowed clause."""
+    rc = tlc_main(["-C", str(consumer_dir), "context"])
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "## What you may write in a consuming project" in out
+    # Whitespace-normalised: where the prose happens to wrap is cosmetic, and a test
+    # that pins it would fail on a reflow that changed nothing an agent reads.
+    flat = " ".join(out.split())
+    assert "You write only to your own registers" in flat
+    assert "never ratified by you" in flat
+    assert "the link is stored on *your* item" in flat.lower()

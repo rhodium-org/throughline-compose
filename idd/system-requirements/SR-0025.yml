@@ -1,0 +1,36 @@
+uid: SR-0025
+type: system_requirement
+status: implemented
+title: The composition brief covers every mechanic composition adds, and stays complete
+text: The composition section of the brief shall describe every mechanic composition
+  adds that an agent must be aware of to work correctly — each command whose behaviour
+  differs over the union, each way a source is declared, pinned, cached or refreshed,
+  each rule governing what an agent may and may not write in a consuming project,
+  and any behaviour that would surprise an agent that had read only the core brief.
+  It shall derive that coverage from the tool's own command surface and the project's
+  declared sources wherever it can, rather than from a list maintained by hand, and
+  a mechanic left undescribed shall fail a check rather than pass silently.
+rationale: SR-0016 fixes what the composition section must cover and requires the
+  core brief to pass through unchanged; it does not oblige that section to stay complete
+  as composition grows, and the mechanics most likely to go missing are the ones
+  that bite hardest. An agent that has not been told the source cache never refetches
+  a moved ref will report a clean check that proves nothing, because the content
+  it validated is stale. One that has not been told composition is only one level
+  deep will declare a source and be refused over a namespace it never knew it had
+  to name. One that has not been told a consumer writes only to its own registers
+  may try to ratify a borrowed item. Each of those has already cost this estate real
+  time, and each is invisible to an agent reading a brief that is authoritative in
+  tone and partial in fact — the more so because the brief instructs the agent to
+  trust it over any other source, so silence reads as absence. Deriving the coverage
+  rather than listing it is what keeps the obligation true after the next feature
+  lands, since a hand-kept list drifts precisely when someone is moving fast.
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0016
+  type: refines
+attrs:
+  origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:544f95bbf7830d8df7d1fb8a3d619de3c186549659186150ad60e88f6415f110
