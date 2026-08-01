@@ -71,6 +71,7 @@ from throughline.validate import ERROR, is_namespace_qualified, validate
 from . import git_resolver  # noqa: F401 — registers the reference git resolver (SR-0011)
 from .resolve import cache_root
 from .resolver import UnionResolver
+from .seam import apply_seam
 from .sources import Source, SourceError, parse_sources
 from .spi import ResolvedSource, ResolverError, resolver_for
 from .union import ComposeError, build_union, translate_finding
@@ -236,6 +237,11 @@ def _compose_check(args) -> int:
         return _err(str(e))
 
     findings = validate(union.project, strict=args.strict)
+    # Report against a borrowed item only what this consumer can act on, and let a
+    # local item grounded through a source count as grounded (SR-0026).
+    findings, suppressed, rescued = apply_seam(
+        findings, union, union.project.schema, Index.build(union.project)
+    )
     pattern = union.pattern()
     findings = [translate_finding(f, union, pattern) for f in findings]
 
