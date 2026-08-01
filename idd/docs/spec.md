@@ -167,5 +167,5 @@ The table is generated from the graph, so it cannot drift from the actual links.
 | UR-0004 | Non-git authorities are composed through pluggable resolvers | SR-0011, SR-0012, SR-0013 |
 | UR-0005 | Transitive sources are pulled forward by re-export and alias, never silently merged | SR-0014, SR-0015 |
 | UR-0006 | Composing tolerates a source at an older on-disk format major | SR-0017 |
-| UR-0007 | The published distribution is trustworthy out of the box | SR-0021 |
+| UR-0007 | The published distribution is trustworthy out of the box | SR-0021, SR-0027 |
 <!-- tl:end -->

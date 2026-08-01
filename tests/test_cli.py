@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pytest
 
+import throughline_compose
 from throughline.cli import main as tl_main
 from throughline_compose.cli import main as tlc_main
 
@@ -643,3 +644,33 @@ def test_brief_states_what_a_consumer_may_write(consumer_dir, capsys):
     assert "You write only to your own registers" in flat
     assert "never ratified by you" in flat
     assert "the link is stored on *your* item" in flat.lower()
+
+
+# --- the reported version (SR-0027) ------------------------------------------
+
+def test_the_reported_version_is_the_installed_distributions():
+    """0.9.0 shipped saying "0.8.0" because the release bumped the packaging
+    metadata and not the literal beside it. Deriving the value is what makes that
+    class of drift impossible rather than merely unlikely."""
+    from importlib.metadata import version as dist_version
+
+    assert throughline_compose.__version__ == dist_version("throughline-compose")
+
+
+def test_an_uninstalled_source_tree_declines_to_name_a_release(monkeypatch):
+    """The other half of the obligation. Asked from a tree that was never
+    installed, the honest answer is that this is not a release — guessing at the
+    nearest one would recreate, from the other direction, the very claim the
+    literal used to make."""
+    import importlib
+    import importlib.metadata
+
+    def _absent(name):
+        raise importlib.metadata.PackageNotFoundError(name)
+
+    monkeypatch.setattr(importlib.metadata, "version", _absent)
+    try:
+        assert importlib.reload(throughline_compose).__version__ == "0.0.0+unknown"
+    finally:
+        monkeypatch.undo()
+        importlib.reload(throughline_compose)
