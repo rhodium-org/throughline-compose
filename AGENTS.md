@@ -80,6 +80,19 @@ itself cites another namespace, you must also declare that namespace (or
 refetched from cache — bump the `ref`, or clear
 `~/.cache/throughline-compose/sources/…@<ref>`, to pick up changed content.
 
+**Adopting a source costs the `[[sources]]` block and nothing else**
+([SR-0026](idd/system-requirements/SR-0026.yml)) — never copy the source's model
+into your `throughline.toml`. Its statuses, attributes, link vocabulary and
+endpoint rules stay its business: a finding whose only remedy is a commit in the
+graph that owns the item is not raised in your project, so you will not see one
+and be tempted to widen your schema until it goes away. Copied declarations are
+inert, unattributed, and wrong the moment the pin moves. Your own items are
+judged under your own model in full, and the seam strictly — a reference into a
+source must resolve, a stamp you recorded on a borrowed clause must still match
+it, and a chain that leaves your graph and grounds inside a source counts as
+grounded. If a borrowed item is genuinely wrong, the remedy is to move the pin or
+tell the owner.
+
 ### 4. Starting throughline-compose on a project
 
 - **New project:** `tl-compose -C idd init`, then declare `[[sources]]` and author

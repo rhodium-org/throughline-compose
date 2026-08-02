@@ -130,6 +130,16 @@ honest:
   It merges the sources into one in-memory `Project` and runs throughline's existing
   `validate`, `Index`, and `fingerprint` over that union — no second validation
   engine. A composed graph is exactly as sound as a native one.
+- **Adopting a source costs one declaration, never a copy of its model**
+  ([SR-0026](https://github.com/rhodium-org/throughline-compose/blob/main/idd/system-requirements/SR-0026.yml)).
+  A borrowed item is reported against only where you can act: its statuses, attributes,
+  link vocabulary and grounding are the owning graph's business, so no finding reaches
+  you whose remedy is a commit in someone else's repo. Your own items are judged under
+  your model in full, and the seam strictly — a reference into a source must resolve, a
+  stamp you recorded on a borrowed clause must still match it, and a chain that grounds
+  inside a source counts as grounded. Adopting a source, or moving its pin, therefore
+  stays a `[[sources]]` change: nothing to restate in your own `throughline.toml`, and
+  nothing to re-restate when the edition moves.
 - **Bare `tl check` fails fast on unresolved cross-source refs**
   ([SR-0005](https://github.com/rhodium-org/throughline-compose/blob/main/idd/system-requirements/SR-0005.yml)). If you run core `tl` in a composed
   repo by habit, a namespace-qualified reference it cannot resolve makes it stop and
