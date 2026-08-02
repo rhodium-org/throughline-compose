@@ -11,7 +11,9 @@ import pytest
 
 import throughline_compose
 from throughline.cli import main as tl_main
+from throughline.storage import load_project
 from throughline_compose.cli import main as tlc_main
+from throughline_compose.seam import apply_seam
 
 
 def test_version_reports_compose_not_core(capsys):
@@ -79,6 +81,75 @@ def test_compose_check_prints_union_summary_split_local_borrowed(consumer_dir, c
     assert "Grounding  " in err           # full core summary, not just a tally
     assert "Local      2 of 5 local" in err
     assert "3 borrowed" in err
+
+
+def test_grounding_figure_counts_only_what_the_consumer_can_act_on(
+    lean_consumer_dir, capsys
+):
+    """SR-0029: the grounding headline is scoped to the consumer's own items.
+
+    The lean consumer does not adopt `implements` as a grounding link, so the toy
+    source's SR — which grounds through it — reaches no root under this schema.
+    Counted over the union that reads as 2 of 3; counted over what the consumer can
+    actually link, it is 1 of 1. The union figure would print a shortfall directly
+    above a verdict of zero errors, with no act available to close it.
+    """
+    rc = tlc_main(["-C", str(lean_consumer_dir), "check", "--base", ""])
+    assert rc == 0
+    err = capsys.readouterr().err
+
+    assert "Grounding  1/1 local non-root items trace to a root" in err
+    assert "1/1 local delivery roots served" in err
+    # The union figure is the one this requirement exists to stop printing.
+    assert "2/3" not in err
+    # The line says what it counts, so its scope is not inferred from its size.
+    assert "local non-root items" in err
+    # Union totals stay: a composer still sees the size of what was validated.
+    assert "Items      5 live" in err
+    assert "Local      2 of 5 local" in err
+    assert "3 borrowed" in err
+
+
+def test_the_borrowed_orphan_is_real_but_not_the_consumers_to_answer(
+    lean_consumer_dir, capsys
+):
+    """The premise of the test above: the borrowed item genuinely does not reach a
+    root under the consumer's schema, and the seam is what keeps it out of the
+    report (SR-0026). Without this, a scoped headline of 1/1 could be passing for
+    the trivial reason that nothing was ungrounded in the first place."""
+    from throughline.graph import Index
+    from throughline.validate import validate
+    from throughline_compose.cli import _resolve_sources
+    from throughline_compose.sources import parse_sources
+    from throughline_compose.union import build_union
+
+    consumer = load_project(str(lean_consumer_dir))
+    res = _resolve_sources(parse_sources(consumer), Path(lean_consumer_dir))
+    union = build_union(consumer, res.projects(), res.ns_aliases)
+
+    raw = validate(union.project, strict=False)
+    assert any(f.rule == "orphan" for f in raw), (
+        "expected core to report the borrowed item as an orphan under this schema"
+    )
+    kept, suppressed, _rescued = apply_seam(
+        raw, union, union.project.schema, Index.build(union.project)
+    )
+    assert any(f.rule == "orphan" for f in suppressed)
+    assert not any(f.rule == "orphan" for f in kept)
+
+
+def test_core_still_labels_the_grounding_line(source_dir):
+    """The rescope finds core's grounding line by its label rather than its
+    position. If core ever renames or reformats it, that must fail here — loudly,
+    at build time — rather than degrade a user's report quietly at runtime."""
+    from throughline.cli import _check_summary
+    from throughline_compose.cli import _GROUNDING_LABEL
+
+    lines = _check_summary(load_project(str(source_dir)))
+    labelled = [ln for ln in lines if ln.startswith(_GROUNDING_LABEL)]
+    assert len(labelled) == 1, (
+        f"core's summary no longer has exactly one {_GROUNDING_LABEL!r} line: {lines}"
+    )
 
 
 def test_compose_check_quiet_suppresses_summary(consumer_dir, capsys):

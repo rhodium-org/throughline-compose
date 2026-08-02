@@ -147,6 +147,24 @@ def _write(root: Path, files: dict[str, str]) -> Path:
     return root
 
 
+# A consumer that does NOT restate the source's model, which is what SR-0026 made
+# legal and therefore what a consumer now looks like. It differs from _CONSUMER by
+# one line: `implements` is not one of *its* grounding links. The toy source grounds
+# its SR through `implements`, so under this schema that borrowed item reaches no
+# root — not a defect in either graph, just a model the consumer never adopted and
+# cannot be asked to fix. It is the smallest graph that tells a union-wide grounding
+# figure apart from a local one (SR-0029).
+_LEAN_CONSUMER: dict[str, str] = dict(
+    _CONSUMER,
+    **{
+        "throughline.toml": _CONSUMER["throughline.toml"].replace(
+            'ground_link_types = ["derives_from", "implements"]',
+            'ground_link_types = ["derives_from"]',
+        )
+    },
+)
+
+
 @pytest.fixture
 def source_dir(tmp_path: Path) -> Path:
     return _write(tmp_path / "toy-source", _SOURCE)
@@ -155,3 +173,8 @@ def source_dir(tmp_path: Path) -> Path:
 @pytest.fixture
 def consumer_dir(tmp_path: Path, source_dir: Path) -> Path:
     return _write(tmp_path / "consumer", _CONSUMER)
+
+
+@pytest.fixture
+def lean_consumer_dir(tmp_path: Path, source_dir: Path) -> Path:
+    return _write(tmp_path / "consumer", _LEAN_CONSUMER)

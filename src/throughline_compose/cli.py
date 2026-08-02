@@ -71,7 +71,7 @@ from throughline.version import distribution_version
 from . import git_resolver  # noqa: F401 — registers the reference git resolver (SR-0011)
 from .resolve import cache_root
 from .resolver import UnionResolver
-from .seam import apply_seam
+from .seam import apply_seam, is_borrowed
 from .sources import Source, SourceError, parse_sources
 from .spi import ResolvedSource, ResolverError, resolver_for
 from .union import ComposeError, build_union, translate_finding
@@ -190,21 +190,80 @@ def _resolve_sources(sources, root) -> _Resolution:
     return out
 
 
-def _compose_check_summary(union) -> list[str]:
-    """The graph summary ``check`` prints over the composed union (SR-0022).
+# The line of core's summary that composition must rescope. Located by its label
+# rather than by position, and asserted by a test against core's real output, so a
+# change to core's format fails the build loudly instead of degrading a user's report
+# quietly. Nothing else in the summary is touched.
+_GROUNDING_LABEL = "  Grounding  "
 
-    The first lines are byte-identical to what core ``tl check`` prints — items by
-    type, status breakdown, link breakdown and grounding coverage — but computed
-    over the union, so a composer gets the same picture of what was validated whether
-    or not the project declares sources. A trailing ``Local`` line then splits the
-    consumer's own items from the ones borrowed through a source (a union item is
-    local exactly when its UID is not a mangled, source-owned one), reporting both
-    the union totals and the local subset so the composer can read their own graph at
-    a glance without the borrowed clauses drowning it."""
+
+def _local_grounding(union, schema, index, local) -> tuple[int, int, int, int]:
+    """The grounding figures for the consumer's own items (SR-0029).
+
+    The terminus is widened exactly as ``apply_seam`` widens it — "a root, or
+    anything borrowed" — so the headline and the findings answer the same question
+    and cannot disagree. A local item grounded through a source counts as grounded
+    in both, because it is one walk of core's own ``Index.reaches``, not a second
+    grounding engine (SR-0026, NG-0001).
+    """
+    non_roots = [it for it in local if not schema.is_root(it)]
+    grounded = sum(
+        1 for it in non_roots
+        if index.reaches(
+            it.uid,
+            lambda i: schema.is_root(i) or is_borrowed(union, i.uid),
+            schema.ground_link_types,
+        )
+    )
+    # A local delivery root may be served by a borrowed item, so the in-links are
+    # read over the whole union even though the roots counted are the consumer's.
+    delivery = [it for it in local if it.type in schema.delivery_roots]
+    served = sum(
+        1 for it in delivery
+        if any(lt in schema.ground_link_types for _o, lt in index.in_links(it.uid))
+    )
+    return grounded, len(non_roots), served, len(delivery)
+
+
+def _compose_check_summary(union, index=None) -> list[str]:
+    """The graph summary ``check`` prints over the composed union (SR-0022, SR-0029).
+
+    The item, status and link lines are byte-identical to what core ``tl check``
+    prints but computed over the union, so a composer sees the size of what was
+    actually validated. A trailing ``Local`` line then splits the consumer's own
+    items from the ones borrowed through a source (a union item is local exactly
+    when its UID is not a mangled, source-owned one).
+
+    The grounding line is the exception, and is rescoped to the consumer's own items
+    (SR-0029). Counted over the union it reports a shortfall no reader can close:
+    borrowed items ground under the model of the graph that owns them, which a
+    consumer is no longer obliged to restate since SR-0026, so they read as orphans
+    of a model that was never theirs. Printed directly above a verdict of zero
+    errors, that figure teaches the reader to distrust the verdict — the harm
+    SR-0026 names for findings, arriving one line higher. The line says what it
+    counts so its scope is never inferred from its size.
+    """
     lines = list(_check_summary(union.project))
     live = [it for it in union.project.items() if not it.is_deleted]
     local = [it for it in live if union.qualified(it.uid) == it.uid]
     borrowed = len(live) - len(local)
+
+    if index is None:
+        index = Index.build(union.project)
+    grounded, non_roots, served, delivery = _local_grounding(
+        union, union.project.schema, index, local
+    )
+    scoped = (
+        f"{_GROUNDING_LABEL}{grounded}/{non_roots} local non-root items trace to a "
+        f"root · {served}/{delivery} local delivery roots served"
+    )
+    for i, line in enumerate(lines):
+        if line.startswith(_GROUNDING_LABEL):
+            lines[i] = scoped
+            break
+    else:  # core's format moved; keep the honest figure rather than lose it
+        lines.append(scoped)
+
     breakdown = _by_count(it.type for it in local) if local else "none"
     lines.append(
         f"  Local      {len(local)} of {len(live)} local   {breakdown}"
@@ -240,9 +299,12 @@ def _compose_check(args) -> int:
 
     findings = validate(union.project, strict=args.strict)
     # Report against a borrowed item only what this consumer can act on, and let a
-    # local item grounded through a source count as grounded (SR-0026).
+    # local item grounded through a source count as grounded (SR-0026). The same
+    # index then serves the summary, so the headline and the findings are walked
+    # over one graph rather than two builds of it (SR-0029).
+    index = Index.build(union.project)
     findings, suppressed, rescued = apply_seam(
-        findings, union, union.project.schema, Index.build(union.project)
+        findings, union, union.project.schema, index
     )
     pattern = union.pattern()
     findings = [translate_finding(f, union, pattern) for f in findings]
@@ -258,7 +320,7 @@ def _compose_check(args) -> int:
     errs = sum(1 for f in findings if f.severity == ERROR)
     warns = len(findings) - errs
     if not getattr(args, "quiet", False):
-        for line in _compose_check_summary(union):
+        for line in _compose_check_summary(union, index):
             print(line, file=sys.stderr)
 
         def _describe(ns: str) -> str:

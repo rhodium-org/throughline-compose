@@ -1,0 +1,53 @@
+uid: SR-0029
+type: system_requirement
+status: implemented
+title: The grounding figure counts only what the consumer can act on
+text: Where throughline-compose reports how far the graph is grounded, that figure
+  shall count only items whose grounding the consumer is able to act on. An item
+  borrowed through a source shall not be counted as failing to reach a root, because
+  the consumer cannot link it and the remedy lies in the graph that owns it. The
+  union totals shall remain, so a composer still sees the size of what was validated,
+  but no figure shall report a shortfall against which its reader has no available
+  act. Where a figure is narrowed in this way it shall say what it counts, so the
+  reader is never left to infer the scope of a number from its size.
+rationale: SR-0022 has the summary computed over the union, and that was right when
+  it was written. A consumer then had to restate the source's model to get a clean
+  check, and it was exactly that restatement — the source's roots and its grounding
+  link types, copied into the consumer — which made the union figure true. SR-0026
+  removed the obligation, so no consumer restates it any more, and the figure it
+  had been quietly relying on went with it. This is therefore not one project's oddity
+  but the condition of every composed project from 0.10.0 onward, and it surfaced
+  the moment SR-0026 was first taken up rather than being introduced by it. Measured
+  on throughline-ratify at the pin move. The headline read 85 of 233 non-root items
+  trace to a root, printed directly above a verdict of 0 errors, strict. Of the 148
+  that appear not to, every one is borrowed and none is local; the consumer's own
+  36 non-root items are all grounded. So the number a reader takes for the picture
+  of their graph is not merely imprecise — it answers a question they did not ask,
+  about items they are not permitted to touch. The harm is the one SR-0026 already
+  names, arriving one line above the findings instead of among them. An unactionable
+  finding teaches a reader to skip the class it belongs to; an unactionable headline
+  teaches them to distrust the verdict beneath it, which is worse, because that verdict
+  is the thing the gate exists to deliver. A summary and a tally that disagree leave
+  the reader to work out which is lying, and the safe reading — assume the green
+  is wrong — is the one that costs a composer their confidence in the tool. The cause
+  is narrow and does not implicate the core. The summary helper is core's, and over
+  a single graph its answer is correct; composition hands it the union while applying
+  the seam to the findings alone, so the two halves of one report are scoped differently.
+  The fix belongs where that split is made. Reporting only the local figure was considered
+  and rejected — a composer does want to know the union was walked — which is why
+  the union totals stay, and why it is the grounding figure, the one number that
+  implies an unmet obligation, that gets scoped.
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0022
+  type: refines
+- target: SR-0026
+  type: relates
+attrs:
+  origin: ai
+  priority: must
+  verification: test
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:278f7d19d30348513587566194512db92b4ee0895b1fba1e19ca244e6d11bb13
