@@ -94,9 +94,12 @@ ground_link_types = ["derives_from", "implements"]
 [links]
 types = ["derives_from", "implements", "relates"]
 
-# The consumer's schema governs the whole union, so its link rules must be a
-# superset covering the shapes its sources use internally (here the toy source's
-# `UR derives_from INT`) as well as the consumer's own (`SR derives_from INT`).
+# These link rules are a superset: they cover the shapes the toy source uses
+# internally (`UR derives_from INT`) as well as the consumer's own
+# (`SR derives_from INT`). SR-0026 does not ask for that — adopting a source costs
+# the `[[sources]]` block and no restatement of its model — so this is a choice the
+# fixture makes, to exercise the path where a borrowed item does ground under the
+# consumer's schema. `_LEAN_CONSUMER` below is the same graph without the choice.
 [link_rules]
 implements   = { from = ["system_requirement"], to = ["user_requirement"] }
 derives_from = { from = ["system_requirement", "user_requirement"], to = ["intent"] }
