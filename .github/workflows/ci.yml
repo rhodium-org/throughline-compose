@@ -6,6 +6,32 @@ on:
   pull_request:
 
 jobs:
+  test:
+    name: test (${{ matrix.os }}, py${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.12"]
+        include:
+          # Prove the supported floor (pyproject says Python >= 3.11).
+          - os: ubuntu-latest
+            python-version: "3.11"
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: Unit tests
+        run: pytest -q
+
   gate:
     runs-on: ubuntu-latest
     steps:
@@ -29,3 +55,8 @@ jobs:
 
       - name: Docs freshness gate (idd/docs/spec.md must match the graph)
         run: tl-compose -C idd docs --check
+
+  # The very round-trip that gates publication, run on every change too, so a
+  # break is found at the commit that caused it and not at the release (SR-0028).
+  sdist-suite:
+    uses: ./.github/workflows/sdist-suite.yml

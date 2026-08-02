@@ -17,6 +17,12 @@ permissions:
   contents: read
 
 jobs:
+  # The shipped suite, run from the shipped artifact, BEFORE anything is uploaded
+  # (SR-0028). A check that runs after the upload names a defect the reader can no
+  # longer avoid, so publication waits on this rather than reporting beside it.
+  sdist-suite:
+    uses: ./.github/workflows/sdist-suite.yml
+
   build:
     name: Build sdist + wheel
     runs-on: ubuntu-latest
@@ -45,7 +51,7 @@ jobs:
 
   publish:
     name: Publish to PyPI
-    needs: build
+    needs: [build, sdist-suite]
     runs-on: ubuntu-latest
     environment:
       name: pypi

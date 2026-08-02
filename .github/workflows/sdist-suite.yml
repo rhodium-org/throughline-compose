@@ -1,0 +1,54 @@
+name: sdist suite
+
+# The shipped suite, run from the shipped artifact (SR-0028).
+#
+# UR-0007 makes its claim about the distribution a user installs, not the working
+# tree it was built from, and a checkout run cannot test that: tests/conftest.py
+# reaches the sdist only because MANIFEST.in names it, and pytest run from the
+# source tree passes whether or not that line survives. The published 0.3.0 sdist
+# shipped without it and errored 31 times at collection — found after release.
+#
+# This is a reusable workflow so that the check gating a release and the check
+# running on every push are the same implementation rather than two copies of it.
+
+on:
+  workflow_call:
+
+jobs:
+  sdist:
+    name: Shipped suite runs from the built sdist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Build the source distribution
+        run: |
+          python -m pip install --upgrade build
+          python -m build --sdist
+
+      - name: Install it into a clean environment
+        # A fresh venv, so what gets imported is the artifact rather than this
+        # checkout, and throughline resolves from the index exactly as a user's
+        # install would.
+        run: |
+          python -m venv /tmp/sdist-env
+          /tmp/sdist-env/bin/pip install --upgrade pip
+          /tmp/sdist-env/bin/pip install dist/*.tar.gz "pytest>=8.0"
+
+      - name: Run the suite the distribution shipped
+        # Unpacked to /tmp and run from there: the tests must be the ones inside
+        # the artifact, and src/ layout keeps them importing the installed package
+        # rather than any source beside them. A helper the suite needs but the
+        # distribution omits fails here — pytest exits non-zero for a missing
+        # testpath (4), an empty collection (5), and a fixture it cannot find (1),
+        # so no magic count has to be maintained to notice.
+        run: |
+          mkdir -p /tmp/unpacked
+          tar -xzf dist/*.tar.gz -C /tmp/unpacked --strip-components=1
+          cd /tmp/unpacked
+          /tmp/sdist-env/bin/python -m pytest -q

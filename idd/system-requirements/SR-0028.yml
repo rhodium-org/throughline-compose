@@ -1,6 +1,6 @@
 uid: SR-0028
 type: system_requirement
-status: ratified
+status: implemented
 title: The gate that guards the published distribution runs against the artifact,
   before it ships
 text: Continuous integration shall run the test suite on every change, and shall
