@@ -4,12 +4,12 @@ status: implemented
 title: CONTRIBUTING.md carries the whole path from clone to pull request
 text: A CONTRIBUTING.md at the repository root shall state how to install the package
   for development, how to run the tests, and how to run this repository's own composed
-  gate. It shall state that a change is grounded in an idd/ item before it is built,
-  that the item's UID is cited in the commit, and that every commit carries a Developer
-  Certificate of Origin sign-off. It shall point at the chained editable install
-  for anyone also working on throughline, because a compose layer running against
-  a published core reports findings the other build would not and the mismatch is
-  invisible in every version string.
+  gate. It shall state that a change is grounded in an idd/ item before it is built
+  and that the item's UID is cited in the commit, and shall record the terms a contribution
+  is offered under. It shall point at the chained editable install for anyone also
+  working on throughline, because a compose layer running against a published core
+  reports findings the other build would not and the mismatch is invisible in every
+  version string.
 normative: true
 links:
 - target: UR-0010

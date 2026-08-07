@@ -1,6 +1,6 @@
 uid: SR-0030
 type: system_requirement
-status: implemented
+status: rejected
 title: An unsigned commit fails the build, and the failure carries its own remedy
 text: Every commit that lands on the default branch shall carry a Developer Certificate
   of Origin sign-off. A continuous-integration check shall inspect each commit in
@@ -32,3 +32,8 @@ attrs:
   origin: ai
   ratified_by: Henry Grech-Cini
   ratified_fingerprint: sha256:e65cc067ec486b71518470a9c58c975fcf0f5543e18aee91aadbda37ffa4377d
+  invalidated_reason: Withdrawn, not superseded. The gate would have blocked every
+    browser-based contribution — a web edit, an accepted review suggestion, a revert
+    — because GitHub composes those commits with no Signed-off-by trailer and no
+    check can supply one. UR-0008 now rests on section 5 of the licence, which needs
+    nothing from the contributor per commit.

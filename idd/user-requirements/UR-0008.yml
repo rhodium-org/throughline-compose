@@ -2,9 +2,19 @@ uid: UR-0008
 type: user_requirement
 status: ratified
 title: A contribution states the terms under which it is offered
-text: Every commit offered to this project carries a Developer Certificate of Origin
-  sign-off naming its author. A contribution whose commits do not carry one is not
-  accepted, so the project never holds work whose provenance it cannot evidence.
+text: A contribution arrives under terms the project can point to. CONTRIBUTING.md
+  shall record that submitting a contribution licenses it under the project's own
+  Apache-2.0 terms, per section 5 of that licence, so the project never holds work
+  whose licensing it cannot evidence. Nothing further shall be required of the contributor
+  per commit.
+rationale: The first form of this required a Developer Certificate of Origin sign-off
+  on every commit, enforced in CI. Withdrawn because of what it cost the contributions
+  this project most wants. GitHub composes a web-UI commit — an edit in the browser,
+  an accepted review suggestion, a revert — with no Signed-off-by trailer at all,
+  and no check can add one, so the drive-by documentation fix was the exact contribution
+  the gate turned away. Section 5 of the licence already achieves inbound equals
+  outbound without asking the contributor for anything, and a term nobody has to
+  remember is worth more here than evidence nobody was going to audit.
 normative: true
 links:
 - target: BN-0004
