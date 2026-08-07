@@ -1,0 +1,17 @@
+uid: UR-0008
+type: user_requirement
+status: ratified
+title: A contribution states the terms under which it is offered
+text: Every commit offered to this project carries a Developer Certificate of Origin
+  sign-off naming its author. A contribution whose commits do not carry one is not
+  accepted, so the project never holds work whose provenance it cannot evidence.
+normative: true
+links:
+- target: BN-0004
+  type: derives_from
+attrs:
+  priority: must
+  verification: test
+  origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:ed4c9f41c99379b9386486c640a614cb8194086c580b53e608bff28f921933c2

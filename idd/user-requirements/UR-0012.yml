@@ -1,0 +1,18 @@
+uid: UR-0012
+type: user_requirement
+status: ratified
+title: What is expected of participants, and where a breach is taken
+text: The behaviour expected of everyone taking part shall be stated in the repository,
+  with a private route for reporting a breach and a named person answerable for acting
+  on one. An expectation nobody has written down cannot be relied on by the person
+  it exists to protect.
+normative: true
+links:
+- target: BN-0004
+  type: derives_from
+attrs:
+  priority: should
+  verification: inspection
+  origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:7343b4b7e6faf8dd55fe86fed6b628c3bef6944ee793e3c63c9868af82c41a53

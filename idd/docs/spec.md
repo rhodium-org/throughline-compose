@@ -36,6 +36,16 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 **origin**: human · **ratified_by**: Henry Grech-Cini · **ratified_fingerprint**: sha256:0ba0ff70e6472758c174a7d5331d4b149bcf075f891a4581858d6c93609020db · **ratified_backfilled**: True
 <!-- tl:end -->
 
+<!-- tl:item BN-0004 -->
+**BN-0004 — Contributable** — `business_need`, status `ratified`
+
+> As an open-source project, throughline-compose should let an outside contributor understand how to contribute, how to report a vulnerability privately, and what conduct is expected, and should have each contribution arrive carrying an explicit, recorded grant of the rights under which it is offered — so that a contribution can be accepted without a later, unanswerable question about the terms on which it was given.
+
+*Derives from:* INT-0001
+
+**origin**: ai · **ratified_by**: Henry Grech-Cini · **ratified_fingerprint**: sha256:205162cd6597c72da1f7a826c54fd1483d2eaf559cea83dc9d5c6288aa0f2b6a
+<!-- tl:end -->
+
 ## User requirements
 
 <!-- tl:item UR-0001 -->
@@ -168,4 +178,9 @@ The table is generated from the graph, so it cannot drift from the actual links.
 | UR-0005 | Transitive sources are pulled forward by re-export and alias, never silently merged | SR-0014, SR-0015 |
 | UR-0006 | Composing tolerates a source at an older on-disk format major | SR-0017 |
 | UR-0007 | The published distribution is trustworthy out of the box | SR-0021, SR-0027, SR-0028 |
+| UR-0008 | A contribution states the terms under which it is offered | SR-0030 |
+| UR-0009 | Know that a slow composition is working, not hung | SR-0031 |
+| UR-0010 | A newcomer can set up, check and offer a change without asking | SR-0032 |
+| UR-0011 | A vulnerability can be reported without first disclosing it | SR-0033 |
+| UR-0012 | What is expected of participants, and where a breach is taken | SR-0034 |
 <!-- tl:end -->

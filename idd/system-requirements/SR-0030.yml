@@ -1,0 +1,34 @@
+uid: SR-0030
+type: system_requirement
+status: implemented
+title: An unsigned commit fails the build, and the failure carries its own remedy
+text: Every commit that lands on the default branch shall carry a Developer Certificate
+  of Origin sign-off. A continuous-integration check shall inspect each commit in
+  the change and fail when any of them carries no Signed-off-by trailer matching
+  either its author or its committer. On a pull request the check shall be a required
+  status check, so a non-conforming contribution cannot be merged; on a direct push
+  it shall fail the build, which is the strongest gate that route allows. A failing
+  check shall name each offending commit and print the command that remedies it.
+rationale: Two questions the first draft left open, decided here, and decided the
+  same way as throughline-ratify's SR-0032 so the estate has one DCO clause rather
+  than two that differ. Scope — gating pull requests alone left maintainer pushes
+  straight to the default branch unsigned, which made UR-0008's claim untrue of most
+  of this repository's own history; the obligation therefore follows the commit rather
+  than the route it arrived by, at the strength each route permits. Whose sign-off
+  counts — matching the trailer strictly against the commit author rejects cherry-picks,
+  rebases and co-authored work, where the person offering the contribution is the
+  committer; accepting either endpoint keeps the evidence intact and drops the false
+  negatives. The remedy clause is load-bearing rather than courtesy. The measurable
+  friction in a DCO gate is a contributor who forgot -s and must rewrite history
+  to recover, and the check that rejects the work is the only place that fix is certain
+  to be read.
+normative: true
+links:
+- target: UR-0008
+  type: implements
+attrs:
+  priority: must
+  verification: test
+  origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:e65cc067ec486b71518470a9c58c975fcf0f5543e18aee91aadbda37ffa4377d

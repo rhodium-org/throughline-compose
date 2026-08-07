@@ -1,0 +1,18 @@
+uid: SR-0034
+type: system_requirement
+status: implemented
+title: CODE_OF_CONDUCT.md is the Contributor Covenant with a real contact on it
+text: A CODE_OF_CONDUCT.md at the repository root shall adopt the Contributor Covenant
+  version 2.1, attributed to its source, and shall name the person answerable for
+  enforcement together with the private route by which a breach reaches them. A code
+  of conduct whose enforcement section names nobody is decoration.
+normative: true
+links:
+- target: UR-0012
+  type: implements
+attrs:
+  priority: should
+  verification: inspection
+  origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:c51ee04df3b81d86473a4864ba38a181eb70c49e0d4694a4f5961b3effad8b0d
