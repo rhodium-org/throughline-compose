@@ -168,6 +168,34 @@ _LEAN_CONSUMER: dict[str, str] = dict(
 )
 
 
+# A consumer carrying a coverage rule that no intent in the union satisfies — the
+# local intent and the borrowed one both lack an incoming `relates`. It is the
+# smallest graph that tells the two halves of SR-0035 apart, because the finding is
+# identical either side of the seam and only the seam decides which is reported.
+_COVERAGE_RULE = """
+[[rules.coverage]]
+filter = "type == 'intent'"
+needs = "incoming:relates"
+severity = "warning"
+"""
+
+_COVERAGE_CONSUMER: dict[str, str] = dict(
+    _CONSUMER,
+    **{"throughline.toml": _CONSUMER["throughline.toml"] + _COVERAGE_RULE},
+)
+
+# The same graph, with the consumer declaring that its coverage rule is one it can
+# answer across the seam (SR-0035).
+_WIDENED_CONSUMER: dict[str, str] = dict(
+    _CONSUMER,
+    **{
+        "throughline.toml": _CONSUMER["throughline.toml"]
+        + _COVERAGE_RULE
+        + '\n[seam]\nreport_on_borrowed = ["coverage"]\n'
+    },
+)
+
+
 @pytest.fixture
 def source_dir(tmp_path: Path) -> Path:
     return _write(tmp_path / "toy-source", _SOURCE)
@@ -176,6 +204,18 @@ def source_dir(tmp_path: Path) -> Path:
 @pytest.fixture
 def consumer_dir(tmp_path: Path, source_dir: Path) -> Path:
     return _write(tmp_path / "consumer", _CONSUMER)
+
+
+@pytest.fixture
+def coverage_consumer_dir(tmp_path: Path, source_dir: Path) -> Path:
+    """A coverage rule over the union, with the seam left at its default."""
+    return _write(tmp_path / "consumer", _COVERAGE_CONSUMER)
+
+
+@pytest.fixture
+def widened_consumer_dir(tmp_path: Path, source_dir: Path) -> Path:
+    """The same, with ``[seam] report_on_borrowed = ["coverage"]``."""
+    return _write(tmp_path / "consumer", _WIDENED_CONSUMER)
 
 
 @pytest.fixture

@@ -6,7 +6,7 @@ guide, a platform standard, a regulatory baseline — alongside the requirements
 write yourself, and work the combined graph as one.
 
 This repository is itself a throughline project: its own design is captured as a
-grounded IDD spine of <!-- tl:count.inline type == 'user_requirement' -->12<!-- tl:end --> user requirements and <!-- tl:count.inline type == 'system_requirement' -->32<!-- tl:end --> system requirements 
+grounded IDD spine of <!-- tl:count.inline type == 'user_requirement' -->12<!-- tl:end --> user requirements and <!-- tl:count.inline type == 'system_requirement' -->33<!-- tl:end --> system requirements 
 under [`idd/vision/`](https://github.com/rhodium-org/throughline-compose/tree/main/idd/vision), [`idd/goals/`](https://github.com/rhodium-org/throughline-compose/tree/main/idd/goals),
 [`idd/user-requirements/`](https://github.com/rhodium-org/throughline-compose/tree/main/idd/user-requirements),
 [`idd/system-requirements/`](https://github.com/rhodium-org/throughline-compose/tree/main/idd/system-requirements), and [`idd/non-goals/`](https://github.com/rhodium-org/throughline-compose/tree/main/idd/non-goals), and
@@ -145,6 +145,44 @@ honest:
   repo by habit, a namespace-qualified reference it cannot resolve makes it stop and
   point you at `tl-compose` — never a false clean result. Free external references (a
   URL, a linked standard) stay opaque, as intended.
+
+### Widening the seam for a rule you can answer
+
+The seam above keys on the **rule name**, and a rule name does not say where the
+remedy for a finding lies. For nearly every rule the remedy is the owning graph's —
+exactly what SR-0026 suppresses. But a **coverage rule you declared yourself** is
+answered by authoring an item *in your own project*, so suppressing it hides an
+obligation you could have met.
+
+Only you know which of the two it is, so you say so:
+
+```toml
+[[rules.coverage]]
+filter = "type == 'system_requirement' and status == 'ratified'"
+needs  = "incoming:covers"
+
+[seam]
+report_on_borrowed = ["coverage"]
+```
+
+Without the `[seam]` block that rule is **silently inert** over borrowed items — the
+finding names a UID you do not own, so it is dropped and `check` reports clean. With
+it, a borrowed requirement nothing covers is reported in your own vocabulary
+(`spec:SR-0009`) and `--strict` fails the build.
+
+Two deliberate limits:
+
+- **It only ever widens.** There is no syntax for switching a built-in seam rule
+  off. Those are what keep the assembled union coherent — a dangling cross-source
+  reference, a UID collision, a stamp that no longer matches — and silencing one
+  would hide the unresolved reference `UR-0002` forbids outright.
+- **An unknown rule name is refused when the config is read**, not ignored. The
+  defect this closes is a rule that never fires; a typo accepted quietly would
+  reproduce it exactly.
+
+The default is unchanged — a project that declares nothing behaves as it always has,
+so no existing consumer inherits findings by upgrading
+([SR-0035](https://github.com/rhodium-org/throughline-compose/blob/main/idd/system-requirements/SR-0035.yml)).
 
 Composition deliberately lives here, not in the throughline core
 ([NG-0001](https://github.com/rhodium-org/throughline-compose/blob/main/idd/non-goals/NG-0001.yml)) — the core stays a single-purpose, offline tool
