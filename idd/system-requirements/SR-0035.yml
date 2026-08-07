@@ -1,6 +1,6 @@
 uid: SR-0035
 type: system_requirement
-status: proposed
+status: ratified
 title: A consumer may declare which of its own rules cross the seam
 text: throughline-compose shall let a consuming project name, in its own configuration,
   rules that are also reported on borrowed items in addition to the built-in seam
@@ -30,3 +30,5 @@ attrs:
   priority: should
   verification: test
   origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:96abb1e21442c355cbb31b619ffbfa19e562823fc4e46de7a8d866853552a3e1
