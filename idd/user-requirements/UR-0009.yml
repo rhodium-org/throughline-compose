@@ -1,0 +1,19 @@
+uid: UR-0009
+type: user_requirement
+status: ratified
+title: Know that a slow composition is working, not hung
+text: Composing a project can take long enough to look like nothing is happening
+  — a source with a cold cache is fetched over the network before any checking begins.
+  While a composition is resolving its sources the tool shall show the composer that
+  it is working and what it is working on, so a first run against an unfetched source
+  reads as progress rather than as a tool that has stopped responding.
+normative: true
+links:
+- target: BN-0002
+  type: derives_from
+attrs:
+  priority: should
+  verification: demonstration
+  origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:f5117554261dc83a790668284b0b32d253051cae11f1b2037707e290a77c93b5

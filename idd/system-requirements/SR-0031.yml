@@ -1,0 +1,20 @@
+uid: SR-0031
+type: system_requirement
+status: implemented
+title: A source being fetched announces itself before the fetch, not after
+text: Before a source is fetched from its origin, tl-compose shall report on standard
+  error which source it is resolving and from where, and shall report again when
+  the fetch completes. The notice is emitted only when the fetch is actually going
+  to happen — a source already in the cache resolves silently — so the output appears
+  exactly on the runs that are slow and never on the runs that are not. It goes to
+  standard error so that machine-readable output on standard output is unaffected.
+normative: true
+links:
+- target: UR-0009
+  type: implements
+attrs:
+  priority: should
+  verification: test
+  origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:9daaa4515495d6854fcae71534efc95be5d6c9ada047435360fe3fea296cee46
