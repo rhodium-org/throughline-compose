@@ -1,0 +1,18 @@
+uid: BN-0004
+type: business_need
+status: ratified
+title: Contributable
+text: As an open-source project, throughline-compose should let an outside contributor
+  understand how to contribute, how to report a vulnerability privately, and what
+  conduct is expected, and should have each contribution arrive carrying an explicit,
+  recorded grant of the rights under which it is offered — so that a contribution
+  can be accepted without a later, unanswerable question about the terms on which
+  it was given.
+normative: true
+links:
+- target: INT-0001
+  type: derives_from
+attrs:
+  origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:205162cd6597c72da1f7a826c54fd1483d2eaf559cea83dc9d5c6288aa0f2b6a

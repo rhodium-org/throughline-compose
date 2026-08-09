@@ -39,10 +39,14 @@ derives_from = { from = ["business_need", "user_requirement"], to = ["intent", "
 values = ["proposed", "draft", "deferred", "approved", "ratified", "implemented",
           "verified", "suspect", "rejected", "deleted"]
 
+# 'proposed', 'draft' and 'deferred' reach 'suspect' because all three are
+# reachable from the birth status, so an item can sit in any of them when the
+# footing under it is withdrawn — and without the route it would carry no record
+# that anything had happened (throughline:SR-0177).
 [transitions]
-proposed    = ["draft", "approved", "ratified", "deferred", "rejected", "deleted"]
-draft       = ["approved", "deferred", "rejected", "deleted"]
-deferred    = ["draft", "approved", "rejected", "deleted"]
+proposed    = ["draft", "approved", "ratified", "deferred", "suspect", "rejected", "deleted"]
+draft       = ["approved", "deferred", "suspect", "rejected", "deleted"]
+deferred    = ["draft", "approved", "suspect", "rejected", "deleted"]
 approved    = ["ratified", "implemented", "deferred", "suspect", "rejected", "deleted"]
 ratified    = ["implemented", "suspect", "rejected", "deleted"]
 implemented = ["verified", "suspect", "rejected", "deleted"]

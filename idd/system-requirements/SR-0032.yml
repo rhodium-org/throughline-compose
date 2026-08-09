@@ -1,0 +1,22 @@
+uid: SR-0032
+type: system_requirement
+status: implemented
+title: CONTRIBUTING.md carries the whole path from clone to pull request
+text: A CONTRIBUTING.md at the repository root shall state how to install the package
+  for development, how to run the tests, and how to run this repository's own composed
+  gate. It shall state that a change is grounded in an idd/ item before it is built
+  and that the item's UID is cited in the commit, and shall record the terms a contribution
+  is offered under. It shall point at the chained editable install for anyone also
+  working on throughline, because a compose layer running against a published core
+  reports findings the other build would not and the mismatch is invisible in every
+  version string.
+normative: true
+links:
+- target: UR-0010
+  type: implements
+attrs:
+  priority: should
+  verification: inspection
+  origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:5e102ee1689251c31357fb76a6c8f06ba9b7685fcf57821488c82b55aa12dc3b

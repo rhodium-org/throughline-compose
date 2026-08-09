@@ -1,0 +1,34 @@
+uid: SR-0035
+type: system_requirement
+status: ratified
+title: A consumer may declare which of its own rules cross the seam
+text: throughline-compose shall let a consuming project name, in its own configuration,
+  rules that are also reported on borrowed items in addition to the built-in seam
+  set. A rule so named shall be judged on a borrowed item exactly as it is on a local
+  one, and reported in the consumer's own vocabulary. The declaration shall be additive
+  only — the built-in seam rules cannot be switched off, because they are what keeps
+  the assembled union coherent. A project that names nothing shall behave exactly
+  as it does today. A name that matches no rule the validator can emit shall be refused
+  when the configuration is read, rather than accepted and silently never fired.
+rationale: |-
+  A consumer that declares a coverage rule over items it borrowed gets a clean check and an unmet obligation. The finding names the borrowed uid, the seam drops it, and nothing is printed — so a rule that has never once fired is indistinguishable from a rule that is satisfied. That is the false clean result UR-0002 forbids, and it is worse than having no rule, because the project believes it is gated.
+
+  This does not weaken SR-0026. That requirement suppresses a finding whose SOLE remedy lies in the graph that owns the item. A consumer-declared coverage rule's remedy is local — author the covering item here, in the consumer. Such a finding was never in the class SR-0026 describes; the allowlist could not tell the two apart because it keys on the rule name alone, and the rule name does not say where the remedy lies. Only the consumer that wrote the rule knows that, which is why the consumer is the one who declares it.
+
+  Additive only, deliberately. The built-in seam rules are what keep the assembled union coherent — a dangling cross-source reference, a uid collision, a stamp that no longer matches. Letting a consumer switch those off would let a project hide exactly the unresolved reference UR-0002 names, so the configuration can widen the seam and never narrow it.
+
+  An unknown rule name is refused rather than ignored, because silence is the defect being fixed and a typo accepted quietly would reproduce it exactly.
+
+  Who pays. Nobody who does not opt in. A project that declares nothing behaves as before, so no existing consumer inherits new findings. A project that opts in accepts findings against items it does not own and must answer them by authoring locally or by dropping the rule — that cost is the point of asking for it. The source and its owner are untouched; nothing is written to the source and its own gate is unchanged.
+
+  Adding coverage to the built-in allowlist for everyone was considered and rejected — most consumers' coverage rules concern the source's own internals, where the remedy really is the owner's, and those consumers would inherit unactionable findings of exactly the kind SR-0026 exists to prevent. A per-source setting was also rejected, because the rule belongs to the consumer that wrote it and not to any one source it happens to range over.
+normative: true
+links:
+- target: UR-0002
+  type: implements
+attrs:
+  priority: should
+  verification: test
+  origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:96abb1e21442c355cbb31b619ffbfa19e562823fc4e46de7a8d866853552a3e1

@@ -71,7 +71,7 @@ from throughline.version import distribution_version
 from . import git_resolver  # noqa: F401 — registers the reference git resolver (SR-0011)
 from .resolve import cache_root
 from .resolver import UnionResolver
-from .seam import apply_seam, is_borrowed
+from .seam import SeamError, apply_seam, is_borrowed, parse_seam
 from .sources import Source, SourceError, parse_sources
 from .spi import ResolvedSource, ResolverError, resolver_for
 from .union import ComposeError, build_union, translate_finding
@@ -297,14 +297,23 @@ def _compose_check(args) -> int:
     except ComposeError as e:
         return _err(str(e))
 
+    # The consumer's own widening of the seam, read before anything is judged so a
+    # misspelled rule name is refused rather than left silently never firing
+    # (SR-0035).
+    try:
+        extra_seam_rules = parse_seam(consumer)
+    except SeamError as e:
+        return _err(str(e))
+
     findings = validate(union.project, strict=args.strict)
     # Report against a borrowed item only what this consumer can act on, and let a
-    # local item grounded through a source count as grounded (SR-0026). The same
-    # index then serves the summary, so the headline and the findings are walked
-    # over one graph rather than two builds of it (SR-0029).
+    # local item grounded through a source count as grounded (SR-0026), widened by
+    # any rule the consumer declared under [seam] (SR-0035). The same index then
+    # serves the summary, so the headline and the findings are walked over one graph
+    # rather than two builds of it (SR-0029).
     index = Index.build(union.project)
     findings, suppressed, rescued = apply_seam(
-        findings, union, union.project.schema, index
+        findings, union, union.project.schema, index, extra_seam_rules
     )
     pattern = union.pattern()
     findings = [translate_finding(f, union, pattern) for f in findings]

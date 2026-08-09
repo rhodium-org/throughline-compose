@@ -18,12 +18,23 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
 from .sources import Source
 
 _SLUG_RE = re.compile(r"[^A-Za-z0-9._-]+")
+
+
+def _announce(msg: str) -> None:
+    """Say what is being fetched, while it is being fetched (SR-0031).
+
+    Standard error, so machine-readable output on stdout is unaffected. Only the
+    cold-cache path calls this, which is what keeps it honest as a progress notice
+    rather than noise: a run that prints nothing is a run that had nothing slow to
+    do, and every run that does have a network fetch ahead of it says so first."""
+    print(f"tl-compose: {msg}", file=sys.stderr, flush=True)
 
 
 class ResolveError(Exception):
@@ -138,7 +149,13 @@ def resolve_source(source: Source, consumer_root: Path) -> Path:
     if not (dest.is_dir() and (dest / ".git").exists()):
         if dest.exists():  # partial/corrupt leftover
             shutil.rmtree(dest, ignore_errors=True)
+        # The clone is the only slow thing composition does, and it happens before
+        # any checking has begun — so a first run against an unfetched source used
+        # to sit silent for the whole of it (SR-0031). Announced before, not after.
+        _announce(f"resolving source '{source.namespace}' from "
+                  f"{source.url}@{source.ref} (not cached — fetching)")
         _fetch(source.url, source.ref, dest)
+        _announce(f"resolved source '{source.namespace}'")
     # Resolved once at this pinned ref — idempotent, offline thereafter.
     project = _descend(dest, source)
     if not (project / "throughline.toml").is_file():
