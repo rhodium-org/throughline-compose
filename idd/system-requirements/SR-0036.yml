@@ -1,0 +1,46 @@
+uid: SR-0036
+type: system_requirement
+status: ratified
+title: The declared core range is tested at both ends on a schedule
+text: 'The repository shall run its unit tests and its graph gates on a recurring
+  schedule, independently of any commit, against two resolutions of its declared
+  dependency range: the versions the package index currently publishes, and the exact
+  declared minimums. The minimum versions installed shall be derived from the package
+  metadata rather than restated in the workflow. The schedule shall place the run
+  outside the maintainers'' working hours.'
+rationale: 'throughline is declared as a floor rather than locked, so continuous
+  integration resolves whatever the index happens to publish and a green check is
+  only true on the day it ran. Composition is the exposed case: a change lands in
+  this repository but is judged by core''s validator, so a core release can change
+  this project''s answers without changing a line of it. That is not hypothetical
+  — on 2026-08-09 pull request #6 sat green for two days while throughline 1.13 shipped
+  a rule this graph did not satisfy, and the break surfaced only when the branch
+  was next touched. Nothing observed it in between. Testing the two ends catches
+  opposite faults. The ceiling catches a core that has moved ahead of the composition
+  layer, which is the fault this repository is structurally most likely to meet.
+  The floor catches a minimum that is declared but no longer actually supported —
+  a version written down on the strength of ''it has the API we call'' and never
+  installed since, which is a promise to every consumer whose resolver honours it.
+  Deriving the minimums from the package metadata rather than restating them keeps
+  the workflow from drifting away from the versions the package actually promises,
+  which would leave a green floor job proving nothing. Who pays: maintainers, who
+  receive failures that no commit of theirs caused. That is the intent — the alternative
+  is not the absence of the failure but its arrival in a contributor''s pull request,
+  attributed to their change. The scheduled hour is offset from the top of the hour
+  because scheduled jobs queue heavily there, and placed outside working hours so
+  a red result waits rather than interrupts. Rejected: locking the core version,
+  which would trade this failure for a silent staleness nothing observes and would
+  make the package hostile to install alongside core in a consumer''s environment;
+  and requiring branches to be up to date with the base before merging, which addresses
+  a different drift entirely and would not have caught #6, whose branch was already
+  current.'
+normative: true
+links:
+- target: UR-0007
+  type: implements
+attrs:
+  priority: should
+  verification: inspection
+  origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:0a2d9a47aff771ceae5fa9618dcad675a10b31ee5f9b0e848022b275db153f01
