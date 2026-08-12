@@ -1,0 +1,63 @@
+uid: SR-0037
+type: system_requirement
+status: implemented
+title: A listing answers over the composed graph and states its scope
+text: Where throughline-compose lists the items of a composed project, the listing
+  shall be taken over the composed union rather than over the consumer's own graph
+  alone, and a borrowed item shall be identified in the same `<namespace>:<UID>`
+  vocabulary in which findings are reported. The composer shall be able to restrict
+  a listing to their own items explicitly. Every listing shall state the scope it
+  answered over — how many of the items it counted are the consumer's own and how
+  many are borrowed — so that no count can be read as a statement about the whole
+  composed graph unless it is one, and an empty result is never indistinguishable
+  from a graph that genuinely holds nothing. A machine-readable listing shall carry
+  each item's owning source as data, rather than leaving a reader to infer it from
+  a UID prefix. This shall hold identically for every spelling of the listing command.
+rationale: 'Composition made every other command answer over the union — check validates
+  it, trace walks into it, docs renders a borrowed clause''s own reference number,
+  and both `new --ground` and `link` accept a borrowed UID — while the one command
+  whose whole purpose is to show a composer what exists kept answering over the consumer''s
+  graph alone, and said nothing about doing so. Those are two separate faults. The
+  missing capability leaves the documented route into a source undiscoverable: a
+  composer is invited to ground an item at `asvs:V2.1.1`, but no command will show
+  them that the clause exists or what its UID is, so the tool accepts references
+  it offers no way to find. The silence is the graver of the two, because it is not
+  an absence but a wrong answer. Measured on attachment-to-link-requirements at 0.11.0:
+  check reports 603 live items, of which 543 are borrowed and 531 are system requirements,
+  while a listing filtered to that type reports 38, unqualified, with nothing to
+  say it had counted a sixteenth of them. Where the type is one no local register
+  uses, the same command prints 0 item(s) — which a reader, or an agent, takes for
+  a clean bill of health on a question that has hundreds of answers. A requirements
+  tool exists to keep scope honest, and a silent zero is the worst failure available
+  to it; it is the same fault SR-0029 repaired for the grounding headline, arriving
+  in a different command. Making the union the default was chosen over an opt-in
+  flag, although it changes the output of an existing command. The inconsistency
+  is the defect, and a flag would preserve it by leaving this the one union command
+  a composer has to ask twice for — while the composer who does not know the wider
+  answer exists is precisely the reader the present behaviour misleads. The one who
+  wants the narrower answer can still say so. Who pays: a consumer whose script counts
+  the lines of a listing, which will now count the union. That is bought with a minor
+  version and a release note, on a package below 1.0, and it is the cheapest this
+  change will ever be. Stating the scope without widening it was considered and rejected
+  as the whole remedy: it makes the answer honest but leaves the composer''s real
+  question — which borrowed clauses this graph has not yet superseded — unaskable.
+  It is kept as the other half of this requirement rather than as the alternative
+  to it. Nothing here reaches the core. `tl` is a single-graph tool by NG-0001 and
+  its own listing requirement is correct over the graph it is handed; the scope split
+  is made in composition, so that is where it is repaired. And because every union-aware
+  command is bound to its description in one table (SR-0025), giving a listing union
+  behaviour describes it to an agent by the same act.'
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0003
+  type: refines
+- target: SR-0029
+  type: relates
+attrs:
+  priority: must
+  verification: test
+  origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:60d0051d326a4ce8bfc0858382af5214e6ded986da7c81395002985fb9e0aba8

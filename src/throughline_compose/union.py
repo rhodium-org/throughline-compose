@@ -52,6 +52,38 @@ class Union:
             return f"{namespace}:{src_prefix}-{m.group(2)}"
         return uid
 
+    def displayed(self) -> Project:
+        """The union as the composer names it (SR-0037): a copy in which every
+        borrowed UID, link target and register prefix reads back as
+        ``<namespace>:<...>``.
+
+        A listing selects with a filter and then prints what it selected, so those
+        two have to speak one vocabulary. Printing ``wcag:UR-0012`` while matching
+        only ``WCAGUR-0012`` would hand the composer a second silent zero one layer
+        below the one this view exists to remove — and it would leak the mangled
+        prefix, which is an internal identity trick (SR-0004) this tool does not
+        promise to keep.
+
+        The view is never validated and its UIDs are deliberately not legal core
+        UIDs; the union it is taken from is untouched.
+        """
+        out = Project(path=self.project.path, config=self.project.config)
+        for prefix, reg in self.project.registers.items():
+            owner = self.owners.get(prefix)
+            shown = f"{owner[0]}:{owner[1]}" if owner else prefix
+            items = {}
+            for uid, it in reg.items.items():
+                qualified = self.qualified(uid)
+                items[qualified] = replace(
+                    it,
+                    uid=qualified,
+                    links=[replace(link, target=self.qualified(link.target))
+                           for link in it.links],
+                    _register_prefix=shown,
+                )
+            out.registers[shown] = replace(reg, prefix=shown, items=items)
+        return out
+
     def pattern(self) -> re.Pattern | None:
         """A regex matching any mangled UID token, for message translation."""
         if not self.owners:

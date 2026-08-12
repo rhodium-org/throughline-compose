@@ -26,9 +26,11 @@ Read the hat that matches what you're doing:
 ## Using throughline-compose in a project
 
 `tl-compose` is a **strict superset of `tl`**: local-graph commands forward to
-throughline unchanged; the union-aware `check` and `docs` compose the declared
-sources into one graph, validate it with throughline's own validator, and render
-documents over the union. In a composed project **drive everything through
+throughline unchanged, while the union-aware ones compose the declared sources into
+one graph and work it — `check` validates it, `docs` renders over it, `query` lists
+over it, `trace` walks into it. `tl-compose context` names the full set from the
+dispatch table, so read it there rather than trusting this sentence to stay current.
+In a composed project **drive everything through
 `tl-compose`, never `tl` directly** (a bare `tl` fails fast on unresolved
 cross-source references rather than giving a false clean result).
 

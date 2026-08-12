@@ -6,7 +6,7 @@ guide, a platform standard, a regulatory baseline — alongside the requirements
 write yourself, and work the combined graph as one.
 
 This repository is itself a throughline project: its own design is captured as a
-grounded IDD spine of <!-- tl:count.inline type == 'user_requirement' -->12<!-- tl:end --> user requirements and <!-- tl:count.inline type == 'system_requirement' -->34<!-- tl:end --> system requirements 
+grounded IDD spine of <!-- tl:count.inline type == 'user_requirement' -->12<!-- tl:end --> user requirements and <!-- tl:count.inline type == 'system_requirement' -->35<!-- tl:end --> system requirements 
 under [`idd/vision/`](https://github.com/rhodium-org/throughline-compose/tree/main/idd/vision), [`idd/goals/`](https://github.com/rhodium-org/throughline-compose/tree/main/idd/goals),
 [`idd/user-requirements/`](https://github.com/rhodium-org/throughline-compose/tree/main/idd/user-requirements),
 [`idd/system-requirements/`](https://github.com/rhodium-org/throughline-compose/tree/main/idd/system-requirements), and [`idd/non-goals/`](https://github.com/rhodium-org/throughline-compose/tree/main/idd/non-goals), and
@@ -122,10 +122,14 @@ honest:
 
 - **`tl-compose` is a strict superset of `tl`** ([SR-0003](https://github.com/rhodium-org/throughline-compose/blob/main/idd/system-requirements/SR-0003.yml)).
   Local-graph commands are forwarded to the throughline library unchanged; the
-  union-aware `check` and `docs` are overridden to compose, validate, and render the
-  combined graph. (The `source` subcommands for editing declarations are the remaining
-  superset surface — see the status note above.) The core command set is obtained
-  programmatically, so the two surfaces cannot drift apart.
+  union-aware ones — `check`, `docs`, `query`, `trace`, `new`, `link`, `ratify`,
+  `migrate` and `context` — are overridden to compose, validate, list and render the
+  combined graph. `tl-compose context` names them from the dispatch table itself
+  ([SR-0025](https://github.com/rhodium-org/throughline-compose/blob/main/idd/system-requirements/SR-0025.yml)),
+  so trust that over any list written by hand, including this one. (The `source`
+  subcommands for editing declarations are the remaining superset surface — see the
+  status note above.) The core command set is obtained programmatically, so the two
+  surfaces cannot drift apart.
 - **Composition reuses throughline unchanged** ([SR-0004](https://github.com/rhodium-org/throughline-compose/blob/main/idd/system-requirements/SR-0004.yml)).
   It merges the sources into one in-memory `Project` and runs throughline's existing
   `validate`, `Index`, and `fingerprint` over that union — no second validation

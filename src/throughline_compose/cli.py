@@ -27,6 +27,12 @@ refusals, same fingerprint — merely able to see further.
 `trace` (SR-0010) walks that same union so a link into a borrowed clause resolves
 into the source and reads in ``<namespace>:<UID>`` vocabulary, instead of the
 dead-end ``(unresolved)`` bare ``tl`` prints for anything outside the local graph.
+
+`query` (SR-0037) lists over the union, in that same vocabulary, and says which
+scope it answered over. It is the command a composer discovers a borrowed clause
+with, so while it answered over the local graph alone the tool accepted references
+— ``--ground asvs:V2.1.1`` — that it gave no way to find, and reported the absence
+as ``0 item(s)``.
 """
 from __future__ import annotations
 
@@ -48,6 +54,7 @@ from throughline.cli import (
     cmd_link,
     cmd_migrate,
     cmd_new,
+    cmd_query,
     cmd_ratify,
     cmd_trace,
     force_utf8_io,
@@ -65,7 +72,13 @@ from throughline.storage import (
     write_item,
 )
 from throughline.uid import UidError, next_uid, parse_uid
-from throughline.validate import ERROR, is_namespace_qualified, validate
+from throughline.validate import (
+    ERROR,
+    FilterError,
+    eval_filter,
+    is_namespace_qualified,
+    validate,
+)
 from throughline.version import distribution_version
 
 from . import git_resolver  # noqa: F401 — registers the reference git resolver (SR-0011)
@@ -77,6 +90,10 @@ from .spi import ResolvedSource, ResolverError, resolver_for
 from .union import ComposeError, build_union, translate_finding
 
 OK, FINDINGS, USAGE = 0, 1, 2
+
+# Core's own aliases for a union-aware command, mapped to the name `_UNION_COMMANDS`
+# holds it under (SR-0037).
+_CMD_ALIASES = {"ls": "query"}
 
 
 def _err(msg: str) -> int:
@@ -343,6 +360,95 @@ def _compose_check(args) -> int:
         tally += "  — composed graph is sound" + (" (strict)" if args.strict else "")
     print(tally, file=sys.stderr)
     return FINDINGS if any(f.severity == ERROR for f in findings) else OK
+
+
+def _query_dict(item) -> dict:
+    """One matched item of the display view as data (SR-0037). The item already
+    names itself as the composer does; what the dict adds is the owning source as
+    its own field, so a consumer of the JSON reads provenance rather than parsing
+    it back out of a UID."""
+    d = item.to_dict()
+    d["source"] = item.uid.split(":", 1)[0] if is_namespace_qualified(item.uid) else None
+    return d
+
+
+def _compose_query(args) -> int:
+    """List the items matching a filter over the composed union (SR-0037).
+
+    Every other union-aware command already answers over the composed graph, while
+    the one command whose purpose is to show a composer what exists answered over
+    the consumer's own graph alone — and said nothing about having done so. The
+    second half is the worse one: a filter naming a type only a source holds printed
+    `0 item(s)`, which reads as a clean bill of health rather than as a question that
+    was never asked. So the union is the default here as it is everywhere else, and
+    ``--local`` is how a composer narrows the answer deliberately.
+
+    ``--local`` narrows *which items are listed*, not which graph they are judged
+    in: the filter's link predicates are evaluated over the union either way, so a
+    local item counts as verified by a borrowed test under both scopes. Narrowing
+    the graph as well would make ``--local`` a second, quieter validator with its
+    own answers, which is the divergence SR-0003 exists to refuse.
+
+    The scope line is printed in JSON mode too, where core prints no count at all.
+    It goes to stderr, so it cannot corrupt the document on stdout, and a listing
+    that states its scope in one mode and not the other would leave the reader to
+    discover which they were in. With no sources declared this is a pure
+    pass-through to core ``tl query`` (SR-0003).
+    """
+    try:
+        consumer = load_project(args.path)
+    except ProjectError as e:
+        return _err(str(e))
+    try:
+        sources = parse_sources(consumer)
+    except SourceError as e:
+        return _err(str(e))
+
+    if not sources:
+        return cmd_query(args)
+
+    try:
+        res = _resolve_sources(sources, Path(args.path))
+    except ResolverError as e:
+        return _err(str(e))
+    try:
+        union = build_union(consumer, res.projects(), res.ns_aliases)
+    except ComposeError as e:
+        return _err(str(e))
+
+    view = union.displayed()
+    live = [it for it in view.items() if args.all or not it.is_deleted]
+    local = [it for it in live if not is_namespace_qualified(it.uid)]
+    pool = local if args.local else live
+
+    index = Index.build(view)
+    try:
+        matched = [it for it in pool if eval_filter(it, args.expr, index)]
+    except FilterError as e:
+        return _err(f"bad filter expression: {e}")
+    # Local UIDs are uppercase and namespaces lowercase, so sorting by the name the
+    # composer reads lists their own items first, then groups each source together.
+    matched.sort(key=lambda it: it.uid)
+
+    if args.format == "json":
+        import json
+        print(json.dumps([_query_dict(it) for it in matched], indent=2, default=str))
+    else:
+        for it in matched:
+            title = f"  {it.title}" if it.title else ""
+            print(f"{it.uid}  [{it.type}/{it.status}]{title}")
+        sys.stdout.flush()
+
+    n_sources = len(res.resolved)
+    if args.local:
+        scope = (f"local only · {len(live) - len(local)} borrowed item(s) across "
+                 f"{n_sources} source(s) not searched — drop --local to search them")
+    else:
+        borrowed = sum(1 for it in matched if is_namespace_qualified(it.uid))
+        scope = (f"composed graph · {len(matched) - borrowed} local · "
+                 f"{borrowed} borrowed from {n_sources} source(s)")
+    print(f"\n{len(matched)} item(s) ({scope})", file=sys.stderr)
+    return OK
 
 
 def _compose_docs(args) -> int:
@@ -927,6 +1033,12 @@ _UNION_COMMANDS: dict[str, tuple[Callable[[argparse.Namespace], int], str]] = {
         _compose_check,
         "composes consumer + sources, validates the union with core's own "
         "validator, and reports every finding in `<namespace>:<UID>` vocabulary."),
+    "query": (
+        _compose_query,
+        "lists over the composed graph, so a borrowed clause is findable and is "
+        "shown as `<namespace>:<UID>`; `--local` narrows to your own items, and "
+        "either way the count says which scope it answered over. `ls` is an alias "
+        "for it, and `--format json` carries each item's owning source as a field."),
     "docs": (
         _compose_docs,
         "a `tl:matrix` target cell pointing at a borrowed clause renders that "
@@ -1014,8 +1126,21 @@ def main(argv: list[str] | None = None) -> int:
         "agentinfo",
         help="alias for `context` — emit the agent brief (IDD + composition)")
     ai.set_defaults(func=cmd_context, cmd="context")
+    # `--local` narrows a listing to the consumer's own items (SR-0037). The flag is
+    # added to core's own `query` subparser rather than declared in core, which knows
+    # nothing of borrowed items and so has nothing for it to mean. `ls` is core's
+    # alias for that same parser object, so both spellings gain it in one call.
+    sub.choices["query"].add_argument(
+        "--local", action="store_true",
+        help="list only this project's own items, not the ones it borrows")
     args = parser.parse_args(argv)
-    entry = _UNION_COMMANDS.get(getattr(args, "cmd", None))
+    # argparse records the spelling that was typed, so an alias of a union-aware
+    # command arrives under a name the table does not hold — and would fall through
+    # to the local-only core pass-through, silently, for the one command whose whole
+    # complaint was silence (SR-0037). `agentinfo` escapes this only by fixing `cmd`
+    # above, which the aliases core owns cannot do.
+    cmd = _CMD_ALIASES.get(getattr(args, "cmd", None), getattr(args, "cmd", None))
+    entry = _UNION_COMMANDS.get(cmd)
     try:
         return entry[0](args) if entry else args.func(args)
     except KeyboardInterrupt:  # pragma: no cover
