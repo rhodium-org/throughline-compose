@@ -172,12 +172,12 @@ The table is generated from the graph, so it cannot drift from the actual links.
 | UID | Title | Implements (incoming) |
 |---|---|---|
 | UR-0001 | The composer controls source namespaces | SR-0001, SR-0002, SR-0024 |
-| UR-0002 | A composed project is worked as one — one tool, one set of guarantees | SR-0003, SR-0004, SR-0005, SR-0007, SR-0010, SR-0016, SR-0019, SR-0020, SR-0022, SR-0023, SR-0025, SR-0026, SR-0029, SR-0035 |
+| UR-0002 | A composed project is worked as one — one tool, one set of guarantees | SR-0003, SR-0004, SR-0005, SR-0007, SR-0010, SR-0016, SR-0019, SR-0020, SR-0022, SR-0023, SR-0025, SR-0026, SR-0029, SR-0035, SR-0037 |
 | UR-0003 | A source is referenced by origin and pinned to an edition | SR-0006, SR-0008, SR-0018 |
 | UR-0004 | Non-git authorities are composed through pluggable resolvers | SR-0011, SR-0012, SR-0013 |
 | UR-0005 | Transitive sources are pulled forward by re-export and alias, never silently merged | SR-0014, SR-0015 |
 | UR-0006 | Composing tolerates a source at an older on-disk format major | SR-0017 |
-| UR-0007 | The published distribution is trustworthy out of the box | SR-0021, SR-0027, SR-0028 |
+| UR-0007 | The published distribution is trustworthy out of the box | SR-0021, SR-0027, SR-0028, SR-0036 |
 | UR-0008 | A contribution states the terms under which it is offered | — |
 | UR-0009 | Know that a slow composition is working, not hung | SR-0031 |
 | UR-0010 | A newcomer can set up, check and offer a change without asking | SR-0032 |
