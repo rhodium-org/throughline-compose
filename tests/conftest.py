@@ -26,6 +26,9 @@ root_types = ["intent"]
 delivery_roots = ["intent"]
 ground_link_types = ["derives_from", "implements"]
 
+[links]
+types = ["derives_from", "implements"]
+
 [status]
 values = ["proposed", "draft", "approved", "ratified", "rejected", "suspect", "deleted"]
 

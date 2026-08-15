@@ -3,6 +3,8 @@
 """Unit tests for the composition engine (union.py, sources.py)."""
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from throughline.model import Item, Link, Project, Register
 from throughline.validate import validate
@@ -11,16 +13,22 @@ from throughline_compose.sources import SourceError, parse_sources
 from throughline_compose.union import ComposeError, build_union, translate_finding
 
 # A permissive consumer schema so these unit tests exercise the merge, not the
-# consumer's own type rules (those are covered by the on-disk fixtures).
+# consumer's own type rules (those are covered by the on-disk fixtures). Permissive
+# in what it admits, not in what it leaves unsaid: core requires a project to state
+# the vocabularies its items are validated against (throughline SR-0185), and these
+# tests assert a clean validate, so the schema declares exactly what the fixtures
+# below use.
 _SCHEMA = {
     "project": {"name": "c", "format_version": 2},
     "grounding": {"root_types": ["intent"], "delivery_roots": ["intent"],
                   "ground_link_types": ["derives_from", "implements"]},
+    "status": {"values": ["approved"]},
+    "links": {"types": ["derives_from", "implements", "relates"]},
 }
 
 
 def _project(config: dict, regs: dict[str, list[Item]]) -> Project:
-    p = Project(path=".", config=config)
+    p = Project(path=Path("."), config=config)
     for prefix, items in regs.items():
         reg = Register(prefix=prefix)
         for it in items:
