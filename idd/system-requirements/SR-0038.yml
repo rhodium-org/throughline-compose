@@ -1,0 +1,33 @@
+uid: SR-0038
+type: system_requirement
+status: ratified
+title: Publication coverage is judged over the union, not left inert
+text: 'tl-compose check shall judge the composed graph''s publication coverage exactly
+  as a standalone throughline check judges a local graph''s: when the consumer configures
+  published documents, every live normative item it owns shall be required to appear
+  in one of them, and a consumer that configures none shall be unaffected. A finding
+  of this kind against a borrowed item shall stay suppressed at the seam, its remedy
+  lying with the graph that owns it. No path shall leave the rule unfired while the
+  configuration that turns it on is present.'
+rationale: |-
+  The validator does not read the published documents for itself — `check` reads them and hands the set in, and a caller that omits it gets `published=None`, which the rule treats as "not configured" and stays silent. `tl-compose check` omitted it. So a composed project could configure `[docs] paths`, watch `docs --check` pass, watch `check --strict` pass, and be told nothing at all about publication coverage. A rule that never fires is indistinguishable from a rule that is satisfied — the false clean result UR-0002 forbids, and worse than having no rule, because the project believes it is gated.
+
+  Why it survived. throughline-compose's own graph declares no `[[sources]]`, so its self-hosted gate takes the early return that defers to the core check verbatim (SR-0003) — the branch that was always correct. The defect lived precisely in the branch this repo's own dogfooding cannot reach, and was found from a consumer, throughline-ratify, whose graph does compose a source.
+
+  Judged over the union rather than over the consumer's own items alone, so a published document may cite a borrowed clause and have that citation count. The seam then does its ordinary work: `unpublished` is not a seam rule, so the finding survives on a local item and is dropped on a borrowed one, whose remedy is a commit in the owning graph. That falls out of SR-0026 unchanged; nothing here widens or narrows the seam.
+
+  Who pays. Nobody who has not configured `[docs] paths` — for them the rule stays inert exactly as before. A composed project that has configured them may see findings on its first run after this lands: those are the coverage obligations it already declared and was never told it was failing. That is the backlog surfacing, not a new rule.
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0026
+  type: relates
+- target: SR-0003
+  type: relates
+attrs:
+  priority: must
+  verification: test
+  origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:71cb8a59293be1c00da94a9167550c7e1a9a4ddc8ae4ed4d7ccc98c60ece214a

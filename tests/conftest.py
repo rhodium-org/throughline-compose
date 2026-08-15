@@ -199,6 +199,33 @@ _WIDENED_CONSUMER: dict[str, str] = dict(
 )
 
 
+# A consumer that publishes documents. `[docs] paths` is what turns core's
+# `unpublished` rule on, so these two fixtures are the smallest graph that can tell a
+# rule that fires from a rule that was never asked (SR-0038): the same graph, the
+# same configuration, differing only in whether the document names the local item.
+_DOCS_CONFIG = '\n[docs]\npaths = ["docs/*.md"]\n'
+
+_PUBLISHING_CONSUMER: dict[str, str] = dict(
+    _CONSUMER,
+    **{
+        "throughline.toml": _CONSUMER["throughline.toml"] + _DOCS_CONFIG,
+        # A published document that publishes nothing. Marker-free is deliberate: a
+        # document with nothing to inject is still a published document, so the
+        # coverage question is asked of it exactly as of any other.
+        "docs/spec.md": "# Consumer spec\n\nNothing is published here yet.\n",
+    },
+)
+
+_COVERED_CONSUMER: dict[str, str] = dict(
+    _PUBLISHING_CONSUMER,
+    **{
+        "docs/spec.md": (
+            "# Consumer spec\n\n<!-- tl:item SR-0001 -->\n<!-- tl:end -->\n"
+        ),
+    },
+)
+
+
 @pytest.fixture
 def source_dir(tmp_path: Path) -> Path:
     return _write(tmp_path / "toy-source", _SOURCE)
@@ -224,3 +251,15 @@ def widened_consumer_dir(tmp_path: Path, source_dir: Path) -> Path:
 @pytest.fixture
 def lean_consumer_dir(tmp_path: Path, source_dir: Path) -> Path:
     return _write(tmp_path / "consumer", _LEAN_CONSUMER)
+
+
+@pytest.fixture
+def publishing_consumer_dir(tmp_path: Path, source_dir: Path) -> Path:
+    """``[docs] paths`` configured, and a document that names nothing."""
+    return _write(tmp_path / "consumer", _PUBLISHING_CONSUMER)
+
+
+@pytest.fixture
+def covered_consumer_dir(tmp_path: Path, source_dir: Path) -> Path:
+    """The same, with the local clause actually published."""
+    return _write(tmp_path / "consumer", _COVERED_CONSUMER)

@@ -64,6 +64,7 @@ from throughline.fingerprint import fingerprint
 from throughline.graph import Index
 from throughline.grounding import GroundingError, ratify
 from throughline.identity import RATIFIED_ID_ATTR, IdentityError, default_ratifier
+from throughline.inject import referenced_uids
 from throughline.model import Item, Link
 from throughline.storage import (
     ProjectError,
@@ -322,7 +323,14 @@ def _compose_check(args) -> int:
     except SeamError as e:
         return _err(str(e))
 
-    findings = validate(union.project, strict=args.strict)
+    # Publication coverage is core's, but the set of published documents is not
+    # something the validator reads for itself — `check` hands it in, and omitting it
+    # leaves the `unpublished` rule (SR-0096) inert rather than failing, which is
+    # indistinguishable from a graph that is fully published. Read over the union so
+    # a document may cite a borrowed item, and by the same `[docs] paths` the
+    # consumer already configured for `docs`.
+    published = referenced_uids(union.project)  # None unless [docs] paths configured
+    findings = validate(union.project, strict=args.strict, published=published)
     # Report against a borrowed item only what this consumer can act on, and let a
     # local item grounded through a source count as grounded (SR-0026), widened by
     # any rule the consumer declared under [seam] (SR-0035). The same index then
