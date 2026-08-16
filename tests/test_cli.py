@@ -302,7 +302,7 @@ def test_compose_docs_item_block_shows_borrowed_link_reference(consumer_dir):
 
 
 def test_compose_docs_sourced_mirrors_borrowed_clause(consumer_dir):
-    # SR-0114: tl:sourced mirrors, in full, the external clause the consumer's items
+    # SR-0039: tl:sourced mirrors, in full, the external clause the consumer's items
     # reference — toy:SR-0001's own block, drawn from its source.
     ref = consumer_dir / "reference.md"
     ref.write_text(
@@ -314,15 +314,99 @@ def test_compose_docs_sourced_mirrors_borrowed_clause(consumer_dir):
     assert "The source shall provide one concrete, testable clause." in out
 
 
-def test_compose_docs_sourced_placeholder_without_sources(source_dir):
-    # SR-0114: with no sources, tl:sourced resolves nothing and renders a
-    # placeholder rather than erroring — the passthrough default resolver.
+def test_compose_docs_sourced_states_qualified_identity(consumer_dir):
+    """SR-0039: the mirrored clause is stated under the identity the citing document
+    uses for it — namespace-qualified, with its reference number — never under the
+    source's own local UID, which the consumer's unrelated SR-0001 also carries."""
+    ref = consumer_dir / "reference.md"
+    ref.write_text(
+        "<!-- tl:sourced uid == 'SR-0001' -->\n<!-- tl:end -->\n", encoding="utf-8")
+    assert tlc_main(["-C", str(consumer_dir), "docs", str(ref)]) == 0
+    out = ref.read_text(encoding="utf-8")
+    assert "**toy:SR-0001 (V1.1.1) — A normative clause the source offers**" in out
+    # The defect this fixes: the borrowed clause published under a bare SR-0001, the
+    # same heading the consumer's own unrelated SR-0001 renders under.
+    assert "**SR-0001 — A normative clause the source offers**" not in out
+
+
+def test_compose_docs_sourced_qualifies_the_mirrored_clauses_links(consumer_dir):
+    """SR-0039: a mirrored clause's own outgoing links render namespace-qualified, so
+    a target internal to the source is never shown as though it named a consumer
+    item."""
+    ref = consumer_dir / "reference.md"
+    ref.write_text(
+        "<!-- tl:sourced uid == 'SR-0001' -->\n<!-- tl:end -->\n", encoding="utf-8")
+    assert tlc_main(["-C", str(consumer_dir), "docs", str(ref)]) == 0
+    out = ref.read_text(encoding="utf-8")
+    body = out.split("A normative clause the source offers", 1)[1]
+    for line in body.splitlines():
+        if line.startswith("*") and ":*" in line and "Rationale" not in line:
+            for target in line.split(":*", 1)[1].split(","):
+                target = target.strip()
+                if target:
+                    assert target.startswith("toy:"), f"unqualified target: {line}"
+
+
+def test_compose_docs_sourced_placeholder_when_nothing_is_referenced(source_dir):
+    # SR-0039: the selected items reference no external clause, so there is nothing
+    # to mirror and a clear placeholder is rendered rather than an error.
     ref = source_dir / "reference.md"
     ref.write_text(
         "<!-- tl:sourced uid == 'SR-0001' -->\n<!-- tl:end -->\n", encoding="utf-8")
     rc = tlc_main(["-C", str(source_dir), "docs", str(ref)])
     assert rc == 0
-    assert "no source-backed external clauses to mirror" in ref.read_text(encoding="utf-8")
+    assert "reference no external clause" in ref.read_text(encoding="utf-8")
+
+
+def test_bare_tl_docs_refuses_a_composed_document(consumer_dir):
+    """SR-0039/throughline SR-0186: running bare `tl docs` over an already-rendered
+    composed document fails and overwrites nothing, instead of silently replacing the
+    mirrored clauses with a placeholder and exiting 0.
+
+    In this process throughline_compose is imported, so the directive is registered
+    and the failure is the missing sources; a real `tl` process has no registration
+    and reports the directive as unprovided (covered by throughline's own suite).
+    Both paths must leave the document untouched, which is what this asserts."""
+    from throughline.cli import main as tl_main
+    ref = consumer_dir / "reference.md"
+    ref.write_text(
+        "<!-- tl:sourced uid == 'SR-0001' -->\n<!-- tl:end -->\n", encoding="utf-8")
+    assert tlc_main(["-C", str(consumer_dir), "docs", str(ref)]) == 0
+    rendered = ref.read_text(encoding="utf-8")
+    assert "A normative clause the source offers" in rendered
+
+    assert tl_main(["-C", str(consumer_dir), "docs", str(ref)]) == 2
+    assert ref.read_text(encoding="utf-8") == rendered  # nothing was overwritten
+
+
+def test_compose_docs_sourced_fails_on_an_unmirrorable_reference(consumer_dir):
+    """SR-0039: a referenced clause that cannot be rendered from its declared source
+    fails injection rather than being quietly dropped."""
+    from throughline_compose.directives import render_sourced
+    from throughline.inject import InjectError
+
+    class _NoSources:
+        def mirror_block(self, uid):
+            return None
+
+    class _Item:
+        uid = "SR-0001"
+        is_deleted = False
+        links = [type("L", (), {"target": "toy:SR-9999", "type": "relates"})()]
+
+    class _Proj:
+        def items(self):
+            return [_Item()]
+
+    import throughline_compose.directives as d
+    real = d.matching
+    d.matching = lambda project, expr: [_Item()]
+    try:
+        with pytest.raises(InjectError) as ei:
+            render_sourced(_Proj(), "uid == 'SR-0001'", _NoSources())
+        assert "toy:SR-9999" in str(ei.value)
+    finally:
+        d.matching = real
 
 
 def _write_sr(consumer_dir: Path, uid: str, links: list[tuple[str, str]]) -> Path:

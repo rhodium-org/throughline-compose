@@ -1,0 +1,49 @@
+uid: SR-0039
+type: system_requirement
+status: ratified
+title: The tl:sourced mirror is provided and rendered by the composition layer
+text: throughline-compose shall provide the tl:sourced document directive itself,
+  registering it through the directive seam core exposes (throughline SR-0186) and
+  declaring it as not publishing the local items its filter selects for the coverage
+  rule, rather than depending on core to render a directive core cannot satisfy (throughline
+  NG-0007). Rendering shall mirror, in full, the distinct external clauses that the
+  matching items reference by a namespace-qualified link target, in target order.
+  Each mirrored clause shall be stated under the identity the citing document uses
+  for it — the namespace-qualified target and, where the clause carries a reference
+  number, that number — and never under the source graph local UID, so a mirrored
+  clause cannot be mistaken for a local item that happens to share its UID and the
+  heading a reader arrives at matches the citation that sent them there. The outgoing
+  links of a mirrored clause shall likewise render namespace-qualified, so a target
+  internal to the source is never displayed as though it named one of the consumer
+  items. Identity and reference number shall take the same form the consumer citations
+  already use (SR-0007). Where the matching items reference no external clause there
+  is nothing to mirror and a clear placeholder shall be rendered; where a referenced
+  clause cannot be rendered from its declared source, injection shall fail rather
+  than quietly drop it. Block rendering shall continue to reuse the core item renderer
+  rather than reimplementing it (SR-0004).
+rationale: 'Two defects meet here. The directive lived in core while only composition
+  holds the sources it needs, so core shipped a renderer whose sole unaided output
+  was a note naming another program, and bare tl docs silently overwrote already-rendered
+  clauses with that note. And because the block was rendered from the source graph
+  with the namespace stripped, a mirrored clause appeared under the source local
+  UID: a consumer document containing both its own SR-0003 and a borrowed asvs:SR-0003
+  showed two unrelated requirements under one heading, leaving the reference number
+  at the foot of the block as the only way to tell them apart. Consumers were compensating
+  with hand-written warning paragraphs telling readers not to trust the headings.
+  Moving the directive to the layer that holds the sources fixes both at once: the
+  identity is known where the render happens, and core no longer has a degraded path
+  to take.'
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0007
+  type: relates
+- target: SR-0004
+  type: relates
+attrs:
+  priority: should
+  verification: test
+  origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:be004b2e86e305c5bbf8e17e55d2524876a0fb838392b60cc37a0e82b2826731
