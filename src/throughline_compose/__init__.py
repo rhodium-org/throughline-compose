@@ -22,4 +22,9 @@ try:
 except PackageNotFoundError:  # a source tree that was never installed
     __version__ = "0.0.0+unknown"
 
+# Registering the directives this layer provides is an import side effect, so any
+# entry into the package — the CLI, or a caller using it as a library — renders
+# tl:sourced, while a bare `tl` reports it as unprovided (SR-0039).
+from . import directives as _directives  # noqa: E402,F401
+
 __all__ = ["__version__"]

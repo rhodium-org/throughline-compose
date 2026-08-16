@@ -19,7 +19,7 @@ from __future__ import annotations
 import re
 
 from throughline import is_namespace_qualified
-from throughline.inject import TargetResolver, _render_item
+from throughline.inject import TargetResolver, render_item
 
 _NS_SPLIT = re.compile(r"^([a-z][a-z0-9_-]*):(.+)$")
 
@@ -57,24 +57,62 @@ class UnionResolver(TargetResolver):
         ref = self.attr(uid, "source_ref")
         return f"{uid} ({ref})" if ref else uid
 
-    def block(self, uid: str) -> str | None:
-        """The borrowed clause's own full block (SR-0114): render the source item a
-        namespace-qualified target names, from its source project. Returns ``None``
-        for a local target or a source that cannot render it, so ``tl:sourced``
-        mirrors only the external clauses a source backs."""
+    def mirror_block(self, uid: str) -> str | None:
+        """The borrowed clause's own full block, stated under the identity the citing
+        document uses for it (SR-0039). Returns ``None`` for a local target or one
+        whose namespace names no declared source, so the caller can report which
+        reference it could not mirror rather than dropping it.
+
+        The block is produced by core's item renderer (SR-0004) over the *source*
+        project, with a resolver that qualifies every UID it renders: the heading
+        through the identity seam (throughline SR-0187) and the clause's outgoing
+        links through the link seam (throughline SR-0113). Without that, a mirrored
+        clause would be published under the source's own local UID and collide with
+        an unrelated consumer item of the same number."""
         src = self._source_for(uid)
         if src is None:
             return None
         local = _local(uid)
         if src.get(local) is None:
             return None
-        return _render_item(src, local, TargetResolver(src))
+        ns = _NS_SPLIT.match(uid).group(1)
+        return render_item(src, local, _MirrorResolver(src, ns))
 
     def _source_for(self, uid: str):
         """The loaded source project owning a namespace-qualified ``uid``, or None."""
         if not is_namespace_qualified(uid):
             return None
         return self._sources.get(_NS_SPLIT.match(uid).group(1))
+
+
+class _MirrorResolver(TargetResolver):
+    """Renders one source's items under the consumer's namespace for that source.
+
+    A source graph knows nothing of the namespace a consumer binds it to, so every
+    UID it would render — the clause's own, and each of its outgoing link targets —
+    is qualified here (SR-0039). Reference numbers take the same ``UID (ref)`` form
+    the consumer's citations already use (SR-0007), so the heading a reader arrives
+    at matches the citation that sent them there."""
+
+    def __init__(self, source, namespace: str) -> None:
+        super().__init__(source)
+        self._ns = namespace
+
+    def _qualified(self, uid: str) -> str:
+        """``uid`` under this source's namespace, with its reference number where the
+        clause carries one. A target already qualified is a reference the source makes
+        into a further namespace of its own and is left exactly as the source wrote
+        it — re-qualifying it would claim it for the wrong graph."""
+        if is_namespace_qualified(uid):
+            return uid
+        ref = self.attr(uid, "source_ref")
+        return f"{self._ns}:{uid} ({ref})" if ref else f"{self._ns}:{uid}"
+
+    def display(self, uid: str) -> str:
+        return self._qualified(uid)
+
+    def link_display(self, uid: str) -> str:
+        return self._qualified(uid)
 
 
 def _local(uid: str) -> str:
