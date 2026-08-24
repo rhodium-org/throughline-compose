@@ -1,0 +1,37 @@
+uid: SR-0042
+type: system_requirement
+status: ratified
+title: The agent brief's item section is composed too
+text: When the agent brief is asked about a specific UID over a project that declares
+  sources, the item section it appends shall be computed over the composed union
+  and reported in <namespace>:<UID> vocabulary, under the same source boundary the
+  neighbourhood command applies (SR-0041). The core brief above that section shall
+  remain the unchanged core output, and the composition sections below it shall be
+  unaffected. A UID that does not exist in the union shall fail with the same diagnostic
+  the other UID-taking union commands give, before any brief is emitted. When the
+  project declares no sources the command shall remain a pure pass-through to the
+  core tool (SR-0003).
+rationale: |-
+  The brief is the one document an agent is told to trust over everything else, so a wrong answer inside it is worse than a missing one. Forwarding the item section to the core tool computes the neighbourhood over the bare local graph, which renders every borrowed clause as (unresolved) — and then, a few lines further down, the same output tells the agent that composition is working and that cross-source references resolve. That is a false clean result of the exact kind fail-fast exists to prevent (SR-0005), delivered by the document least likely to be questioned.
+
+  Rejected — suppressing the item section when sources are declared. It is safe and it is the wrong trade: a composed graph is precisely the one whose neighbourhood is hardest to reconstruct by hand, because half the edges leave the repository. Withdrawing the capability where it is most needed, to avoid getting it wrong, concedes the point of composing at all.
+
+  Rejected — re-wording the section here rather than rendering the core one. Two tools describing the same section in two ways is how an agent learns to treat the wording as noise. The section is emitted through the core renderer with the union supplied as the graph, so only the neighbourhood differs between the tools and never the prose around it.
+
+  Who pays: asking the brief about a UID now resolves and composes the sources, so it is slower than the bare command and can reach the network on a cold cache. The no-UID form is untouched and stays the fast path, and the cost is only paid by a caller who asked a question that cannot be answered without the union.
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0041
+  type: relates
+- target: SR-0016
+  type: refines
+- target: SR-0005
+  type: relates
+attrs:
+  origin: ai
+  priority: must
+  verification: test
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:6b04ba61685bb52722c9e3cb2e04a2faf486401dd8fea1962f961a5218222273

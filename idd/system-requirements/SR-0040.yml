@@ -1,0 +1,65 @@
+uid: SR-0040
+type: system_requirement
+status: ratified
+title: A composed export carries the composed graph, or declares that it did not
+text: Where throughline-compose exports a composed project as data for another tool
+  to read, the export shall be taken over the composed union rather than over the
+  consumer's own graph alone, so that every reference the export carries resolves
+  inside it. A borrowed item shall appear under the same `<namespace>:<UID>` vocabulary
+  in which findings are reported, and shall carry its owning source as data rather
+  than leaving a reader to infer it from a qualifier. The export shall state the
+  scope it answered over — which sources were composed and at which pinned edition,
+  and how many of the items it carries are the consumer's own — and shall identify
+  the tooling that produced it, the composition layer included. The composer shall
+  be able to restrict an export to their own items, and an export so restricted shall
+  record that restriction in its own data, so that a partial export is never indistinguishable
+  from a whole one.
+rationale: 'Composition made every other command answer over the union — check validates
+  it, trace walks into it, docs renders over it, and query was repaired to list over
+  it (SR-0037) — while the one command whose declared purpose is to hand the graph
+  to somebody else''s tooling kept answering over the consumer''s graph alone. That
+  is SR-0037''s fault arriving in the interchange surface, where it is graver than
+  a wrong count: the export is not merely partial, it is unresolvable. Measured on
+  home-platform-idd at tl-compose 0.14.0 / throughline 2.1.0: check and query report
+  396 live items, 33 local and 363 borrowed from asvs pinned at v5.0.0; the export
+  emits 33 items and not one namespace-qualified UID, while carrying the source declaration
+  in its own config and three links whose targets — asvs:SR-0226, asvs:SR-0272, asvs:SR-0273
+  — name items the document does not contain. Every reader of that file must either
+  fail on a dangling target or silently drop it, and what it drops is exactly the
+  record that a local requirement is grounded in a published standard, which is the
+  evidence an export exists to carry. The header names the core''s version alone,
+  so nothing in the file says composition was involved at all. Widening the export
+  by default was chosen over an opt-in flag, following SR-0037 for the reason SR-0037
+  gives: the inconsistency is the defect, and a flag preserves it. Who pays: a third
+  party reading the current output, which will now receive the borrowed items, and
+  item identifiers carrying a namespace qualifier. That syntax already appears in
+  link targets today, so a reader that handles the document at all already meets
+  it — and nothing correct can have been built on a document whose references do
+  not resolve. It is bought with an export schema version and a release note, on
+  a package below 1.0, and it is the cheapest this change will ever be. Emitting
+  the borrowed items without stating the scope was rejected as the whole remedy.
+  Restricting an export to the consumer''s own items is legitimate — someone publishing
+  their own graph should not have to ship a standard''s full text with it — so the
+  fix cannot be that every export is whole; it must be that the document says which
+  it is, leaving partiality a fact in the data rather than something the reader has
+  to know already. Nothing here reaches the core. tl is a single-graph tool by NG-0001
+  and its export is correct over the graph it is handed; the scope split is made
+  in composition, so it is repaired in composition — by adding the command to the
+  one table that both routes a union-aware command and supplies the agent brief''s
+  description of it (SR-0025), so it cannot become documented-but-wrong or right-but-undocumented.'
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0003
+  type: refines
+- target: SR-0037
+  type: relates
+- target: SR-0001
+  type: relates
+attrs:
+  priority: must
+  verification: test
+  origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:de24564143c16fda57db18c3d2e915395a75653350251aee688ac1d6ca1bf9f4
