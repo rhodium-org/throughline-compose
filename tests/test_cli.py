@@ -859,3 +859,278 @@ def test_an_uninstalled_source_tree_declines_to_name_a_release(monkeypatch):
     finally:
         monkeypatch.undo()
         importlib.reload(throughline_compose)
+
+
+# ---------------------------------------------------------------------- SR-0041
+# `tl-compose subgraph` — the neighbourhood of a UID, composed, bounded at the seam.
+
+def test_compose_subgraph_resolves_cross_source(consumer_dir, capsys):
+    # SR-0041: the consumer's SR-0001 relates to toy:SR-0001. The neighbourhood is
+    # built over the union, so the borrowed clause is a node of it — in namespace
+    # vocabulary, never mangled, never (unresolved).
+    rc = tlc_main(["-C", str(consumer_dir), "subgraph", "SR-0001"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "toy:SR-0001" in out
+    assert "A normative clause the source offers" in out   # the clause's own title
+    assert "SR-0001  -relates->  toy:SR-0001" in out
+    assert "(unresolved)" not in out
+    assert "TOYSR-0001" not in out
+
+
+def test_compose_subgraph_stops_at_the_source_boundary(consumer_dir, capsys):
+    # SR-0041/SR-0020: toy:SR-0001 is reached during the walk, so it is *shown* but
+    # not traversed. Its own grounding chain (toy:UR-0001 -> toy:INT-0001) stays
+    # inside the source, or one link would drag a whole standard into the view.
+    rc = tlc_main(["-C", str(consumer_dir), "subgraph", "SR-0001"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "toy:SR-0001" in out
+    assert "toy:UR-0001" not in out
+    assert "toy:INT-0001" not in out
+
+
+def test_compose_subgraph_from_a_borrowed_clause_names_its_local_adopters(
+    consumer_dir, capsys
+):
+    # SR-0041: the question the boundary's start-node exception exists for — which
+    # of *my* items adopt this clause. Applying the boundary to the named item too
+    # would answer it with silence and exit 0.
+    rc = tlc_main(["-C", str(consumer_dir), "subgraph", "toy:SR-0001"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert out.startswith("toy:SR-0001  [system_requirement/approved]")
+    assert "depended on by (1):" in out
+    assert "SR-0001" in out and "Consumer clause building on the source" in out
+    # The named clause is walked one step, and no further: its parent shows, its
+    # grandparent does not.
+    assert "toy:UR-0001" in out
+    assert "toy:INT-0001" not in out
+    assert "TOYSR-0001" not in out
+
+
+def test_compose_subgraph_reports_edges_that_start_at_a_borrowed_clause(
+    consumer_dir, capsys
+):
+    # SR-0041: the boundary governs what is walked *into*, not what is reported
+    # between nodes already in the set. toy:SR-0001 -> toy:UR-0001 joins two shown
+    # nodes and must appear, or the rendered graph would contradict the set it
+    # claims to induce.
+    rc = tlc_main(["-C", str(consumer_dir), "subgraph", "toy:SR-0001"])
+    assert rc == 0
+    edges = capsys.readouterr().out.split("links within this set")[1]
+    assert "toy:SR-0001  -implements->  toy:UR-0001" in edges
+    assert "SR-0001      -relates->  toy:SR-0001" in edges   # the cross-seam edge
+
+
+def test_compose_subgraph_dangling_cross_source_stays_unresolved(
+    consumer_dir, capsys
+):
+    # SR-0041: a namespace-qualified target with no clause at the pinned edition is
+    # a leaf reported as unresolved — in the composer's vocabulary, never mangled.
+    sr = consumer_dir / "system-requirements" / "SR-0001.yml"
+    sr.write_text(sr.read_text().replace("toy:SR-0001", "toy:SR-9999"))
+    rc = tlc_main(["-C", str(consumer_dir), "subgraph", "SR-0001"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "toy:SR-9999  (unresolved)" in out
+    assert "TOYSR-9999" not in out
+
+
+def test_compose_subgraph_json_speaks_namespace_vocabulary(consumer_dir, capsys):
+    # The machine-readable form an agent consumes must use the same vocabulary as
+    # the text form — a mangled UID in JSON is a UID nothing else in the toolchain
+    # will accept back.
+    import json
+    rc = tlc_main(["-C", str(consumer_dir), "subgraph", "SR-0001",
+                   "--format", "json"])
+    assert rc == 0
+    raw = capsys.readouterr().out
+    assert "TOYSR-0001" not in raw
+    doc = json.loads(raw)
+    assert doc["start"] == "SR-0001"
+    assert "toy:SR-0001" in doc["upstream"]
+    assert {"source": "SR-0001", "type": "relates",
+            "target": "toy:SR-0001"} in doc["edges"]
+
+
+def test_compose_subgraph_passthrough_without_sources(source_dir, capsys):
+    # A project declaring no [[sources]]: subgraph must behave like bare
+    # `tl subgraph` over the local graph (SR-0003).
+    rc = tlc_main(["-C", str(source_dir), "subgraph", "SR-0001"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert out.startswith("SR-0001  [system_requirement/approved]")
+    assert "UR-0001" in out and "INT-0001" in out   # nothing bounds a local walk
+
+
+def test_compose_subgraph_rejects_an_unknown_uid(consumer_dir, capsys):
+    rc = tlc_main(["-C", str(consumer_dir), "subgraph", "toy:SR-9999"])
+    assert rc == 2
+    assert "toy:SR-9999 does not exist" in capsys.readouterr().err
+
+
+# ---------------------------------------------------------------------- SR-0042
+# The brief's item section is composed too, not answered over the bare local graph.
+
+def test_context_with_a_uid_resolves_borrowed_clauses(consumer_dir, capsys):
+    # SR-0042: computed over the union, so the clause SR-0001 relates to reads with
+    # its own type/status/title. Left to core it would say `(unresolved)` and then,
+    # a few lines below, assert that composition resolves such references — a false
+    # clean result in the one document an agent is told to trust (SR-0005).
+    rc = tlc_main(["-C", str(consumer_dir), "context", "SR-0001"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    # Only the fenced neighbourhood, not the composition manual below it — that
+    # manual discusses `(unresolved)` in prose and would mask the regression.
+    section = out.split("## The item you were given")[1]
+    assert section.startswith(": SR-0001")
+    graph = section.split("```")[1]
+    assert "toy:SR-0001  [system_requirement/approved]" in graph
+    assert "A normative clause the source offers" in graph
+    assert "(unresolved)" not in graph
+    assert "TOYSR-0001" not in out
+
+
+def test_context_with_a_uid_keeps_the_core_brief_and_composition_sections(
+    consumer_dir, capsys
+):
+    # SR-0042: the UID adds a section; it does not disturb the brief above it or the
+    # composition manual below it. Order matters — the manual stays last.
+    rc = tlc_main(["-C", str(consumer_dir), "context", "SR-0001"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "The contract: Intent-Driven Development" in out
+    assert "## Sources this project declares" in out
+    assert out.index("## The item you were given") < out.index(
+        "Composition: working this project with `tl-compose`")
+
+
+def test_context_with_a_uid_stops_at_the_source_boundary(consumer_dir, capsys):
+    # SR-0042 defers to SR-0041's boundary: the borrowed clause is shown, its own
+    # grounding chain is not, so a brief cannot swell to include a whole standard.
+    rc = tlc_main(["-C", str(consumer_dir), "context", "SR-0001"])
+    assert rc == 0
+    section = capsys.readouterr().out.split("## The item you were given")[1]
+    graph = section.split("```")[1]
+    assert "toy:SR-0001" in graph
+    assert "toy:UR-0001" not in graph
+    assert "toy:INT-0001" not in graph
+
+
+def test_context_rejects_an_unknown_uid_before_emitting_a_brief(
+    consumer_dir, capsys
+):
+    # SR-0042: failing after printing a brief would bury the diagnostic under a
+    # screenful of output the caller did not get an answer to.
+    rc = tlc_main(["-C", str(consumer_dir), "context", "toy:SR-9999"])
+    assert rc == 2
+    captured = capsys.readouterr()
+    assert "toy:SR-9999 does not exist" in captured.err
+    assert captured.out == ""
+
+
+def test_context_with_a_uid_passes_through_without_sources(source_dir, capsys):
+    # SR-0003: with no sources declared this is core's own behaviour, UID and all.
+    rc = tlc_main(["-C", str(source_dir), "context", "SR-0001"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "## The item you were given: SR-0001" in out
+    assert "declares no `[[sources]]`" in out
+
+
+# ---------------------------------------------------------------------- SR-0040
+# `tl-compose dump` — the interchange surface, answered over the composed graph.
+
+def _dump(consumer_dir, capsys, *extra) -> dict:
+    import json
+    rc = tlc_main(["-C", str(consumer_dir), "dump", *extra])
+    assert rc == 0
+    raw = capsys.readouterr().out
+    assert "TOYSR-0001" not in raw   # the mangling is an internal trick (SR-0004)
+    return json.loads(raw)
+
+
+def test_compose_dump_carries_the_borrowed_items_it_links_to(consumer_dir, capsys):
+    # SR-0040: over the consumer's graph alone the document is not merely partial,
+    # it is unresolvable — it carries a link to toy:SR-0001 and does not contain it,
+    # so every reader must dangle or silently drop the one record proving a local
+    # requirement is grounded in a published standard.
+    doc = _dump(consumer_dir, capsys)
+    uids = {it["uid"] for it in doc["items"]}
+    assert "SR-0001" in uids and "toy:SR-0001" in uids
+    targets = {link["target"] for it in doc["items"] for link in it.get("links", [])}
+    assert targets <= uids   # every reference resolves inside the document
+
+
+def test_compose_dump_names_each_item_s_owning_source_as_data(consumer_dir, capsys):
+    # SR-0040: provenance is a field, not something a reader parses back out of a
+    # qualifier — and a local item says so explicitly rather than by omission.
+    doc = _dump(consumer_dir, capsys)
+    by_uid = {it["uid"]: it for it in doc["items"]}
+    assert by_uid["toy:SR-0001"]["source"] == "toy"
+    assert by_uid["SR-0001"]["source"] is None
+
+
+def test_compose_dump_states_the_scope_it_answered_over(consumer_dir, capsys):
+    # SR-0040: which sources at which pin, and how many items are the consumer's
+    # own. Without it a reader cannot tell a whole export from a narrowed one.
+    comp = _dump(consumer_dir, capsys)["composition"]
+    assert comp["scope"] == "composed"
+    assert comp["local_item_count"] == 2          # INT-0001 + SR-0001
+    assert comp["borrowed_item_count"] == 3       # the toy source's three items
+    (source,) = comp["sources"]
+    assert source["namespace"] == "toy"
+    assert source["path"] == "../toy-source"
+    assert source["item_count"] == 3
+    assert source["fingerprint"]                  # the edition actually read
+
+
+def test_compose_dump_identifies_the_composition_layer(consumer_dir, capsys):
+    # SR-0040: the header named the core alone, so nothing in the file said
+    # composition was involved at all.
+    doc = _dump(consumer_dir, capsys)
+    assert doc["throughline_dump"]["tool_version"].startswith("tl-compose ")
+    assert "throughline " in doc["throughline_dump"]["tool_version"]
+
+
+def test_compose_dump_local_records_that_it_was_narrowed(consumer_dir, capsys):
+    # SR-0040: restricting an export to your own items is legitimate; a restricted
+    # export that did not say so would be indistinguishable from a whole one.
+    doc = _dump(consumer_dir, capsys, "--local")
+    assert {it["uid"] for it in doc["items"]} == {"INT-0001", "SR-0001"}
+    comp = doc["composition"]
+    assert comp["scope"] == "local"
+    # Counted over the union either way: what the numbers exist to say is how much
+    # is *missing* from this document.
+    assert comp["local_item_count"] == 2
+    assert comp["borrowed_item_count"] == 3
+
+
+def test_compose_dump_is_deterministic(consumer_dir, capsys):
+    # Core's dump carries no wall-clock field so two dumps diff cleanly (SR-0055);
+    # the composition block must not reintroduce one.
+    first = _dump(consumer_dir, capsys)
+    second = _dump(consumer_dir, capsys)
+    assert first == second
+
+
+def test_compose_dump_writes_to_a_file(consumer_dir, capsys, tmp_path):
+    import json
+    out = tmp_path / "export.json"
+    rc = tlc_main(["-C", str(consumer_dir), "dump", "-o", str(out)])
+    assert rc == 0
+    assert "wrote" in capsys.readouterr().err
+    doc = json.loads(out.read_text(encoding="utf-8"))
+    assert doc["composition"]["scope"] == "composed"
+
+
+def test_compose_dump_passthrough_without_sources(source_dir, capsys):
+    # SR-0003: no sources declared, so this is byte-for-byte core `tl dump` — no
+    # composition block, and the core's own tool version.
+    import json
+    rc = tlc_main(["-C", str(source_dir), "dump"])
+    assert rc == 0
+    doc = json.loads(capsys.readouterr().out)
+    assert "composition" not in doc
+    assert not doc["throughline_dump"]["tool_version"].startswith("tl-compose")

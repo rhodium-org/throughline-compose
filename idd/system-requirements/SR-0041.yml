@@ -1,0 +1,49 @@
+uid: SR-0041
+type: system_requirement
+status: ratified
+title: The neighbourhood of a UID is composed, and stops at the source boundary
+text: 'When tl-compose is asked for the neighbourhood of a UID over a project that
+  declares sources, it shall build that neighbourhood from the composed union rather
+  than the bare local graph, so a link into a borrowed clause resolves into its source
+  and every node and edge is reported in <namespace>:<UID> vocabulary. The starting
+  item may be given as a local UID or a namespace-qualified one. The walk shall stop
+  at the source boundary in the same sense trace already does (SR-0020): a borrowed
+  clause reached during the walk is reported as a node of the neighbourhood, but
+  its own source-internal links are not traversed, so the neighbourhood of one local
+  item does not expand into the whole of a borrowed standard. The item the composer
+  names is the one exception and shall always be traversed, whether it is local or
+  borrowed, so that asking for a borrowed clause answers which of the composers own
+  items adopt it; the boundary then applies to every clause reached from it, bounding
+  the walk one step inside the source. Links joining two nodes already in the set
+  shall still be reported, including a link whose source is a borrowed clause, because
+  that is the part of the view neither trace nor a blast radius can give. A namespace-qualified
+  target with no matching clause at the pinned edition shall remain a leaf reported
+  as unresolved, in that same qualified vocabulary. The traversal shall be the core
+  index over the union rather than a second walker, and when the project declares
+  no sources the command shall be a pure pass-through to the core tool (SR-0003).'
+rationale: |-
+  The neighbourhood view exists to answer what else moves if this moves. In a composed project the most consequential part of that answer is the cross-source part — the clause a local requirement adopts, and the sibling local items that adopt the same clause. Forwarding the command to the bare core tool would dead-end exactly those edges at (unresolved), leaving the composed case answered worst by the view built to answer it.
+
+  Rejected — walking the union without a boundary. A neighbourhood is unbounded in both directions by design, so a single link into a large borrowed standard would pull most of that standard into the node set and every link inside it into the edge list. The result is not a bigger answer but an unreadable one, and it would leave the depth bound as the only defence — a blunt one, because it truncates the local half of the view at the same time. Stopping at the source boundary is the rule trace already follows (SR-0020), so a composer meets one boundary concept across both commands rather than two.
+
+  Rejected — applying the boundary to the named item as well, which is the simpler rule and the one trace implements. Under it, asking for a borrowed clause returns that clause alone: the incoming closure cannot leave a node that is never traversed, so the single most valuable composed question — which of my requirements adopt this clause — returns nothing, silently and with exit zero. Naming a clause is an explicit request to stand on it, not an accident of a walk that wandered into a source, and it stays bounded because everything reached from it is borrowed and is therefore not traversed in turn.
+
+  Rejected — omitting edges that originate at a borrowed clause. That would be a cheaper boundary to implement and it is the wrong one: a borrowed clause pointing at a second borrowed clause already in the set is a real edge between two nodes being shown, and suppressing it would make the rendered graph disagree with the graph it claims to induce. The boundary governs what is walked into, not what is reported between things already there.
+
+  Who pays: a composer who wants the interior structure of a borrowed standard gets one step of it and no more, and must run the command against that source project directly for the rest. That is close to the trade trace already makes, and it is the trade that keeps the composed view about the composers own graph.
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0020
+  type: refines
+- target: SR-0010
+  type: relates
+- target: SR-0025
+  type: relates
+attrs:
+  origin: ai
+  priority: should
+  verification: test
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:d2660f8b0e54057cfbf44c72143d90a7b307b0ebe135ded7b3c87410d5191f3b

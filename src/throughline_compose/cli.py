@@ -47,25 +47,31 @@ from throughline.cli import (
     _check_summary,
     _resolve_uid,
     _resolve_value,
+    _subgraph_json,
     build_parser,
     cmd_check,
     cmd_context,
     cmd_docs,
+    cmd_dump,
     cmd_link,
     cmd_migrate,
     cmd_new,
     cmd_query,
     cmd_ratify,
+    cmd_subgraph,
     cmd_trace,
+    context_item_section,
     force_utf8_io,
+    render_subgraph,
     render_trace,
 )
+from throughline.dump import build_dump
 from throughline.fingerprint import fingerprint
 from throughline.graph import Index
 from throughline.grounding import GroundingError, ratify
 from throughline.identity import RATIFIED_ID_ATTR, IdentityError, default_ratifier
 from throughline.inject import referenced_uids
-from throughline.model import Item, Link
+from throughline.model import Item, Link, Project
 from throughline.storage import (
     ProjectError,
     load_project,
@@ -144,14 +150,19 @@ def _conflict_message(ns: str, where_a: str, fp_a: str,
 class _Resolution:
     """The outcome of resolving a consumer's sources plus any re-exports: the
     namespace -> :class:`ResolvedSource` map, the union namespace remaps each
-    re-exporting source needs (SR-0014), and a human origin per bound namespace."""
+    re-exporting source needs (SR-0014), a human origin per bound namespace, and
+    the coordinates each was reached by."""
 
     def __init__(self):
         self.resolved: dict[str, ResolvedSource] = {}
         self.ns_aliases: dict[str, dict[str, str]] = {}
         self.locations: dict[str, str] = {}
+        # The declaration each bound namespace was reached by — the consumer's own
+        # for a declared source, the inherited one for a re-exported source, so an
+        # export can state every pin as data and not only as prose (SR-0040).
+        self.coordinates: dict[str, Source] = {}
 
-    def bind(self, ns: str, rs: ResolvedSource, where: str) -> None:
+    def bind(self, ns: str, rs: ResolvedSource, where: str, source: Source) -> None:
         """Bind ``ns`` to a resolved source, or fail fast when ``ns`` is already
         bound to a different edition (SR-0015). Binding the same edition twice — a
         namespace both declared and re-exported at one pin — resolves to the one
@@ -165,6 +176,7 @@ class _Resolution:
             return  # same edition — a single bound source
         self.resolved[ns] = rs
         self.locations[ns] = where
+        self.coordinates[ns] = source
 
     def projects(self) -> dict:
         """The namespace -> Project view the union engine consumes (SR-0004)."""
@@ -183,7 +195,7 @@ def _resolve_sources(sources, root) -> _Resolution:
 
     # 1. Directly declared sources.
     for s in sources:
-        out.bind(s.namespace, resolver_for(s).resolve(s, root), _source_location(s))
+        out.bind(s.namespace, resolver_for(s).resolve(s, root), _source_location(s), s)
 
     # 2. Re-exported transitive sources — resolved from the intermediate source's
     #    own declaration so the pin is inherited, never restated (SR-0014).
@@ -201,7 +213,8 @@ def _resolve_sources(sources, root) -> _Resolution:
                     f"which '{s.namespace}' does not itself declare as a source")
             derived = replace(dep, namespace=alias, reexport={})
             where = f"{_source_location(dep)} (re-exported from '{s.namespace}')"
-            out.bind(alias, resolver_for(derived).resolve(derived, src_root), where)
+            out.bind(alias, resolver_for(derived).resolve(derived, src_root), where,
+                     derived)
             if alias != internal_ns:
                 out.ns_aliases.setdefault(s.namespace, {})[internal_ns] = alias
 
@@ -370,13 +383,20 @@ def _compose_check(args) -> int:
     return FINDINGS if any(f.severity == ERROR for f in findings) else OK
 
 
+def _owning_source(uid: str) -> str | None:
+    """The namespace a displayed UID was borrowed from, or ``None`` when it is the
+    consumer's own. Provenance as data rather than something a reader has to parse
+    back out of a qualifier (SR-0037, SR-0040)."""
+    return uid.split(":", 1)[0] if is_namespace_qualified(uid) else None
+
+
 def _query_dict(item) -> dict:
     """One matched item of the display view as data (SR-0037). The item already
     names itself as the composer does; what the dict adds is the owning source as
     its own field, so a consumer of the JSON reads provenance rather than parsing
     it back out of a UID."""
     d = item.to_dict()
-    d["source"] = item.uid.split(":", 1)[0] if is_namespace_qualified(item.uid) else None
+    d["source"] = _owning_source(item.uid)
     return d
 
 
@@ -456,6 +476,129 @@ def _compose_query(args) -> int:
         scope = (f"composed graph · {len(matched) - borrowed} local · "
                  f"{borrowed} borrowed from {n_sources} source(s)")
     print(f"\n{len(matched)} item(s) ({scope})", file=sys.stderr)
+    return OK
+
+
+# The composition block's own schema version, independent of core's
+# `dump_schema_version`: the two documents evolve on separate release cycles, and a
+# reader that keyed off core's alone could not tell a composition change from none.
+COMPOSE_DUMP_SCHEMA_VERSION = 1
+
+
+def _local_view(view: Project, consumer: Project) -> Project:
+    """``view`` narrowed to the consumer's own registers (SR-0040). Ownership is
+    read from the consumer's own register set rather than inferred from the shape
+    of a displayed name, so narrowing cannot disagree with what was loaded."""
+    out = Project(path=view.path, config=view.config)
+    for prefix, reg in view.registers.items():
+        if prefix in consumer.registers:
+            out.registers[prefix] = reg
+    return out
+
+
+def _dump_composition(res: _Resolution, view: Project, *, local: bool) -> dict:
+    """The scope an export answered over (SR-0040): which sources were composed at
+    which pinned edition, how many items are the consumer's own, and whether the
+    document was narrowed.
+
+    The counts are taken over the whole union even for a narrowed export, because
+    what they exist to tell a reader is how much is *missing* — a partial export
+    that reported only what it contains would state its restriction and then leave
+    its size indistinguishable from a whole one's."""
+    per_source = dict.fromkeys(res.resolved, 0)
+    local_count = 0
+    for it in view.items():
+        ns = _owning_source(it.uid)
+        if ns is None:
+            local_count += 1
+        else:
+            per_source[ns] = per_source.get(ns, 0) + 1
+    return {
+        "compose_dump_schema_version": COMPOSE_DUMP_SCHEMA_VERSION,
+        "scope": "local" if local else "composed",
+        "local_item_count": local_count,
+        "borrowed_item_count": sum(per_source.values()),
+        "sources": [_dump_source(ns, res, per_source[ns])
+                    for ns in sorted(res.resolved)],
+    }
+
+
+def _dump_source(ns: str, res: _Resolution, item_count: int) -> dict:
+    """One composed source as data (SR-0040). The fingerprint is the edition that
+    was actually read (SR-0012), which is what a mutable ref cannot be trusted to
+    name on its own."""
+    s = res.coordinates[ns]
+    return {
+        "namespace": ns,
+        "url": s.url,
+        "ref": s.ref,
+        "path": s.path,
+        "subdir": s.subdir,
+        "origin": res.locations[ns],
+        "fingerprint": res.resolved[ns].fingerprint,
+        "item_count": item_count,
+    }
+
+
+def _compose_dump(args) -> int:
+    """Export the composed graph as one JSON document (SR-0040).
+
+    `dump` is the sanctioned interchange surface (core SR-0055) — the one command
+    whose declared purpose is handing the graph to somebody else's tooling — so it
+    is answered over the union, as every other union-aware command already is. Over
+    the consumer's graph alone the document is not merely partial but unresolvable:
+    it carries links to borrowed clauses it does not contain, and what a reader must
+    then drop is precisely the record that a local requirement is grounded in a
+    published standard.
+
+    Items read in ``<namespace>:<UID>`` vocabulary and each carries its owning
+    source as a field, so provenance is data rather than something parsed back out
+    of a qualifier. The ``composition`` block states the scope that was answered
+    over. ``--local`` narrows the document to the consumer's own items — a
+    legitimate thing to want, since publishing your own graph should not oblige you
+    to ship a standard's full text with it — and records the narrowing in the
+    document, so partiality is a fact in the data rather than something the reader
+    has to know already. With no sources declared this is a pure pass-through to
+    core ``tl dump`` (SR-0003).
+    """
+    try:
+        consumer = load_project(args.path)
+    except ProjectError as e:
+        return _err(str(e))
+    try:
+        sources = parse_sources(consumer)
+    except SourceError as e:
+        return _err(str(e))
+
+    if not sources:
+        return cmd_dump(args)
+
+    try:
+        res = _resolve_sources(sources, Path(args.path))
+    except ResolverError as e:
+        return _err(str(e))
+    try:
+        union = build_union(consumer, res.projects(), res.ns_aliases)
+    except ComposeError as e:
+        return _err(str(e))
+
+    view = union.displayed()
+    composition = _dump_composition(res, view, local=args.local)
+    # `_version_string` names both layers, so the document says composition was
+    # involved rather than leaving a reader to infer it from the extra block.
+    data = build_dump(_local_view(view, consumer) if args.local else view,
+                      _version_string())
+    for item in data["items"]:
+        item["source"] = _owning_source(item["uid"])
+    data["composition"] = composition
+
+    import json
+    text = json.dumps(data, indent=2, default=str, sort_keys=False)
+    if args.output:
+        Path(args.output).write_text(text + "\n", encoding="utf-8")
+        print(f"wrote {args.output}", file=sys.stderr)
+    else:
+        print(text)
     return OK
 
 
@@ -544,6 +687,63 @@ def _compose_trace(args) -> int:
     local_uids = {it.uid for it in consumer.items()}
     render_trace(project, start, direction=args.direction, max_depth=args.depth or 0,
                  uid_display=union.qualified, expand=lambda u: u in local_uids)
+    return OK
+
+
+def _compose_subgraph(args) -> int:
+    """The neighbourhood of one item over the composed union (SR-0041).
+
+    Both directed closures plus the links joining their members, in
+    ``<namespace>:<UID>`` vocabulary, so the cross-source edges — the ones a
+    composer most needs before changing anything — are part of the answer rather
+    than ``(unresolved)`` stubs.
+
+    The boundary is trace's (SR-0020) with one deliberate exception: the item the
+    composer *named* is always walked, so `subgraph asvs:V2.1.1` can answer which
+    local items adopt that clause. Everything reached from it is borrowed and is
+    not walked in turn, so the view stays one step inside the source. With no
+    sources declared this is a pure pass-through to core ``tl subgraph``
+    (SR-0003).
+    """
+    try:
+        consumer = load_project(args.path)
+    except ProjectError as e:
+        return _err(str(e))
+    try:
+        sources = parse_sources(consumer)
+    except SourceError as e:
+        return _err(str(e))
+
+    if not sources:
+        return cmd_subgraph(args)
+
+    uid = _resolve_uid(consumer, args.uid, "show the neighbourhood of", "UID")
+    if uid is None:
+        return USAGE
+
+    try:
+        res = _resolve_sources(sources, Path(args.path))
+    except ResolverError as e:
+        return _err(str(e))
+    try:
+        union = build_union(consumer, res.projects(), res.ns_aliases)
+    except ComposeError as e:
+        return _err(str(e))
+
+    project = union.project
+    start = _union_uid(union, uid)
+    if project.get(start) is None:
+        return _err(f"{uid} does not exist")
+
+    local_uids = {it.uid for it in consumer.items()}
+    types = set(args.link_type) if args.link_type else None
+    view = Index.build(project).subgraph(start, types, args.depth or 0,
+                                         expand=lambda u: u in local_uids)
+    if args.format == "json":
+        import json
+        print(json.dumps(_subgraph_json(project, view, union.qualified), indent=2))
+    else:
+        render_subgraph(project, view, uid_display=union.qualified)
     return OK
 
 
@@ -993,9 +1193,42 @@ def _compose_context(args) -> int:
     the unchanged core command so the superset holds byte-for-byte; only when the
     project declares sources is the full composition manual appended — with none
     declared the brief stays the core's plus a short 'composition available but unused'
-    note, keeping the strict-superset promise (SR-0003)."""
+    note, keeping the strict-superset promise (SR-0003).
+
+    Given a UID, the item section is computed over the *union* (SR-0042). Left to
+    core it would be computed over the bare local graph, printing every borrowed
+    clause as ``(unresolved)`` and then asserting, a few lines below, that
+    composition resolves them — a false clean result in the one document an agent
+    is told to trust (SR-0005).
+    """
     import contextlib
     import io
+
+    try:
+        consumer = load_project(args.path)
+        sources = parse_sources(consumer)
+    except (ProjectError, SourceError):
+        consumer, sources = None, []
+
+    uid = getattr(args, "uid", None)
+    # Core renders the brief; when there is a union to answer over, the item section
+    # is rendered here instead, so core is never handed a UID it would answer locally.
+    composed_section = None
+    if sources and uid is not None:
+        try:
+            res = _resolve_sources(sources, Path(args.path))
+            union = build_union(consumer, res.projects(), res.ns_aliases)
+        except (ResolverError, ComposeError) as e:
+            return _err(str(e))
+        start = _union_uid(union, uid)
+        if union.project.get(start) is None:
+            return _err(f"{uid} does not exist")
+        local_uids = {it.uid for it in consumer.items()}
+        view = Index.build(union.project).subgraph(
+            start, expand=lambda u: u in local_uids)
+        composed_section = context_item_section(
+            union.project, view, uid_display=union.qualified)
+        args.uid = None
 
     buf = io.StringIO()
     with contextlib.redirect_stdout(buf):
@@ -1003,12 +1236,8 @@ def _compose_context(args) -> int:
     sys.stdout.write(buf.getvalue())
     if rc != OK:
         return rc
-
-    try:
-        consumer = load_project(args.path)
-        sources = parse_sources(consumer)
-    except (ProjectError, SourceError):
-        sources = []
+    if composed_section is not None:
+        sys.stdout.write("\n" + composed_section)
 
     if not sources:
         sys.stdout.write(
@@ -1047,6 +1276,13 @@ _UNION_COMMANDS: dict[str, tuple[Callable[[argparse.Namespace], int], str]] = {
         "shown as `<namespace>:<UID>`; `--local` narrows to your own items, and "
         "either way the count says which scope it answered over. `ls` is an alias "
         "for it, and `--format json` carries each item's owning source as a field."),
+    "dump": (
+        _compose_dump,
+        "exports the composed graph, so every link in the document resolves inside "
+        "it; borrowed items read as `<namespace>:<UID>` and carry their owning "
+        "source as a field, and a `composition` block states the scope — which "
+        "sources at which pin, and how many items are your own. `--local` narrows "
+        "the export to your own items and records that it did."),
     "docs": (
         _compose_docs,
         "a `tl:matrix` target cell pointing at a borrowed clause renders that "
@@ -1055,6 +1291,12 @@ _UNION_COMMANDS: dict[str, tuple[Callable[[argparse.Namespace], int], str]] = {
         _compose_trace,
         "a link into a borrowed clause is followed *into* the source (with its own "
         "type, status and title) instead of dead-ending at `(unresolved)`."),
+    "subgraph": (
+        _compose_subgraph,
+        "an item's neighbourhood — both directions plus the links between its "
+        "members — is built over the union, so cross-source edges are part of the "
+        "answer. Naming a borrowed clause tells you which of *your* items adopt "
+        "it; the walk then stops at the source boundary, as `trace` does."),
     "new": (
         _compose_new,
         "a `--ground` target naming a borrowed clause is validated against the "
@@ -1141,6 +1383,12 @@ def main(argv: list[str] | None = None) -> int:
     sub.choices["query"].add_argument(
         "--local", action="store_true",
         help="list only this project's own items, not the ones it borrows")
+    # The same flag on `dump`, for the same reason and by the same route (SR-0040):
+    # an export restricted to the consumer's own items, which says in the document
+    # that it was restricted.
+    sub.choices["dump"].add_argument(
+        "--local", action="store_true",
+        help="export only this project's own items, not the ones it borrows")
     args = parser.parse_args(argv)
     # argparse records the spelling that was typed, so an alias of a union-aware
     # command arrives under a name the table does not hold — and would fall through
