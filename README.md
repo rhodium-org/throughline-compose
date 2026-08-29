@@ -66,9 +66,11 @@ path = "../house-style"              # a directory relative to this project
   reused rather than cloned again, but the reuse is checked. A `ref` that is a commit
   id is reused with no network call. A tag or a branch can be moved by the origin, so
   the ref is looked up there and the source is refetched if it now points somewhere
-  else — one ref query, no download, when nothing has moved. Set `TL_COMPOSE_OFFLINE=1`
-  to skip the lookup and compose from the cache as it stands. Nothing is vendored into
-  your repo, so your own item scan never ingests a borrowed graph.
+  else — one ref query, no download, when nothing has moved. An origin that cannot be
+  reached fails the run rather than quietly falling back to whatever was cached; set
+  `TL_COMPOSE_OFFLINE=1` to skip the lookup and compose from the cache as it stands,
+  which also makes an uncached source an error rather than a fetch. Nothing is vendored
+  into your repo, so your own item scan never ingests a borrowed graph.
 - **`path` is for local development.** A directory, relative to the consumer, for
   working on a source alongside the project that consumes it.
 - **The two are mutually exclusive, and a `url` must carry a `ref`.** Declaring both

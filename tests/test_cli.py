@@ -802,17 +802,23 @@ def test_every_union_command_is_described_in_the_brief(consumer_dir, capsys):
         assert note in out
 
 
-def test_brief_states_the_cache_never_refetches_a_moved_ref(consumer_dir, capsys):
-    """SR-0025: an agent that has not been told the cache never refetches a moved
-    ref will report a clean check that proves nothing, because the content it
-    validated is stale. The live cache path is rendered so the fix is actionable."""
-    from throughline_compose.resolve import cache_root
+def test_brief_states_a_moved_ref_is_revalidated(consumer_dir, capsys):
+    """SR-0025 over SR-0043: the brief is the document an agent is told to trust
+    above all others, so it must describe the cache the tool actually has. It
+    previously warned that a moved ref is never refetched — the opposite of the
+    behaviour — which would send an agent off clearing caches to fix a problem that
+    no longer exists, and teach it to distrust a check that is now sound. Both
+    halves of the rule are asserted, plus the offline switch and the live cache
+    path, so the section cannot drift back to describing only the easy case."""
+    from throughline_compose.resolve import OFFLINE_ENV, cache_root
 
     rc = tlc_main(["-C", str(consumer_dir), "context"])
     out = capsys.readouterr().out
     assert rc == 0
-    assert "## The source cache — a moved ref is **not** refetched" in out
-    assert "keep using the content it fetched the" in out
+    assert "## The source cache — a moved ref **is** picked up" in out
+    assert "**A commit id** names one commit for all time" in out  # the cheap half
+    assert "refetches only when it has moved" in out              # the moving half
+    assert OFFLINE_ENV in out
     assert str(cache_root()) in out
 
 

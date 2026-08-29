@@ -1115,19 +1115,28 @@ they compose side by side).
 
 @@UNION_COMMANDS@@
 
-## The source cache — a moved ref is **not** refetched
+## The source cache — a moved ref **is** picked up
 
-A `url` + `ref` source is fetched once into a per-user cache, keyed by that exact
-`(url, ref)` pair, and is offline and unchanged thereafter. That is what makes a
-composed check reproducible, and it has one consequence you must know:
+A `url` + `ref` source is fetched into a per-user cache keyed by that exact
+`(url, ref)` pair, then reused rather than cloned again. Reuse is checked, never
+assumed, because a pin is not the same thing as an immutable edition:
 
-> **If you move a git tag, `tl-compose` will keep using the content it fetched the
-> first time.** The check will pass, and it will have proved nothing about the new
-> content.
+> **A commit id** names one commit for all time, so its checkout is reused with no
+> network access at all.
+>
+> **A tag or a branch** is a name the origin can move, so `tl-compose` asks the
+> origin what it points at now and refetches only when it has moved. An unmoved ref
+> costs one ref advertisement and no download.
 
-To pick up changed content behind a ref you already used, either bump the `ref` to a
-new edition (the intended route — an edition is meant to be immutable), or delete
-that source's cache directory. This project's cache lives at:
+So moving a tag *is* picked up, on the next run, and you never need to clear the
+cache to see changed content behind a ref you have already used. A ref the origin
+resolves ambiguously is an error rather than a guess.
+
+`TL_COMPOSE_OFFLINE=1` composes from the cache without contacting any origin, for a
+genuinely disconnected machine; a source missing from the cache is then an error
+rather than a fetch. Without it, an origin that cannot be reached fails the run — it
+never falls back silently to whatever happens to be cached, because a check that
+cannot see the content it is gating is not a gate. This project's cache lives at:
 
 ```
 @@CACHE_ROOT@@
