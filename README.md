@@ -6,7 +6,7 @@ guide, a platform standard, a regulatory baseline — alongside the requirements
 write yourself, and work the combined graph as one.
 
 This repository is itself a throughline project: its own design is captured as a
-grounded IDD spine of <!-- tl:count.inline type == 'user_requirement' -->12<!-- tl:end --> user requirements and <!-- tl:count.inline type == 'system_requirement' -->40<!-- tl:end --> system requirements 
+grounded IDD spine of <!-- tl:count.inline type == 'user_requirement' -->12<!-- tl:end --> user requirements and <!-- tl:count.inline type == 'system_requirement' -->41<!-- tl:end --> system requirements 
 under [`idd/vision/`](https://github.com/rhodium-org/throughline-compose/tree/main/idd/vision), [`idd/goals/`](https://github.com/rhodium-org/throughline-compose/tree/main/idd/goals),
 [`idd/user-requirements/`](https://github.com/rhodium-org/throughline-compose/tree/main/idd/user-requirements),
 [`idd/system-requirements/`](https://github.com/rhodium-org/throughline-compose/tree/main/idd/system-requirements), and [`idd/non-goals/`](https://github.com/rhodium-org/throughline-compose/tree/main/idd/non-goals), and
@@ -62,10 +62,13 @@ path = "../house-style"              # a directory relative to this project
   — normally a release tag, but any git ref (branch or commit SHA) works. `tl-compose`
   fetches the source from its origin on first use into a per-user cache that lives
   *outside* any project tree (`$TL_COMPOSE_CACHE`, else `$XDG_CACHE_HOME`, else
-  `~/.cache/throughline-compose/sources/`), keyed by `(url, ref)`. Resolution is
-  idempotent and offline thereafter: a source already cached at the pinned ref is
-  reused, never refetched. Nothing is vendored into your repo, so your own item scan
-  never ingests a borrowed graph.
+  `~/.cache/throughline-compose/sources/`), keyed by `(url, ref)`. A cached source is
+  reused rather than cloned again, but the reuse is checked. A `ref` that is a commit
+  id is reused with no network call. A tag or a branch can be moved by the origin, so
+  the ref is looked up there and the source is refetched if it now points somewhere
+  else — one ref query, no download, when nothing has moved. Set `TL_COMPOSE_OFFLINE=1`
+  to skip the lookup and compose from the cache as it stands. Nothing is vendored into
+  your repo, so your own item scan never ingests a borrowed graph.
 - **`path` is for local development.** A directory, relative to the consumer, for
   working on a source alongside the project that consumes it.
 - **The two are mutually exclusive, and a `url` must carry a `ref`.** Declaring both

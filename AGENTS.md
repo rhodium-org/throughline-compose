@@ -78,9 +78,10 @@ A borrowed item is referenced as `namespace:UID` (e.g. `asvs:SR-0001`); a bare
 UID is always local. Composition never renumbers or copies — imported items keep
 their source-native UID. Composition is **one level deep**: if a source you adopt
 itself cites another namespace, you must also declare that namespace (or
-`reexport` it through the intermediate source). A moved git tag is **not**
-refetched from cache — bump the `ref`, or clear
-`~/.cache/throughline-compose/sources/…@<ref>`, to pick up changed content.
+`reexport` it through the intermediate source). A moved git tag **is** picked up: a
+cached source whose `ref` is a tag or branch is checked against the origin on every
+resolve and refetched if it has moved. A commit-id `ref` skips the check. Set
+`TL_COMPOSE_OFFLINE=1` to compose from the cache without contacting the origin.
 
 **Adopting a source costs the `[[sources]]` block and nothing else**
 ([SR-0026](idd/system-requirements/SR-0026.yml)) — never copy the source's model

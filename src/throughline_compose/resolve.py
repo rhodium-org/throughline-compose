@@ -8,8 +8,13 @@ cache that lives *outside* any project tree — a shared, per-user store keyed b
 origin URL and ref, so a consumer's own item scan never ingests a resolved source
 (the reason a resolved source must not live under the project root, per SR-0006).
 
-Resolution is idempotent and offline after the first fetch: a source already
-present in the cache at the pinned ref is reused, never refetched.
+A cached source is reused rather than cloned again, but reuse is not blind
+(SR-0043). A ref that is a commit id names one commit for all time and is reused
+with no network access. A tag or a branch is a name the origin can move, so the
+ref is looked up on the origin and the source is refetched when it now points
+somewhere else. The lookup costs one ref query, not a clone, so an unmoved ref is
+still cheap. ``TL_COMPOSE_OFFLINE`` turns the lookup off and composes from the
+cache as it stands.
 """
 from __future__ import annotations
 
@@ -25,6 +30,9 @@ from pathlib import Path
 from .sources import Source
 
 _SLUG_RE = re.compile(r"[^A-Za-z0-9._-]+")
+_SHA_RE = re.compile(r"\A[0-9a-fA-F]{7,40}\Z")
+
+OFFLINE_ENV = "TL_COMPOSE_OFFLINE"
 
 
 def _announce(msg: str) -> None:
@@ -96,11 +104,91 @@ def _fetch(url: str, ref: str, dest: Path) -> None:
                 raise ResolveError(
                     f"ref '{ref}' not found in {url}: "
                     f"{co.stderr.strip() or 'git checkout failed'}")
-        # Publish atomically: dest only ever appears fully materialised.
+        # Publish atomically: dest only ever appears fully materialised. A refetch
+        # replaces a populated dest, so the old checkout goes only once the new one
+        # is on disk and a failed clone leaves the usable cache untouched.
+        if dest.exists():
+            shutil.rmtree(dest, ignore_errors=True)
         os.replace(tmp, dest)
     finally:
         if tmp.exists():
             shutil.rmtree(tmp, ignore_errors=True)
+
+
+def _cache_only() -> bool:
+    """Whether to compose from the cache without asking the origin anything."""
+    return os.environ.get(OFFLINE_ENV, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _head(dest: Path) -> str:
+    """The commit checked out in a cached source, or "" if it cannot be read."""
+    r = _git("rev-parse", "HEAD", cwd=dest)
+    return r.stdout.strip() if r.returncode == 0 else ""
+
+
+def _names_commit(ref: str, head: str) -> bool:
+    """Whether ``ref`` is the commit id of ``head`` — abbreviated or in full.
+
+    Matching against the cached head, rather than testing the ref for hex on its
+    own, is what makes this safe: a tag legitimately named like an abbreviated sha
+    fails the comparison and is revalidated as the name it is."""
+    return bool(_SHA_RE.match(ref)) and head.startswith(ref.lower())
+
+
+def _remote_commit(url: str, ref: str) -> str:
+    """The commit ``ref`` currently points to at ``url`` (SR-0043).
+
+    Annotated tags are peeled. git reports both ``refs/tags/x`` and
+    ``refs/tags/x^{}`` for one such tag, and only the second is the commit — the
+    first is the tag object, which never equals a cached checkout's HEAD and would
+    otherwise make every run look like a moved ref.
+    """
+    if ref.startswith("refs/"):
+        patterns = [ref, f"{ref}^{{}}"]
+    else:
+        # Fully-qualified rather than bare, so the pattern cannot also match an
+        # unrelated ref that merely ends in the same path component.
+        patterns = [f"refs/heads/{ref}", f"refs/tags/{ref}", f"refs/tags/{ref}^{{}}"]
+    r = _git("ls-remote", url, *patterns)
+    if r.returncode != 0:
+        raise ResolveError(
+            f"could not reach {url} to check whether ref '{ref}' has moved: "
+            f"{r.stderr.strip() or 'git ls-remote failed'}. Set {OFFLINE_ENV}=1 to "
+            "compose from the cache without checking.")
+    found: dict[str, str] = {}
+    for line in r.stdout.splitlines():
+        sha, _, name = line.partition("\t")
+        name = name.strip()
+        if not name:
+            continue
+        peeled = name.endswith("^{}")
+        base = name[:-3] if peeled else name
+        if peeled or base not in found:
+            found[base] = sha.strip()
+    if not found:
+        raise ResolveError(f"ref '{ref}' no longer exists in {url}")
+    if len(found) > 1:
+        raise ResolveError(
+            f"ref '{ref}' is ambiguous in {url} — it matches "
+            f"{', '.join(sorted(found))}. Qualify it as a full refs/… path.")
+    return next(iter(found.values()))
+
+
+def _revalidate(source: Source, dest: Path) -> None:
+    """Refetch a cached source whose ref has moved since it was fetched (SR-0043)."""
+    assert source.url is not None and source.ref is not None
+    head = _head(dest)
+    if head and _names_commit(source.ref, head):
+        return
+    if _cache_only():
+        return
+    current = _remote_commit(source.url, source.ref)
+    if current == head:
+        return
+    _announce(f"source '{source.namespace}' ref {source.ref} moved "
+              f"{head[:9] or 'unknown'} -> {current[:9]} — refetching")
+    _fetch(source.url, source.ref, dest)
+    _announce(f"resolved source '{source.namespace}'")
 
 
 def _descend(root: Path, source: Source) -> Path:
@@ -146,7 +234,9 @@ def resolve_source(source: Source, consumer_root: Path) -> Path:
 
     assert source.url is not None and source.ref is not None
     dest = _cache_dir(source.url, source.ref)
-    if not (dest.is_dir() and (dest / ".git").exists()):
+    if dest.is_dir() and (dest / ".git").exists():
+        _revalidate(source, dest)
+    else:
         if dest.exists():  # partial/corrupt leftover
             shutil.rmtree(dest, ignore_errors=True)
         # The clone is the only slow thing composition does, and it happens before
@@ -156,7 +246,6 @@ def resolve_source(source: Source, consumer_root: Path) -> Path:
                   f"{source.url}@{source.ref} (not cached — fetching)")
         _fetch(source.url, source.ref, dest)
         _announce(f"resolved source '{source.namespace}'")
-    # Resolved once at this pinned ref — idempotent, offline thereafter.
     project = _descend(dest, source)
     if not (project / "throughline.toml").is_file():
         loc = f"{source.url}@{source.ref}"
