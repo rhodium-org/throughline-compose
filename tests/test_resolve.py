@@ -5,6 +5,7 @@ into a cache outside the project tree. A throwaway local git repo stands in for 
 remote origin — git clones a filesystem path exactly as it would a URL."""
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 
@@ -256,3 +257,97 @@ def test_ambiguous_ref_fails_rather_than_being_guessed(tmp_path):
     _git("branch", "v4.0.3", cwd=origin)  # now both a tag and a branch
     with pytest.raises(ResolveError, match="ambiguous"):
         resolve_source(src, tmp_path)
+
+
+def test_offline_mode_with_a_cold_cache_fails_rather_than_fetching(tmp_path, monkeypatch):
+    """Cache-only has to mean it (SR-0043).
+
+    Fetching anyway when the cache happens to be cold would make the switch a
+    preference rather than a guarantee — and the caller who sets it is exactly the
+    one with no route to the origin, so the 'convenience' is a hang or a timeout
+    instead of a sentence saying what is wrong."""
+    origin = _origin(tmp_path)
+    src = Source(namespace="asvs", url=str(origin), ref="v4.0.3")
+    monkeypatch.setenv("TL_COMPOSE_OFFLINE", "1")
+    with pytest.raises(ResolveError, match="not in the cache"):
+        resolve_source(src, tmp_path)
+
+
+def test_a_failed_refetch_leaves_the_previous_edition_in_place(tmp_path, monkeypatch):
+    """A refetch that cannot complete must cost nothing.
+
+    While refetching never happened this was unreachable; now that a moved ref
+    triggers one on an ordinary run, a clone that fails part-way must not be able to
+    leave a consumer with no cache at all."""
+    from throughline_compose import resolve as R
+
+    origin = _origin(tmp_path)
+    src = Source(namespace="asvs", url=str(origin), ref="v4.0.3")
+    first = resolve_source(src, tmp_path)
+    (first / "PREVIOUS").write_text("keep me")
+    _add_commit(origin, "second")
+    _git("tag", "-f", "v4.0.3", cwd=origin)
+
+    real_git = R._git
+
+    def no_clone(*args, **kwargs):
+        if args and args[0] == "clone":
+            return subprocess.CompletedProcess(args, 1, "", "network is down")
+        return real_git(*args, **kwargs)
+
+    monkeypatch.setattr(R, "_git", no_clone)
+    with pytest.raises(ResolveError):
+        resolve_source(src, tmp_path)
+
+    assert (first / "PREVIOUS").read_text() == "keep me"
+    assert not (first / "EDITION").exists()
+    assert not [p for p in first.parent.iterdir() if p.name.startswith(".stale-")]
+
+
+def test_publish_puts_the_old_checkout_back_if_the_swap_fails(tmp_path, monkeypatch):
+    """The swap is two renames, and the second one can still fail — a full disk, a
+    cache pulled out from under the run. When it does, the checkout that was already
+    there goes back, rather than being left parked under a hidden name where nothing
+    would ever find it again."""
+    from throughline_compose import resolve as R
+
+    dest = tmp_path / "cached"
+    dest.mkdir()
+    (dest / "which").write_text("old")
+    incoming = tmp_path / "incoming"
+    incoming.mkdir()
+    (incoming / "which").write_text("new")
+
+    real_replace = os.replace
+    calls = {"n": 0}
+
+    def flaky(src, dst):
+        calls["n"] += 1
+        if calls["n"] == 2:  # dest is aside; fail bringing the new tree in
+            raise OSError("no space left on device")
+        return real_replace(src, dst)
+
+    monkeypatch.setattr(R.os, "replace", flaky)
+    with pytest.raises(OSError):
+        R._publish(incoming, dest)
+
+    assert (dest / "which").read_text() == "old"
+    assert not [p for p in tmp_path.iterdir() if p.name.startswith(".stale-")]
+
+
+def test_publish_leaves_no_residue_behind(tmp_path):
+    """A refetch on a shared cache must not accumulate hidden copies of every
+    superseded edition — the store is per-user and long-lived."""
+    from throughline_compose import resolve as R
+
+    dest = tmp_path / "cached"
+    dest.mkdir()
+    (dest / "which").write_text("old")
+    incoming = tmp_path / "incoming"
+    incoming.mkdir()
+    (incoming / "which").write_text("new")
+
+    R._publish(incoming, dest)
+
+    assert (dest / "which").read_text() == "new"
+    assert [p.name for p in tmp_path.iterdir()] == ["cached"]

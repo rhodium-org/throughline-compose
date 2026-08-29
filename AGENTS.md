@@ -81,7 +81,8 @@ itself cites another namespace, you must also declare that namespace (or
 `reexport` it through the intermediate source). A moved git tag **is** picked up: a
 cached source whose `ref` is a tag or branch is checked against the origin on every
 resolve and refetched if it has moved. A commit-id `ref` skips the check. Set
-`TL_COMPOSE_OFFLINE=1` to compose from the cache without contacting the origin.
+`TL_COMPOSE_OFFLINE=1` to compose from the cache without contacting the origin —
+which also makes an uncached source an error rather than a fetch.
 
 **Adopting a source costs the `[[sources]]` block and nothing else**
 ([SR-0026](idd/system-requirements/SR-0026.yml)) — never copy the source's model

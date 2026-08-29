@@ -26,6 +26,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from uuid import uuid4
 
 from .sources import Source
 
@@ -104,15 +105,40 @@ def _fetch(url: str, ref: str, dest: Path) -> None:
                 raise ResolveError(
                     f"ref '{ref}' not found in {url}: "
                     f"{co.stderr.strip() or 'git checkout failed'}")
-        # Publish atomically: dest only ever appears fully materialised. A refetch
-        # replaces a populated dest, so the old checkout goes only once the new one
-        # is on disk and a failed clone leaves the usable cache untouched.
-        if dest.exists():
-            shutil.rmtree(dest, ignore_errors=True)
-        os.replace(tmp, dest)
+        _publish(tmp, dest)
     finally:
         if tmp.exists():
             shutil.rmtree(tmp, ignore_errors=True)
+
+
+def _publish(tmp: Path, dest: Path) -> None:
+    """Swap a materialised checkout into place, leaving no window where it is absent.
+
+    Deleting ``dest`` and then moving ``tmp`` onto it would be simpler and is wrong
+    here: the cache is a per-user store shared by every project on the host, and
+    since SR-0043 a refetch happens on any run whose ref has moved — so a second
+    process is quite likely to be reading ``dest`` exactly while it is replaced. On
+    the self-hosted runners that share one cache across 33 composition gates, that is
+    a routine collision rather than a theoretical one.
+
+    Two renames within a single directory avoid it. A reader sees either the old tree
+    or the new one and never a partial or missing one, and a reader that already
+    opened the old tree keeps a valid tree for as long as it holds it, because the
+    unlink happens only after the directory is out of the way. If the swap itself
+    fails the old checkout goes back, so a failed refetch costs nothing.
+    """
+    stale = dest.with_name(f".stale-{uuid4().hex[:8]}-{dest.name}")
+    displaced = dest.exists()
+    if displaced:
+        os.replace(dest, stale)
+    try:
+        os.replace(tmp, dest)
+    except BaseException:
+        if displaced:
+            os.replace(stale, dest)
+        raise
+    if displaced:
+        shutil.rmtree(stale, ignore_errors=True)
 
 
 def _cache_only() -> bool:
@@ -237,6 +263,14 @@ def resolve_source(source: Source, consumer_root: Path) -> Path:
     if dest.is_dir() and (dest / ".git").exists():
         _revalidate(source, dest)
     else:
+        if _cache_only():
+            # Cache-only has to mean it. Fetching here because the cache happens to
+            # be cold would make the switch a preference rather than a guarantee,
+            # and the caller who set it is precisely the one who cannot fetch.
+            raise ResolveError(
+                f"source '{source.namespace}' is not in the cache and "
+                f"{OFFLINE_ENV} forbids fetching it: {source.url}@{source.ref}. "
+                f"Unset {OFFLINE_ENV} to fetch it once, then set it again.")
         if dest.exists():  # partial/corrupt leftover
             shutil.rmtree(dest, ignore_errors=True)
         # The clone is the only slow thing composition does, and it happens before
