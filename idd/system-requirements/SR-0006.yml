@@ -2,19 +2,23 @@ uid: SR-0006
 type: system_requirement
 status: ratified
 title: Sources resolve from a pinned git URL into a local cache
-text: Each source entry shall accept, in place of a local path, a git URL together
-  with a ref that pins the edition — a tag, branch, or commit — a tag being the normal
-  form, since a source publishes its editions as tags. On check, tl-compose shall
-  materialise each URL-pinned source by fetching that exact ref into a cache that
-  lives outside the consumer's own project tree, keyed by the origin URL and ref,
-  and compose from that checkout. The cache being outside the project tree is load-bearing,
-  not incidental — the consumer's own item scan walks its whole directory, so a resolved
-  source placed inside it would be wrongly ingested as local items; the cache is
-  a shared, per-user store (like a package manager's) that no project scan ever sees.
-  A source already present at the pinned ref shall not be refetched, so resolution
-  is idempotent and offline after the first fetch. A url and a path shall be mutually
-  exclusive for one source, and a url without a ref shall fail fast rather than silently
-  track a moving default.
+text: |-
+  A source entry shall accept either a local path or a git URL with a ref. The ref
+  selects the edition. It is normally a tag, because a source publishes its editions
+  as tags, but a branch or a commit id shall also be accepted.
+
+  On check, tl-compose shall fetch each URL source at its ref into a cache and
+  compose from that checkout. The cache shall be keyed by URL and ref, and shall sit
+  outside the consumer's project directory, because the consumer's item scan reads
+  its whole directory and would otherwise take the source for its own items. The
+  cache is a shared per-user store, like a package manager's.
+
+  A cached source shall be reused rather than cloned again, on the terms SR-0043
+  sets: a commit id with no network call, a tag or branch after re-checking the
+  origin.
+
+  A source shall not set both url and path. A url with no ref shall fail with an
+  error rather than track a default branch.
 normative: true
 links:
 - target: UR-0003
@@ -24,5 +28,5 @@ attrs:
   priority: must
   verification: test
   ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:7fa15eb0be77695296a19ae1b7ca208f4b963234df76a22ba81d551fe4043663
+  ratified_fingerprint: sha256:5baf9ad35105694e18456ae57d3b7cab013b3c27b2bf17bef74673c49d084735
   ratified_backfilled: true

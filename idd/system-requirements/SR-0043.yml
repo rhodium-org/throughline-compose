@@ -1,0 +1,48 @@
+uid: SR-0043
+type: system_requirement
+status: ratified
+title: Re-check a cached source when its ref is a tag or a branch
+text: |-
+  tl-compose caches each remote source by URL and ref. Before reusing a cached
+  source it shall confirm the ref still points at the cached commit.
+
+  A commit id never moves. It shall be reused with no network call.
+
+  A tag or branch can be moved by the origin. tl-compose shall look the ref up on
+  the origin. Same commit: reuse the cache. Different commit: fetch again. A lookup
+  needs no clone, so an unmoved ref costs one network call and no download.
+
+  An annotated tag shall resolve to the commit it points at, not the tag object's
+  own id. A ref matching more than one thing shall be an error.
+
+  Re-checking shall be on by default. A cache-only mode shall be available for
+  offline use. Otherwise, if the origin cannot be reached, tl-compose shall fail and
+  name that mode.
+rationale: |-
+  A tag can move, and here that is routine. On 2026-08-29, 31 tags across 29 source repos were repointed, because a tag names a standard's edition and tracks its best current rendering. Of 145 source pins in the estate, 134 are tags, 2 are branches and 9 are commit ids. SR-0006 assumed a ref never moves, which is true for 9 of the 145.
+
+  So the cache, not the pin, decides what gets composed, and UR-0003 already requires composition to be reproducible machine to machine. After that tag move, 4 of the 5 self-hosted runner pods still held asvs@v5.0.0 at 1fd609a, and 11 consumer repos gated against the old content while reporting success.
+
+  SR-0012 already requires this for non-git sources: pin to an immutable marker, never track a moving head silently. Git was exempt only because tags were assumed fixed.
+
+  Rejected — a per-workflow TL_COMPOSE_CACHE, or deleting the cache before each check. Both need all 33 gate workflows to remember, and forgetting gives a false pass rather than a failure. Rejected — pinning commit ids instead of tags, which would hide which edition of a standard a consumer is built against.
+
+  Cost: one ref lookup per tag source per run, and offline use must now be asked for rather than happening by accident.
+normative: true
+links:
+- target: UR-0003
+  type: implements
+- target: SR-0006
+  type: refines
+- target: SR-0012
+  type: relates
+- target: SR-0005
+  type: relates
+- target: SR-0031
+  type: relates
+attrs:
+  priority: must
+  verification: test
+  origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:e25f34d763881276abe638c7f7fe450c0a80dcd3c0a02a1f9c873baf8ff29f75
