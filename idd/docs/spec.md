@@ -169,7 +169,7 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 <!-- tl:end -->
 
 <!-- tl:item SR-0044 -->
-**SR-0044 — Declared sources are resolved side by side** — `system_requirement`, status `proposed`
+**SR-0044 — Declared sources are resolved side by side** — `system_requirement`, status `implemented`
 
 > The sources a consumer declares are resolved at the same time, not one after another: each look-up of a pinned ref on its origin (SR-0043), and each fetch, runs beside the others. Two declared sources that share a URL and ref share a cache directory, so only the first of them runs alongside the rest and the others resolve after it, from the warm cache. The union is assembled in declared order whatever order the resolutions finish in, and a source that fails is reported as it was before, the first in declared order. Re-exported transitive sources resolve after the sources that carry them, as now. Cache-only mode is unchanged.
 
@@ -179,7 +179,7 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 *Refines:* SR-0043
 *Relates:* SR-0006
 
-**origin**: ai · **priority**: should · **verification**: test
+**origin**: ai · **priority**: should · **verification**: test · **ratified_by**: Henry Grech-Cini · **ratified_fingerprint**: sha256:ea3b87483b606a82f67667de785b1dd2a18e843bc0d03efd6f858c403eb970cf
 <!-- tl:end -->
 
 ## Non-goals

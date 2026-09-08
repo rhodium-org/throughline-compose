@@ -1,6 +1,6 @@
 uid: SR-0044
 type: system_requirement
-status: proposed
+status: implemented
 title: Declared sources are resolved side by side
 text: 'The sources a consumer declares are resolved at the same time, not one after
   another: each look-up of a pinned ref on its origin (SR-0043), and each fetch,
@@ -32,3 +32,5 @@ attrs:
   origin: ai
   priority: should
   verification: test
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:ea3b87483b606a82f67667de785b1dd2a18e843bc0d03efd6f858c403eb970cf
