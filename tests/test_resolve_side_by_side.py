@@ -73,3 +73,44 @@ def test_the_first_failure_in_declared_order_is_the_one_reported(monkeypatch, tm
     sources = [_src("a", "https://x/a"), _src("b", "https://x/b"), _src("c", "https://x/c")]
     with pytest.raises(spi.ResolverError, match="source 'b' broke"):
         cli._resolve_sources(sources, tmp_path)
+
+
+def test_without_threads_the_sources_resolve_in_order(slow, tmp_path, monkeypatch):
+    """Pyodide cannot start a thread: the editor's worker must still compose."""
+    import concurrent.futures
+    import sys
+
+    monkeypatch.setattr(sys, "platform", "emscripten")
+
+    def refuse(*a, **k):
+        raise AssertionError("a thread pool must not be built where threads cannot start")
+
+    monkeypatch.setattr(concurrent.futures, "ThreadPoolExecutor", refuse)
+    sources = [_src("a", "https://x/a"), _src("b", "https://x/b")]
+    out = cli._resolve_sources(sources, tmp_path)
+    assert list(out.resolved) == ["a", "b"]
+    a0, a1 = slow.spans["a"]
+    b0, _ = slow.spans["b"]
+    assert b0 >= a1, "without threads the second source must start after the first finishes"
+
+
+def test_a_thread_that_cannot_start_falls_back_to_order(slow, tmp_path, monkeypatch):
+    import concurrent.futures
+
+    class NoThreads:
+        def __init__(self, *a, **k):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def submit(self, *a, **k):
+            raise RuntimeError("can't start new thread")
+
+    monkeypatch.setattr(concurrent.futures, "ThreadPoolExecutor", NoThreads)
+    sources = [_src("a", "https://x/a"), _src("b", "https://x/b")]
+    out = cli._resolve_sources(sources, tmp_path)
+    assert list(out.resolved) == ["a", "b"] and {"a", "b"} <= set(slow.spans)

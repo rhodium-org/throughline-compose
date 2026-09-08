@@ -17,9 +17,14 @@ rationale: 'Measured on a consumer of seven sources with a warm cache, the seven
   a lock file recording each tag''s commit, because it adds state whose invalidation
   has to be right and changes what a moved tag means; the operator chose to keep
   SR-0043''s contract as it stands. The shared-cache rule exists because two clones
-  into one directory at once would corrupt it. Verified by test: three sources made
+  into one directory at once would corrupt it. Where a platform cannot start a thread
+  — Python under Pyodide, which is how the throughline editor runs this tool — the
+  sources resolve one after another as they did before: the requirement is about
+  running side by side where that is possible. Found on the first release, 0.16.2,
+  which broke the editor''s composed graphs. Verified by test: three sources made
   slow resolve in about the time of one, bind in declared order, a shared URL and
-  ref is never fetched twice at once, and a failing source gives the same error.'
+  ref is never fetched twice at once, a failing source gives the same error, and
+  without threads they resolve in order.'
 normative: true
 links:
 - target: UR-0003

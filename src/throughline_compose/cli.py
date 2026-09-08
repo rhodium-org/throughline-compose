@@ -254,14 +254,41 @@ def _resolve_side_by_side(sources, root):
         else:
             later.append(i)
 
-    if first:
-        with ThreadPoolExecutor(max_workers=min(8, len(first))) as pool:
-            futures = {i: pool.submit(resolver_for(sources[i]).resolve, sources[i], root) for i in first}
-            for i in first:  # declared order, so the first failure is the one reported
-                results[i] = futures[i].result()
+    if first and _can_thread():
+        try:
+            with ThreadPoolExecutor(max_workers=min(8, len(first))) as pool:
+                futures = {i: pool.submit(resolver_for(sources[i]).resolve, sources[i], root) for i in first}
+                for i in first:  # declared order, so the first failure is the one reported
+                    results[i] = futures[i].result()
+        except RuntimeError as e:
+            # A platform that has the module but cannot start a thread. Nothing
+            # has been bound yet, so resolve every source in order as before.
+            if "thread" not in str(e).lower():
+                raise
+            first = list(range(len(sources)))
+            later = []
+            for i in first:
+                results[i] = resolver_for(sources[i]).resolve(sources[i], root)
+            return results
+    else:
+        for i in first:
+            results[i] = resolver_for(sources[i]).resolve(sources[i], root)
     for i in later:
         results[i] = resolver_for(sources[i]).resolve(sources[i], root)
     return results
+
+
+def _can_thread() -> bool:
+    """Whether this platform can run a thread beside the main one.
+
+    Python under Pyodide — the throughline editor's worker — reports itself as
+    emscripten and cannot start a thread, so there the sources resolve one after
+    another as they did before SR-0044. The requirement is about running side by
+    side where that is possible, not about requiring threads to exist.
+    """
+    import sys
+
+    return sys.platform != "emscripten"
 
 
 # The line of core's summary that composition must rescope. Located by its label
