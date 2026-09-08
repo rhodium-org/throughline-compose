@@ -193,9 +193,15 @@ def _resolve_sources(sources, root) -> _Resolution:
     report, so a source that will not resolve is named in the composer's vocabulary."""
     out = _Resolution()
 
-    # 1. Directly declared sources.
-    for s in sources:
-        out.bind(s.namespace, resolver_for(s).resolve(s, root), _source_location(s), s)
+    # 1. Directly declared sources, resolved side by side (SR-0044). Each
+    #    look-up of a pinned ref on its origin and each fetch runs beside the
+    #    others, and the union is bound in declared order whatever order they
+    #    finish in. Two sources sharing a URL and ref share a cache directory,
+    #    so only the first of each such pair runs concurrently; the rest resolve
+    #    afterwards from the warm cache, because two clones into one directory
+    #    at once would corrupt it.
+    for s, resolved in zip(sources, _resolve_side_by_side(sources, root)):
+        out.bind(s.namespace, resolved, _source_location(s), s)
 
     # 2. Re-exported transitive sources — resolved from the intermediate source's
     #    own declaration so the pin is inherited, never restated (SR-0014).
@@ -219,6 +225,43 @@ def _resolve_sources(sources, root) -> _Resolution:
                 out.ns_aliases.setdefault(s.namespace, {})[internal_ns] = alias
 
     return out
+
+
+def _cache_key(s):
+    """What two sources share when they share a cache directory: the URL and ref."""
+    return (s.url, s.ref) if s.url is not None else None
+
+
+def _resolve_side_by_side(sources, root):
+    """Resolve declared sources concurrently, returning results in declared order.
+
+    The first source for each cache key runs in the pool; a later source with the
+    same key waits for the pool and resolves alone afterwards. An error is raised
+    for the first failing source in declared order, so the report reads as it did
+    when resolution was sequential (SR-0044).
+    """
+    from concurrent.futures import ThreadPoolExecutor
+
+    results: list = [None] * len(sources)
+    seen: set = set()
+    first: list[int] = []
+    later: list[int] = []
+    for i, s in enumerate(sources):
+        key = _cache_key(s)
+        if key is None or key not in seen:
+            seen.add(key)
+            first.append(i)
+        else:
+            later.append(i)
+
+    if first:
+        with ThreadPoolExecutor(max_workers=min(8, len(first))) as pool:
+            futures = {i: pool.submit(resolver_for(sources[i]).resolve, sources[i], root) for i in first}
+            for i in first:  # declared order, so the first failure is the one reported
+                results[i] = futures[i].result()
+    for i in later:
+        results[i] = resolver_for(sources[i]).resolve(sources[i], root)
+    return results
 
 
 # The line of core's summary that composition must rescope. Located by its label
