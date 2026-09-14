@@ -1,35 +1,39 @@
 uid: UR-0005
 type: user_requirement
 status: ratified
-title: Transitive sources are pulled forward by re-export and alias, never silently
-  merged
+title: Transitive sources reach the union by composing, under labels the consumer
+  controls, never silently merged or captured
 text: 'When a source a consumer composes itself references a further source — a source
-  of its sources — the consumer shall be able to bring that transitive source into
-  the union without re-authoring its origin and pin by hand. The consumer shall declare,
-  on the intermediate source it already composes, that a named transitive namespace
-  is re-exported; re-exporting shall inherit that source''s own pinned origin so
-  the edition is not restated and cannot silently diverge from what the intermediate
-  source was authored against. The consumer shall remain in control of the label:
-  a re-exported namespace may be kept under its original name or bound to an alias
-  of the consumer''s choosing, exactly as UR-0001 lets the consumer name a direct
+  of its sources — that transitive source shall reach the consumer''s union without
+  the consumer re-authoring its origin and pin by hand: composing a source shall
+  compose what that source composes, to any depth, each at the edition the source
+  that declared it pinned, so an edition is never restated and cannot silently diverge
+  from what the declaring source was authored against. The consumer shall remain
+  in control of the label: a transitive namespace arrives under the name its declaring
+  source gave it, and the consumer may bind it to an alias of their own choosing
+  on the source they declare, exactly as UR-0001 lets the consumer name a direct
   source. Two editions of the same underlying standard shall be composable side by
   side by aliasing them to distinct namespaces — they are two sources, not one merged
-  one. What the consumer shall never get is a silent merge or a silent edition-pick:
-  a transitive namespace that resolves to two different editions with no alias to
-  tell them apart is an error the composer is told about and must resolve, not a
-  coin the tool flips for them.'
-rationale: Composition is deliberately one level deep and flat — a consumer that
-  composes a source which internally cites `asvs:SR-0272` must itself declare `asvs`,
-  or the reference fails as an undeclared namespace. That is honest but it forces
-  the consumer to copy the transitive source's origin and ref by hand and keep them
-  in sync forever, which is the re-authoring BN-0001 exists to abolish and the friction
-  BN-0002 warns turns teams back to copy-paste. Re-export removes the hand-copy while
-  keeping the consumer the owner of the graph (UR-0001) and the pin (UR-0003). The
-  alias is what makes the hard case tractable — the same standard depended on at
-  two editions is a genuine, not a pathological, situation, and the only sound way
-  to hold both is as two distinctly-named sources. The one thing that must not happen
-  is the tool silently choosing an edition, because that is precisely the false-clean,
-  silent-wrong outcome UR-0002 forbids.
+  one. What the consumer shall never get is a silent merge, a silent edition-pick,
+  or a silent capture: a label that reaches the union at two different editions with
+  no alias to tell them apart is an error the composer is told about and must resolve,
+  and a reference a source wrote against its own label never resolves to a different
+  source that merely shares the name.'
+rationale: Composition was first built one level deep and flat, with a per-namespace
+  re-export as the way to pull a transitive source forward (SR-0014). That kept the
+  consumer's toml the complete list of what the union held, but at the cost of turning
+  it into a hand-transcribed closure of other people's labels that could not reach
+  past one hop, and of leaving a source's un-re-exported labels open to capture by
+  a consumer's reuse of the same name. Neither was a decision the consumer was really
+  making. The one thing the consumer does decide is the label, so that is what the
+  requirement now asks them to write and nothing else; the closure, with the path
+  each namespace was carried by, is stated by the tool in the check summary and context
+  brief rather than by the consumer in the toml. The alias is what makes the hard
+  case tractable — the same standard depended on at two editions is a genuine, not
+  a pathological, situation, and the only sound way to hold both is as two distinctly-named
+  sources. The one thing that must not happen is the tool silently choosing an edition
+  or silently rebinding a reference, because that is precisely the false-clean, silent-wrong
+  outcome UR-0002 forbids.
 normative: true
 links:
 - target: BN-0001
@@ -40,6 +44,6 @@ attrs:
   origin: hybrid
   priority: should
   verification: demonstration
-  ratified_by: henry
-  ratified_fingerprint: sha256:5f4cc5ec65c76604fdab8f5ea7b018756f81596e7b6439b08de89caad793088b
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:5c08adf752f817df1d4d00cd4a98312da9a1af66d25a8c810719b5740fa7a936
   ratified_backfilled: true

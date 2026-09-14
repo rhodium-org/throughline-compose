@@ -8,26 +8,27 @@ text: 'When `tl-compose context` (and its alias `agentinfo`) runs over a project
   byte-for-byte as the core produces them — and then append a composition section
   the core cannot know about: how sources are declared and pinned in throughline.toml
   (namespace, url-or-path, ref), what the union-aware commands (check, docs, trace)
-  do differently over the merged graph, and the re-export and alias mechanism (SR-0014,
-  SR-0015) by which a source''s own transitive sources are pulled forward under a
-  chosen namespace. The appended section shall also list the sources this project
-  actually declares, read from its own config, so the brief describes the composition
-  the agent is really working in rather than a generic one. When the project declares
-  no sources the command shall remain a strict superset (SR-0003): the core brief
-  unchanged, with a short note that composition is available but unused. The alias
-  `agentinfo` shall invoke exactly this command.'
+  do differently over the merged graph, and the transitive model (SR-0045, SR-0015)
+  by which a source''s own sources reach the union at their inherited pins, under
+  their own labels or an alias the consumer sets. The appended section shall also
+  list every namespace bound in this project''s union — the sources it declares and
+  every transitive source those carry — each with its pin and the path that carried
+  it, so the brief describes the composition the agent is really working in rather
+  than a generic one. When the project declares no sources the command shall remain
+  a strict superset (SR-0003): the core brief unchanged, with a short note that composition
+  is available but unused. The alias `agentinfo` shall invoke exactly this command.'
 normative: true
 links:
 - target: UR-0002
   type: implements
 - target: SR-0003
   type: refines
-- target: SR-0014
+- target: SR-0045
   type: relates
 - target: SR-0006
   type: relates
 attrs:
   origin: hybrid
   ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:c20dd263b2c58f9ea3be708b49b0886cc578d1f8952dbb136639204b21e9eeae
+  ratified_fingerprint: sha256:386a7bb028208903116ffcd054c32194d3857cbed61af0df65d55d842d49d2c5
   ratified_backfilled: true

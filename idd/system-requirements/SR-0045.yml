@@ -1,0 +1,93 @@
+uid: SR-0045
+type: system_requirement
+status: ratified
+title: Composing a source composes what it composes, to any depth, under the labels
+  it gave them
+text: 'When tl-compose resolves a declared source it shall also resolve every source
+  that source itself declares, and every source those declare, to any depth, and
+  bind each into the consuming union under the namespace label the declaring source
+  gave it, at the origin and ref the declaring source pinned. The pin is inherited
+  at every hop and is never restated by the consumer. A source is resolved and loaded
+  once however many paths reach it, and the union is assembled with the consumer''s
+  own declarations bound first, in declared order, then each declared source''s closure
+  depth-first in its declared order, so that a name the consumer declares always
+  wins the label. A reference a source wrote against one of its own labels shall
+  resolve against that source''s own declarations mapped through any alias the consumer
+  set on the declared source carrying it — never against the union''s namespace set
+  directly — so a label the consumer happens to reuse for a different source can
+  never capture a reference written against it. A declared source shall accept an
+  `alias` table binding a label, wherever it appears in the subtree rooted at that
+  source, to a namespace of the consumer''s choosing; this is the consumer''s only
+  lever over transitive labels and is the mechanism by which two editions of one
+  standard compose side by side. When two labels reach the union bound to one edition
+  — the same content fingerprint — they shall bind to a single source under the first
+  label bound, and the check summary shall say which label was folded into which,
+  so a reader knows why the second never appears. When one label reaches the union
+  at two editions it is the collision SR-0015 governs. A dependency cycle shall terminate:
+  a source already on the current path is not resolved again. The consumer''s own
+  references may cite any bound namespace, transitive or direct, by its bound label.
+  A reference the consumer wrote against a namespace nothing binds shall fail naming
+  the consumer item that carries it and listing the namespaces the union does bind.
+  The `reexport` key of SR-0014 shall be refused when the consumer''s own configuration
+  is read, with a message naming `alias` and this requirement. The same key found
+  in a source''s own configuration, at any depth, shall not fail the run: the closure
+  it named is composed anyway, and the check summary shall note that the source carries
+  a withdrawn key, so a published edition that used the key stays composable without
+  being re-tagged. The check summary and `tl-compose context` shall list every bound
+  namespace with the path that carried it into the union.'
+rationale: 'Supersedes SR-0014. Re-export was two ideas under one keyword: the intermediate''s
+  pin is inherited rather than restated, and each transitive namespace is pulled
+  forward only where the consumer names it. The first is kept whole — the edition
+  a source was authored and validated against is a fact about that source, not a
+  decision for a consumer, and asking the consumer to restate it asked them to assert
+  something they did not author. The second is withdrawn, for three reasons found
+  in use. It could not reach past one hop: a consumer of house, which re-exports
+  regulation from platform, could neither re-export regulation (house does not declare
+  it) nor compose without it (platform cites it), and was back to hand-copying the
+  pin UR-0005 exists to abolish. It left a source''s internal labels resolving against
+  the union''s namespace set whenever they were not re-exported, so a source that
+  called its dependency `platform` had that reference silently captured by any unrelated
+  `platform` the consumer declared — reproduced on 0.16.4 as a clean strict check
+  with the borrowed link pointing at the wrong graph, the false-clean UR-0002 forbids.
+  And the gate protected no working configuration: a source whose items cite `asvs:`
+  cannot compose without `asvs`, so opt-in was a switch with one working position,
+  and closing the capture properly would have made it mandatory. SR-0014''s ground
+  for rejecting an automatic hoist was that a deep dependency could change what the
+  union contains without the consumer writing anything; but moving a declared source''s
+  ref already does that at the item level, and the consumer accepted it when they
+  composed the source at all — the invariant only ever held at the namespace level,
+  and the check summary, which lists every bound namespace with its provenance, is
+  where the complete statement of the union now lives. What the consumer does decide
+  is the label, and only the label, so that is all the toml now says. Rejected: a
+  lock file materialising the closure into the consumer''s toml, for the reason SR-0044
+  gave — state whose invalidation must be right — and because it would reproduce
+  the transcription this removes. Rejected: treating a borrowed item''s outbound
+  cross-source links as opaque at the seam, which would remove the need for the closure
+  but also remove the trace from a delivery item through a house rule to the clause
+  of the standard, which is the product. The subtree-wide alias is sound because
+  a subtree that composes at all holds one edition per label within it. Verified
+  by test: a three-level chain composes from one declaration; a consumer cites a
+  transitive namespace directly; a reused label is a reported collision, not a capture;
+  the same edition under two labels binds once and says so; two editions under one
+  label fail with the why and both fixes; an alias on the carrying source splits
+  the diamond, including one level deeper; the old keyword is refused with a pointer;
+  a cycle terminates; a shared dependency binds once; a fetched source carrying a
+  path dependency explains what a publishable source must do instead.'
+normative: true
+links:
+- target: UR-0005
+  type: implements
+- target: SR-0015
+  type: relates
+- target: SR-0006
+  type: relates
+- target: SR-0016
+  type: relates
+- target: SR-0044
+  type: relates
+attrs:
+  origin: hybrid
+  priority: must
+  verification: test
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:32e5b4b8ec92e6483caf3e0daeb45d24d834dc8896e141989c28d19bb816a5ae
