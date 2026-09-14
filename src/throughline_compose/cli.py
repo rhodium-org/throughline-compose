@@ -968,8 +968,13 @@ def _compose_ratify(args) -> int:
         # owns what a ratification record contains (SR-0004), and a composed
         # sign-off that quietly dropped the identifier would be a weaker record
         # than the identical bare-`tl` one.
+        # `replacing` travels too (core SR-0196): correcting an unpublished
+        # ratifier is a mode of ratify, and a composed path that accepted the
+        # flag and dropped it would refuse the correction with core's
+        # "nothing to accept" while bare `tl` performed it (SR-0003).
         item = ratify(consumer, uid, by, index=Index.build(union.project),
-                      by_id=getattr(args, "by_id", None))
+                      by_id=getattr(args, "by_id", None),
+                      replacing=getattr(args, "replacing", False))
     except IdentityError as e:
         return _err(str(e))
     except GroundingError as e:
