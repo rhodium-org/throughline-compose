@@ -1,6 +1,6 @@
 uid: SR-0045
 type: system_requirement
-status: ratified
+status: implemented
 title: Composing a source composes what it composes, to any depth, under the labels
   it gave them
 text: 'When tl-compose resolves a declared source it shall also resolve every source

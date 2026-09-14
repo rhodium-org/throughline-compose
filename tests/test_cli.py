@@ -125,7 +125,7 @@ def test_the_borrowed_orphan_is_real_but_not_the_consumers_to_answer(
 
     consumer = load_project(str(lean_consumer_dir))
     res = _resolve_sources(parse_sources(consumer), Path(lean_consumer_dir))
-    union = build_union(consumer, res.projects(), res.ns_aliases)
+    union = build_union(consumer, res.projects(), res.labels)
 
     raw = validate(union.project, strict=False)
     assert any(f.rule == "orphan" for f in raw), (
@@ -744,7 +744,7 @@ def test_compose_new_local_ground_passthrough(consumer_dir, capsys):
 def test_context_appends_composition_section_and_live_sources(consumer_dir, capsys):
     # SR-0016: over a project that declares sources, `context` emits the core brief
     # first (the IDD contract) and then the composition section plus the live listing
-    # of the sources this project actually declares.
+    # of every namespace this project's union binds (SR-0045).
     rc = tlc_main(["-C", str(consumer_dir), "context"])
     out = capsys.readouterr().out
     assert rc == 0
@@ -752,10 +752,11 @@ def test_context_appends_composition_section_and_live_sources(consumer_dir, caps
     assert "The contract: Intent-Driven Development" in out
     # Composition section appended.
     assert "Composition: working this project with `tl-compose`" in out
-    assert "Re-export and alias" in out
-    # Live listing names the declared source and its location.
-    assert "## Sources this project declares" in out
+    assert "Transitive sources" in out
+    # Live listing names the declared source, its location and who declared it.
+    assert "## Namespaces bound in this union" in out
     assert "`toy`" in out and "path `../toy-source`" in out
+    assert "declared by you" in out
 
 
 def test_agentinfo_is_identical_to_context(consumer_dir, capsys):
@@ -777,8 +778,8 @@ def test_context_without_sources_is_core_plus_short_note(source_dir, capsys):
     assert "The contract: Intent-Driven Development" in out
     assert "declares no `[[sources]]`" in out
     # The full manual's headings are absent.
-    assert "Re-export and alias" not in out
-    assert "## Sources this project declares" not in out
+    assert "Transitive sources" not in out
+    assert "## Namespaces bound in this union" not in out
 
 
 def test_every_union_command_is_described_in_the_brief(consumer_dir, capsys):
@@ -1007,7 +1008,7 @@ def test_context_with_a_uid_keeps_the_core_brief_and_composition_sections(
     assert rc == 0
     out = capsys.readouterr().out
     assert "The contract: Intent-Driven Development" in out
-    assert "## Sources this project declares" in out
+    assert "## Namespaces bound in this union" in out
     assert out.index("## The item you were given") < out.index(
         "Composition: working this project with `tl-compose`")
 

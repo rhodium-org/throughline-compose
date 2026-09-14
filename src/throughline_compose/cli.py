@@ -39,7 +39,6 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Callable
-from dataclasses import replace
 from pathlib import Path
 
 from throughline.cli import (
@@ -92,7 +91,7 @@ from . import git_resolver  # noqa: F401 — registers the reference git resolve
 from .resolve import cache_root
 from .resolver import UnionResolver
 from .seam import SeamError, apply_seam, is_borrowed, parse_seam
-from .sources import Source, SourceError, parse_sources
+from .sources import Source, SourceError, parse_sources, withdrawn_declarations
 from .spi import ResolvedSource, ResolverError, resolver_for
 from .union import ComposeError, build_union, translate_finding
 
@@ -128,55 +127,150 @@ def _source_location(s: Source) -> str:
     return f"{s.url}@{s.ref}" if s.is_remote else f"path {s.path}"
 
 
-def _conflict_message(ns: str, where_a: str, fp_a: str,
-                      where_b: str, fp_b: str) -> str:
+def _chain(via: tuple[str, ...]) -> str:
+    """The path that carried a namespace into the union, as the summary prints it."""
+    return " › ".join(via)
+
+
+def _origin(where: str, via: tuple[str, ...]) -> str:
+    """Where a binding came from (SR-0015): its location and the chain of declared
+    sources that carried it in, or the consumer's own declaration."""
+    return f"{where} via {_chain(via)}" if via else f"{where}, declared by you"
+
+
+def _conflict_message(ns: str, origin_a: str, fp_a: str,
+                      origin_b: str, fp_b: str) -> str:
     """The advisory a two-edition namespace collision fails with (SR-0015): the why
-    (namespace, both editions, where each came from) and the fix (pin explicitly, or
-    alias apart) — never a suggestion to merge, which the model cannot honour."""
+    (namespace, both editions, the path each came by) and the fix (pin explicitly,
+    or alias apart on the source carrying one of them) — never a suggestion to
+    merge, which the model cannot honour."""
     short = lambda fp: fp.removeprefix("sha256:")[:12]  # noqa: E731
     return (
         f"namespace '{ns}' is bound to two different editions and tl-compose will "
         f"neither merge them nor pick one for you:\n"
-        f"  - {where_a} [{short(fp_a)}]\n"
-        f"  - {where_b} [{short(fp_b)}]\n"
+        f"  - {origin_a} [{short(fp_a)}]\n"
+        f"  - {origin_b} [{short(fp_b)}]\n"
         f"fix it by either: pinning '{ns}' explicitly in your own [[sources]] to the "
         f"single edition you intend, so one binding governs every reference to it; "
-        f"or aliasing the two to distinct namespaces (for example "
-        f"reexport = {{ {ns} = \"{ns}-alt\" }}) so both editions compose side by side "
+        f"or aliasing one of them apart — set alias = {{ {ns} = \"{ns}-alt\" }} on "
+        f"the declared source carrying it — so both editions compose side by side "
         f"as the two separate sources they are"
     )
 
 
 class _Resolution:
-    """The outcome of resolving a consumer's sources plus any re-exports: the
-    namespace -> :class:`ResolvedSource` map, the union namespace remaps each
-    re-exporting source needs (SR-0014), a human origin per bound namespace, and
-    the coordinates each was reached by."""
+    """The outcome of resolving a consumer's sources and their closure (SR-0045):
+    the namespace -> :class:`ResolvedSource` map in bind order, a human origin and
+    the carrying path per bound namespace, the coordinates each was reached by,
+    the label map each source's own references resolve through, and the notices
+    the summary prints."""
 
     def __init__(self):
         self.resolved: dict[str, ResolvedSource] = {}
-        self.ns_aliases: dict[str, dict[str, str]] = {}
         self.locations: dict[str, str] = {}
         # The declaration each bound namespace was reached by — the consumer's own
-        # for a declared source, the inherited one for a re-exported source, so an
+        # for a declared source, the inherited one for a transitive source, so an
         # export can state every pin as data and not only as prose (SR-0040).
         self.coordinates: dict[str, Source] = {}
+        # The chain of union namespaces that carried each binding in; empty for a
+        # source the consumer declared itself.
+        self.via: dict[str, tuple[str, ...]] = {}
+        # Per bound namespace: the labels that source's own references may use —
+        # its direct declarations and every label its sources hoisted into it —
+        # mapped to the union namespace each was bound under (SR-0045).
+        self.labels: dict[str, dict[str, str]] = {}
+        # What the summary should say beyond the bindings: a same-edition
+        # coalescence, or a withdrawn key found in a published edition.
+        self.notices: list[str] = []
+        # fingerprint -> the first namespace bound to that edition
+        self._holder: dict[str, str] = {}
+        # One resolution per coordinates however many paths reach them
+        self._memo: dict[tuple, ResolvedSource] = {}
 
-    def bind(self, ns: str, rs: ResolvedSource, where: str, source: Source) -> None:
-        """Bind ``ns`` to a resolved source, or fail fast when ``ns`` is already
-        bound to a different edition (SR-0015). Binding the same edition twice — a
-        namespace both declared and re-exported at one pin — resolves to the one
-        source (SR-0014)."""
+    def origin(self, ns: str) -> str:
+        return _origin(self.locations[ns], self.via[ns])
+
+    def bind(self, ns: str, rs: ResolvedSource, where: str, source: Source,
+             via: tuple[str, ...] = ()) -> bool:
+        """Bind ``ns`` to a resolved source and return True, or return False when
+        ``ns`` is already bound to that same edition, or fail fast when it is
+        bound to a different one (SR-0015)."""
         existing = self.resolved.get(ns)
         if existing is not None:
             if existing.fingerprint != rs.fingerprint:
                 raise ResolverError(_conflict_message(
-                    ns, self.locations[ns], existing.fingerprint,
-                    where, rs.fingerprint))
-            return  # same edition — a single bound source
+                    ns, self.origin(ns), existing.fingerprint,
+                    _origin(where, via), rs.fingerprint))
+            return False  # same edition — a single bound source
         self.resolved[ns] = rs
         self.locations[ns] = where
         self.coordinates[ns] = source
+        self.via[ns] = tuple(via)
+        self.labels.setdefault(ns, {})
+        self._holder.setdefault(rs.fingerprint, ns)
+        return True
+
+    def walk(self, ns: str, rename: Callable[[str], str]) -> None:
+        """Bind the closure of the source bound as ``ns`` (SR-0045), depth-first in
+        its declared order.
+
+        ``rename`` maps a label as it would appear in *that source's own* union to
+        the namespace the consumer binds it under: the consumer's alias on the
+        declared source, composed with each intermediate's own alias on the way
+        down, so an alias applies throughout the subtree it was set on. A source
+        already bound to the same edition under another label is not bound twice:
+        the reference is folded into the existing binding and the summary says so.
+        A source bound before is not walked again, which is also what ends a cycle.
+        """
+        rs = self.resolved[ns]
+        carrier = self.coordinates[ns]
+        via = self.via[ns] + (ns,)
+        for dep_ns in withdrawn_declarations(rs.project):
+            self.notices.append(
+                f"'{ns}' ({self.locations[ns]}) declares 'reexport' on its source "
+                f"'{dep_ns}', a key withdrawn by SR-0045 — ignored; the sources it "
+                f"named are composed anyway")
+        src_root = Path(rs.project.path)
+        view = self.labels[ns]
+        for d in parse_sources(rs.project, withdrawn="ignore"):
+            if d.path is not None and carrier.is_remote:
+                raise ResolverError(
+                    f"source '{d.namespace}' is declared by '{ns}' with a path "
+                    f"({d.path}), but '{ns}' was fetched by url "
+                    f"({carrier.url}@{carrier.ref}) and a path resolves nowhere from "
+                    f"the cache — a source published by url must pin its own sources "
+                    f"by url + ref (reached via {_chain(via)})")
+            resolved = self._resolve(d, src_root, via)
+            union_name = rename(d.namespace)
+            holder = self._holder.get(resolved.fingerprint)
+            if holder is not None and holder != union_name:
+                bound = holder
+                self.notices.append(
+                    f"'{union_name}' (via {_chain(via)}) is the same edition as "
+                    f"'{holder}' ({self.origin(holder)}) — bound once as '{holder}'")
+            else:
+                bound = union_name
+                if self.bind(union_name, resolved, _source_location(d), d, via):
+                    self.walk(union_name,
+                              lambda n, _r=rename, _a=d.alias: _r(_a.get(n, n)))
+            # What this source's own references may name: its label for the
+            # dependency, and every label the dependency hoisted into it, each as
+            # this source would have bound it.
+            view[d.namespace] = bound
+            for label, target in self.labels.get(bound, {}).items():
+                view.setdefault(d.alias.get(label, label), target)
+
+    def _resolve(self, d: Source, root: Path, via: tuple[str, ...]) -> ResolvedSource:
+        key = (d.url, d.ref, d.subdir,
+               None if d.path is None else str((root / d.path).resolve()))
+        hit = self._memo.get(key)
+        if hit is None:
+            try:
+                hit = resolver_for(d).resolve(d, root)
+            except ResolverError as e:
+                raise ResolverError(f"{e} (reached via {_chain(via)})") from e
+            self._memo[key] = hit
+        return hit
 
     def projects(self) -> dict:
         """The namespace -> Project view the union engine consumes (SR-0004)."""
@@ -184,13 +278,15 @@ class _Resolution:
 
 
 def _resolve_sources(sources, root) -> _Resolution:
-    """Resolve each declared source, and each transitive source it re-exports,
-    through the registered resolvers (SR-0011) into a :class:`_Resolution`. Every
-    fetch goes through the one resolver interface; no other code path reaches a
-    source. Re-export is one level and opt-in (SR-0014): a source's own sources are
-    pulled forward only where the consumer named them. A namespace bound to two
-    editions fails fast (SR-0015). Raises :class:`ResolverError` for the caller to
-    report, so a source that will not resolve is named in the composer's vocabulary."""
+    """Resolve each declared source and its closure through the registered
+    resolvers (SR-0011) into a :class:`_Resolution`. Every fetch goes through the
+    one resolver interface; no other code path reaches a source. Composing a
+    source composes what it composes (SR-0045): every source a declared source
+    declares, to any depth, is bound under the label its declaring source gave it
+    at the pin that source set, renamed only by an alias the consumer set on the
+    declared source carrying it. A namespace bound to two editions fails fast
+    (SR-0015). Raises :class:`ResolverError` for the caller to report, so a source
+    that will not resolve is named in the composer's vocabulary."""
     out = _Resolution()
 
     # 1. Directly declared sources, resolved side by side (SR-0044). Each
@@ -199,30 +295,14 @@ def _resolve_sources(sources, root) -> _Resolution:
     #    finish in. Two sources sharing a URL and ref share a cache directory,
     #    so only the first of each such pair runs concurrently; the rest resolve
     #    afterwards from the warm cache, because two clones into one directory
-    #    at once would corrupt it.
+    #    at once would corrupt it. The consumer's own declarations bind first,
+    #    so a name the consumer chose always wins the label.
     for s, resolved in zip(sources, _resolve_side_by_side(sources, root)):
         out.bind(s.namespace, resolved, _source_location(s), s)
 
-    # 2. Re-exported transitive sources — resolved from the intermediate source's
-    #    own declaration so the pin is inherited, never restated (SR-0014).
+    # 2. Each declared source's closure, depth-first, in declared order.
     for s in sources:
-        if not s.reexport:
-            continue
-        intermediate = out.resolved[s.namespace].project
-        declared = {d.namespace: d for d in parse_sources(intermediate)}
-        src_root = Path(intermediate.path)
-        for internal_ns, alias in s.reexport.items():
-            dep = declared.get(internal_ns)
-            if dep is None:
-                raise ResolverError(
-                    f"source '{s.namespace}' re-exports namespace '{internal_ns}', "
-                    f"which '{s.namespace}' does not itself declare as a source")
-            derived = replace(dep, namespace=alias, reexport={})
-            where = f"{_source_location(dep)} (re-exported from '{s.namespace}')"
-            out.bind(alias, resolver_for(derived).resolve(derived, src_root), where,
-                     derived)
-            if alias != internal_ns:
-                out.ns_aliases.setdefault(s.namespace, {})[internal_ns] = alias
+        out.walk(s.namespace, lambda n, _a=s.alias: _a.get(n, n))
 
     return out
 
@@ -394,7 +474,7 @@ def _compose_check(args) -> int:
         return _err(str(e))
 
     try:
-        union = build_union(consumer, res.projects(), res.ns_aliases)
+        union = build_union(consumer, res.projects(), res.labels)
     except ComposeError as e:
         return _err(str(e))
 
@@ -440,12 +520,17 @@ def _compose_check(args) -> int:
         for line in _compose_check_summary(union, index):
             print(line, file=sys.stderr)
 
+        # Every bound namespace in bind order, a transitive one with the path that
+        # carried it in, then what the walk folded or ignored (SR-0045, SR-0016).
         def _describe(ns: str) -> str:
             fp = res.resolved[ns].fingerprint.removeprefix("sha256:")[:12]
-            return f"{ns} ({res.locations[ns]}) [{fp}]"
-        names = ", ".join(_describe(ns) for ns in sorted(res.resolved))
+            line = f"{ns} ({res.locations[ns]}) [{fp}]"
+            return f"{line} via {_chain(res.via[ns])}" if res.via[ns] else line
+        names = ", ".join(_describe(ns) for ns in res.resolved)
         print(f"\ntl-compose check · {len(res.resolved)} source(s) composed: {names}",
               file=sys.stderr)
+        for note in res.notices:
+            print(f"  note: {note}", file=sys.stderr)
     tally = f"\n{errs} error(s), {warns} warning(s)"
     if not getattr(args, "quiet", False) and errs == 0:
         tally += "  — composed graph is sound" + (" (strict)" if args.strict else "")
@@ -510,7 +595,7 @@ def _compose_query(args) -> int:
     except ResolverError as e:
         return _err(str(e))
     try:
-        union = build_union(consumer, res.projects(), res.ns_aliases)
+        union = build_union(consumer, res.projects(), res.labels)
     except ComposeError as e:
         return _err(str(e))
 
@@ -648,7 +733,7 @@ def _compose_dump(args) -> int:
     except ResolverError as e:
         return _err(str(e))
     try:
-        union = build_union(consumer, res.projects(), res.ns_aliases)
+        union = build_union(consumer, res.projects(), res.labels)
     except ComposeError as e:
         return _err(str(e))
 
@@ -696,7 +781,8 @@ def _compose_docs(args) -> int:
     except ResolverError as e:
         return _err(str(e))
 
-    return cmd_docs(args, resolver=UnionResolver(consumer, res.projects()))
+    return cmd_docs(args, resolver=UnionResolver(consumer, res.projects(),
+                                                 res.labels))
 
 
 def _union_uid(union, requested: str) -> str:
@@ -742,7 +828,7 @@ def _compose_trace(args) -> int:
     except ResolverError as e:
         return _err(str(e))
     try:
-        union = build_union(consumer, res.projects(), res.ns_aliases)
+        union = build_union(consumer, res.projects(), res.labels)
     except ComposeError as e:
         return _err(str(e))
 
@@ -796,7 +882,7 @@ def _compose_subgraph(args) -> int:
     except ResolverError as e:
         return _err(str(e))
     try:
-        union = build_union(consumer, res.projects(), res.ns_aliases)
+        union = build_union(consumer, res.projects(), res.labels)
     except ComposeError as e:
         return _err(str(e))
 
@@ -873,7 +959,7 @@ def _compose_ratify(args) -> int:
     except ResolverError as e:
         return _err(str(e))
     try:
-        union = build_union(consumer, res.projects(), res.ns_aliases)
+        union = build_union(consumer, res.projects(), res.labels)
     except ComposeError as e:
         return _err(str(e))
 
@@ -939,7 +1025,7 @@ def _compose_migrate(args) -> int:
     except ResolverError as e:
         return _err(str(e))
     try:
-        union = build_union(consumer, res.projects(), res.ns_aliases)
+        union = build_union(consumer, res.projects(), res.labels)
     except ComposeError as e:
         return _err(str(e))
 
@@ -999,7 +1085,7 @@ def _compose_link(args) -> int:
     except ResolverError as e:
         return _err(str(e))
     try:
-        union = build_union(consumer, res.projects(), res.ns_aliases)
+        union = build_union(consumer, res.projects(), res.labels)
     except ComposeError as e:
         return _err(str(e))
 
@@ -1045,7 +1131,7 @@ def _compose_new(args) -> int:
     except ResolverError as e:
         return _err(str(e))
     try:
-        union = build_union(consumer, res.projects(), res.ns_aliases)
+        union = build_union(consumer, res.projects(), res.labels)
     except ComposeError as e:
         return _err(str(e))
 
@@ -1150,38 +1236,42 @@ ref = "v5.0.0"                     # REQUIRED for a url — pins the edition
 hand — there is no CLI subcommand that writes it. Everything about the *graph
 itself* stays CLI-only; see **What you may write in a consuming project**, below.
 
-## Declare every namespace you reference — composition is *not* transitive
+## Transitive sources — composing a source composes what it composes (SR-0045, SR-0015)
 
-If your graph references `asvs:…`, you must declare an `asvs` source. This holds
-**transitively**: if a source you compose itself references `asvs:…` internally, that
-does **not** import `asvs` for you — you must **also** declare `asvs` at the same
-edition, or pull it forward with re-export (below). A reference to an undeclared
-namespace fails the check; that is deliberate — the composer, not a source, owns which
-editions are in play.
+Every namespace a declared source declares — and every one *those* declare, to any
+depth — is bound into your union under the label its declaring source gave it, at
+the pin that source set. You declare only the sources you cite directly and choose
+their labels; the rest arrive on their own, each edition inherited and never
+restated. The check summary and the listing below name every bound namespace with
+the path that carried it in (`regulation … via house › platform`), so the toml says
+what you chose and the tool says what that composes.
 
-## Re-export and alias (SR-0014, SR-0015)
-
-A source can pull *its own* sources forward into your union, so you don't restate a pin
-you don't control:
+Your one lever over a transitive label is `alias`, on the declared source that
+carries it:
 
 ```toml
 [[sources]]
-namespace = "gds"
+namespace = "house"
 url = "..."
 ref = "v2026-07"
-reexport = ["asvs"]                # pull gds's own asvs source forward, same name
-# or:  reexport = { asvs = "owasp" }  # ...forward under an alias you choose
+alias = { asvs = "asvs-v4" }       # house's `asvs`, and any `asvs` beneath it, binds as `asvs-v4`
 ```
 
-Re-export is **one level and opt-in**: only the namespaces you name are pulled forward,
-and each inherits the intermediate source's pin — you never restate the ref. The array
-form re-exports under the same name; the table form binds it to an alias you choose.
+An alias applies throughout that source's subtree. A source's own references always
+resolve through its own declarations (renamed by your alias), never against a label
+you happen to reuse — so a source that calls its dependency `platform` cannot be
+captured by an unrelated `platform` you declared. Your own items may cite any bound
+namespace, transitive or direct, by its bound label; a reference to a namespace
+nothing binds fails, naming the item that carries it and listing what is bound.
 
-If a single namespace ends up bound to **two different editions** — declared at one ref
-and re-exported at another — `tl-compose` will neither merge them nor silently pick
-one: it fails fast, names both editions and where each came from, and states the fix
-(pin the namespace explicitly to the one edition you intend, or alias the two apart so
-they compose side by side).
+Two labels reaching the union at **one edition** bind once, under the first label
+bound, and the summary says which was folded into which. One label reaching the
+union at **two different editions** — declared at one ref and carried in at another,
+or two sources pinning the same standard differently — is refused: `tl-compose`
+names both editions and the path each came by, and states the fix (pin it yourself
+to the one edition you intend, or set an `alias` on the declared source carrying one
+of them so both compose side by side). The old `reexport` key is refused in your own
+toml and ignored, with a note, inside a source's.
 
 @@UNION_COMMANDS@@
 
@@ -1238,41 +1328,49 @@ sources — `tl-compose` never writes back to an external authority. Storing a l
 """
 
 
-def _source_line(s: Source) -> str:
-    """One human-readable bullet describing a declared source for the live listing."""
+def _bound_line(res: _Resolution, ns: str) -> str:
+    """One human-readable bullet describing a bound namespace for the live listing:
+    its pin, and the path that carried it in or the alias set on it (SR-0016)."""
+    s = res.coordinates[ns]
     where = f"`{s.url}` @ `{s.ref}`" if s.is_remote else f"path `{s.path}`"
     if s.subdir:
         where += f" (subdir `{s.subdir}`)"
-    extra = ""
-    if s.reexport:
-        parts = [k if k == v else f"{k}→{v}" for k, v in sorted(s.reexport.items())]
-        extra = f" · re-exports {', '.join(f'`{p}`' for p in parts)}"
-    return f"- **`{s.namespace}`** — {where}{extra}"
+    via = res.via[ns]
+    if via:
+        carried = " · via " + " › ".join(f"`{v}`" for v in via)
+    else:
+        carried = " · declared by you"
+        if s.alias:
+            parts = ", ".join(f"`{k}` → `{v}`" for k, v in sorted(s.alias.items()))
+            carried += f" · alias {parts}"
+    return f"- **`{ns}`** — {where}{carried}"
 
 
-def _ctx_sources(sources: list[Source]) -> str:
-    """The live 'sources this project declares' section — the composition analogue of
-    the core brief's live graph snapshot (SR-0016): read from this project's own
-    config so the brief describes the composition the agent is really working in."""
-    if not sources:
-        return (
-            "## Sources this project declares\n\n"
-            "_None. This project declares no `[[sources]]`, so it is an ordinary "
-            "throughline graph and every command behaves exactly as core `tl`. The "
-            "composition machinery above becomes live the moment you add a source._"
-        )
-    lines = ["## Sources this project declares\n"]
-    lines.extend(_source_line(s) for s in sources)
+def _ctx_bound(res: _Resolution) -> str:
+    """The live 'namespaces bound in this union' section — the composition analogue
+    of the core brief's live graph snapshot (SR-0016, SR-0045): every namespace the
+    union binds, the sources this project declares and every transitive source those
+    carry, each with its pin and the path that carried it, so the brief describes
+    the composition the agent is really working in."""
+    lines = ["## Namespaces bound in this union\n"]
+    lines.extend(_bound_line(res, ns) for ns in res.resolved)
+    if res.notices:
+        lines.append("")
+        lines.extend(f"- _{note}_" for note in res.notices)
     return "\n".join(lines)
 
 
 def _compose_context(args) -> int:
     """Emit the core `tl context` brief verbatim, then append the composition section
-    and this project's live source listing (SR-0016). The core brief is captured from
-    the unchanged core command so the superset holds byte-for-byte; only when the
-    project declares sources is the full composition manual appended — with none
-    declared the brief stays the core's plus a short 'composition available but unused'
-    note, keeping the strict-superset promise (SR-0003).
+    and the live listing of every namespace this project's union binds (SR-0016).
+    The core brief is captured from the unchanged core command so the superset holds
+    byte-for-byte; only when the project declares sources is the full composition
+    manual appended — with none declared the brief stays the core's plus a short
+    'composition available but unused' note, keeping the strict-superset promise
+    (SR-0003). The listing is read from the resolved closure, not the config, since
+    what the config declares is no longer the whole of what the union binds
+    (SR-0045); a source that will not resolve fails the brief rather than leaving
+    it to describe a composition that does not exist.
 
     Given a UID, the item section is computed over the *union* (SR-0042). Left to
     core it would be computed over the bare local graph, printing every borrowed
@@ -1290,14 +1388,19 @@ def _compose_context(args) -> int:
         consumer, sources = None, []
 
     uid = getattr(args, "uid", None)
+    res = None
+    if sources:
+        try:
+            res = _resolve_sources(sources, Path(args.path))
+        except ResolverError as e:
+            return _err(str(e))
     # Core renders the brief; when there is a union to answer over, the item section
     # is rendered here instead, so core is never handed a UID it would answer locally.
     composed_section = None
     if sources and uid is not None:
         try:
-            res = _resolve_sources(sources, Path(args.path))
-            union = build_union(consumer, res.projects(), res.ns_aliases)
-        except (ResolverError, ComposeError) as e:
+            union = build_union(consumer, res.projects(), res.labels)
+        except ComposeError as e:
             return _err(str(e))
         start = _union_uid(union, uid)
         if union.project.get(start) is None:
@@ -1324,13 +1427,13 @@ def _compose_context(args) -> int:
             "# Composition (`tl-compose`)\n\n"
             "This project declares no `[[sources]]`, so `tl-compose` behaves exactly "
             "as `tl` here — everything above is the whole brief. Composition "
-            "(`[[sources]]`, re-export, and union-aware "
+            "(`[[sources]]`, the transitive sources they carry, and union-aware "
             + "/".join(f"`{n}`" for n in sorted(_UNION_COMMANDS))
             + ") becomes available the moment you add a source; run "
             "`tl-compose agentinfo` again then for the full composition brief.\n")
     else:
         sys.stdout.write("\n" + _compose_brief() + "\n"
-                         + _ctx_sources(sources) + "\n")
+                         + _ctx_bound(res) + "\n")
     sys.stdout.flush()
     return OK
 
@@ -1399,8 +1502,9 @@ _UNION_COMMANDS: dict[str, tuple[Callable[[argparse.Namespace], int], str]] = {
         "the union so a record it declined as ungrounded can be completed."),
     "context": (
         _compose_context,
-        "emits the core brief unchanged, then this composition section and your "
-        "live source listing. `agentinfo` is an alias for it."),
+        "emits the core brief unchanged, then this composition section and the "
+        "live listing of every namespace your union binds, with the path that "
+        "carried each in. `agentinfo` is an alias for it."),
 }
 
 
