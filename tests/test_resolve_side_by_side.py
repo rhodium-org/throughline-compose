@@ -10,6 +10,8 @@ from pathlib import Path
 
 import pytest
 
+from throughline.model import Project
+
 from throughline_compose import cli, spi
 from throughline_compose.sources import Source
 
@@ -32,7 +34,10 @@ class _Slow(spi.Resolver):
             raise spi.ResolverError(f"source '{source.namespace}' broke")
         with self.lock:
             self.spans[source.namespace] = (start, time.perf_counter())
-        return spi.ResolvedSource(project=source.namespace, fingerprint=f"fp-{source.namespace}")
+        # A leaf: declares nothing, so the transitive walk (SR-0045) finds no closure.
+        project = Project(path=str(consumer_root),
+                          config={"project": {"name": source.namespace}})
+        return spi.ResolvedSource(project=project, fingerprint=f"fp-{source.namespace}")
 
 
 def _src(ns: str, url: str = None, ref: str = "v1", path: str = None) -> Source:
@@ -53,7 +58,8 @@ def test_sources_resolve_at_the_same_time_and_bind_in_declared_order(slow, tmp_p
     elapsed = time.perf_counter() - t
     assert elapsed < 0.9, f"three 0.4s resolutions took {elapsed:.2f}s — not side by side"
     assert list(out.resolved) == ["a", "b", "c"]
-    assert [out.resolved[ns].project for ns in ("a", "b", "c")] == ["a", "b", "c"]
+    assert [out.resolved[ns].project.config["project"]["name"]
+            for ns in ("a", "b", "c")] == ["a", "b", "c"]
 
 
 def test_a_shared_url_and_ref_is_never_resolved_twice_at_once(slow, tmp_path):

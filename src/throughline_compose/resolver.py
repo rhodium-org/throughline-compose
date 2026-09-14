@@ -27,9 +27,14 @@ _NS_SPLIT = re.compile(r"^([a-z][a-z0-9_-]*):(.+)$")
 class UnionResolver(TargetResolver):
     """Resolve tl:matrix target cells over a consumer plus its sources."""
 
-    def __init__(self, consumer, sources: dict) -> None:
+    def __init__(self, consumer, sources: dict,
+                 labels: dict[str, dict[str, str]] | None = None) -> None:
         super().__init__(consumer)
         self._sources = sources  # namespace -> loaded source Project
+        # namespace -> that source's own label -> union namespace (SR-0045), so a
+        # mirrored clause's outgoing cross-source links read under the names the
+        # citing document uses, not the labels the source's author chose.
+        self._labels = labels or {}
 
     def _delegate(self, uid: str) -> "TargetResolver | None":
         """A resolver over the source project owning ``uid``, or ``None`` when
@@ -76,7 +81,8 @@ class UnionResolver(TargetResolver):
         if src.get(local) is None:
             return None
         ns = _NS_SPLIT.match(uid).group(1)
-        return render_item(src, local, _MirrorResolver(src, ns))
+        return render_item(src, local,
+                           _MirrorResolver(src, ns, self._labels.get(ns, {})))
 
     def _source_for(self, uid: str):
         """The loaded source project owning a namespace-qualified ``uid``, or None."""
@@ -94,17 +100,23 @@ class _MirrorResolver(TargetResolver):
     the consumer's citations already use (SR-0007), so the heading a reader arrives
     at matches the citation that sent them there."""
 
-    def __init__(self, source, namespace: str) -> None:
+    def __init__(self, source, namespace: str,
+                 labels: dict[str, str] | None = None) -> None:
         super().__init__(source)
         self._ns = namespace
+        self._labels = labels or {}
 
     def _qualified(self, uid: str) -> str:
         """``uid`` under this source's namespace, with its reference number where the
         clause carries one. A target already qualified is a reference the source makes
-        into a further namespace of its own and is left exactly as the source wrote
-        it — re-qualifying it would claim it for the wrong graph."""
+        into a further namespace of its own: its label is mapped to the union
+        namespace the consumer bound it under (SR-0045) and otherwise left exactly
+        as the source wrote it — re-qualifying it would claim it for the wrong
+        graph."""
         if is_namespace_qualified(uid):
-            return uid
+            m = _NS_SPLIT.match(uid)
+            bound = self._labels.get(m.group(1))
+            return f"{bound}:{m.group(2)}" if bound else uid
         ref = self.attr(uid, "source_ref")
         return f"{self._ns}:{uid} ({ref})" if ref else f"{self._ns}:{uid}"
 

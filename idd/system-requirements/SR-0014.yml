@@ -1,6 +1,6 @@
 uid: SR-0014
 type: system_requirement
-status: implemented
+status: rejected
 title: A source may re-export a transitive namespace, optionally under a consumer
   alias
 text: 'A source entry in the consumer''s configuration shall accept a declaration
@@ -43,3 +43,12 @@ attrs:
   ratified_by: henry
   ratified_fingerprint: sha256:677499365ec4018a7bc45582c78bf93c3ebf973513073597c97e79d9d1aaf471
   ratified_backfilled: true
+  invalidated_reason: Superseded by SR-0045. Pin inheritance is kept whole there;
+    the per-namespace opt-in gate is withdrawn. In use it could not reach past one
+    hop (a consumer could neither re-export what an intermediate had itself received
+    by re-export nor compose without it), it left un-re-exported internal labels
+    resolving against the union's namespace set so a reused label silently captured
+    a source's reference (reproduced on 0.16.4 as a clean strict check pointing at
+    the wrong graph), and it gated no working configuration, since a source whose
+    items cite a namespace cannot compose without it. The `reexport` key is now
+    refused at read time; `alias` on a declared source is what remains.

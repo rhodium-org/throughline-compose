@@ -134,16 +134,20 @@ class _Mangler:
 
 def _rewrite_target(target: str, current_ns: str | None,
                     namespaces: set[str], mangler: _Mangler,
-                    ns_alias: dict[str, str] | None = None) -> str:
+                    labels: dict[str, str], item_uid: str) -> str:
     """Map one link target into union space.
 
     - External pointers (URLs, paths, anchors — SR-0031) stay opaque.
-    - A namespace-qualified ``ns:UID`` resolves to that namespace's mangled UID;
-      an undeclared namespace is a fail-fast :class:`ComposeError`. When the
-      containing source re-exported that namespace under a consumer alias
-      (``ns_alias``, SR-0014), the source's own label is first remapped to the
-      union namespace the consumer bound it to, so a reference the source wrote
-      against the original name resolves to the one bound source.
+    - A namespace-qualified ``ns:UID`` written by the *consumer* resolves to the
+      mangled UID of the namespace bound under that label; a label nothing binds
+      is a fail-fast :class:`ComposeError` naming the item and what is bound.
+    - A namespace-qualified ``ns:UID`` written inside a *source* resolves through
+      that source's own label map (SR-0045): the label as the source wrote it,
+      mapped to the union namespace its declaration was bound under, through any
+      alias the consumer set. It never falls through to the union's namespace
+      set — a label the consumer happens to reuse for a different source must not
+      capture a reference written against it. A label the source's own
+      configuration does not declare fails fast, naming the source.
     - A bare UID inside a *source* item is a source-internal reference and mangles
       into that source's namespace; inside the *consumer* it is a local UID and is
       left untouched.
@@ -153,12 +157,19 @@ def _rewrite_target(target: str, current_ns: str | None,
     if is_namespace_qualified(target):
         m = _NS_REF_RE.match(target)
         ns, uid = m.group(1), m.group(2)
-        if ns_alias:
-            ns = ns_alias.get(ns, ns)
+        if current_ns is not None:
+            mapped = labels.get(ns)
+            if mapped is None:
+                raise ComposeError(
+                    f"source '{current_ns}' cites '{target}' on its {item_uid} "
+                    f"against a label it does not declare — its own "
+                    f"throughline.toml must declare '{ns}' as a source")
+            return mangler.uid(mapped, uid)
         if ns not in namespaces:
+            bound = ", ".join(sorted(namespaces)) if namespaces else "nothing"
             raise ComposeError(
-                f"reference '{target}' names namespace '{ns}', which is not a "
-                "declared [[sources]] namespace")
+                f"{item_uid} cites '{target}', but nothing binds a namespace "
+                f"'{ns}'. Bound: {bound}.")
         return mangler.uid(ns, uid)
     if current_ns is not None:
         return mangler.uid(current_ns, target)
@@ -167,28 +178,29 @@ def _rewrite_target(target: str, current_ns: str | None,
 
 def _rewrite_links(item: Item, current_ns: str | None,
                    namespaces: set[str], mangler: _Mangler,
-                   ns_alias: dict[str, str] | None = None) -> Item:
+                   labels: dict[str, str]) -> Item:
+    shown = item.uid if current_ns is None else f"{current_ns}:{item.uid}"
     new_links = [replace(link, target=_rewrite_target(
-        link.target, current_ns, namespaces, mangler, ns_alias))
+        link.target, current_ns, namespaces, mangler, labels, shown))
         for link in item.links]
     return replace(item, links=new_links)
 
 
 def build_union(consumer: Project, sources: dict[str, Project],
-                ns_aliases: dict[str, dict[str, str]] | None = None) -> Union:
+                labels: dict[str, dict[str, str]] | None = None) -> Union:
     """Fold ``sources`` (namespace -> loaded source project) into ``consumer`` and
     return the merged :class:`Union`. The union is governed by the *consumer's*
     schema — the consumer decides which types, links and statuses are legal for
     the composed graph.
 
-    ``ns_aliases`` (SR-0014) maps a source's union namespace to the remap of that
-    source's *own* internal namespace labels onto the union namespaces the consumer
-    re-exported them under — so a source that internally cites ``asvs:SR-0272``,
-    re-exported by the consumer as ``owasp``, has that reference resolve to the
-    ``owasp`` source. A source with no re-export aliasing carries no entry and its
-    references are unchanged."""
+    ``labels`` (SR-0045) gives, per bound namespace, the map from the labels that
+    source's own references use to the union namespaces they were bound under —
+    what its own ``[[sources]]`` declared, and every label its own sources hoisted
+    into it, each renamed through any alias the consumer set on the declared source
+    carrying it. A source's cross-source reference is resolved only through its own
+    entry, so a source with no entry may cite no other namespace."""
     namespaces = set(sources)
-    aliases = ns_aliases or {}
+    label_maps = labels or {}
     mangler = _Mangler()
 
     union = Project(path=consumer.path, config=consumer.config)
@@ -196,19 +208,20 @@ def build_union(consumer: Project, sources: dict[str, Project],
     # Consumer items keep their own UIDs; only their ns-qualified references are
     # rewritten. Copy registers so the loaded consumer objects stay untouched.
     for prefix, reg in consumer.registers.items():
-        items = {uid: _rewrite_links(it, None, namespaces, mangler)
+        items = {uid: _rewrite_links(it, None, namespaces, mangler, {})
                  for uid, it in reg.items.items()}
         union.registers[prefix] = replace(reg, items=items)
 
     # Each source's items are mangled into namespace-derived prefixes and merged.
     for namespace, source in sources.items():
-        alias = aliases.get(namespace)
+        own_labels = label_maps.get(namespace, {})
         source_schema = source.schema
         for reg in source.registers.values():
             for uid, it in reg.items.items():
                 mangled_uid = mangler.uid(namespace, uid)
                 mangled_prefix = parse_uid(mangled_uid)[0]
-                rewritten = _rewrite_links(it, namespace, namespaces, mangler, alias)
+                rewritten = _rewrite_links(it, namespace, namespaces, mangler,
+                                           own_labels)
                 # The synthetic UID is ours; the authored one travels with the
                 # item so its fingerprint — and any ratification stamped against
                 # that fingerprint in the source — survives re-labelling (SR-0024).

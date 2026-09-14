@@ -5,21 +5,22 @@ title: A namespace bound to two editions fails fast, advising the why and the fi
 text: 'When resolving sources tl-compose shall detect the case where one namespace
   name is bound to two different editions — for example `asvs` reaching the union
   at ref `v4.0.3` through one source and at `v5.0.0` through another, whether by
-  direct declaration, by re-export, or by any mix — and shall fail fast rather than
-  merge the two graphs or pick an edition on the consumer''s behalf. The failure
-  shall not merely state that a conflict exists. It shall advise the why: it shall
-  name the namespace, name each conflicting edition by its ref, and name where each
-  binding came from — the directly declared source or the intermediate source that
-  re-exported it — so the composer can see the two paths that collided without reading
-  the graph. It shall advise the fix, stating the two remedies the model actually
-  supports: pin the namespace explicitly in the consumer''s own configuration to
-  the single edition intended, so that one binding governs every reference to it;
-  or, when both editions are genuinely required, alias them to distinct namespaces
-  so they compose side by side as the two separate sources they are. The message
-  shall not offer a remedy the model cannot honour — it shall never imply the two
-  editions can be merged into one.'
+  direct declaration, by transitive composition (SR-0045), or by any mix — and shall
+  fail fast rather than merge the two graphs or pick an edition on the consumer''s
+  behalf. The failure shall not merely state that a conflict exists. It shall advise
+  the why: it shall name the namespace, name each conflicting edition by its ref,
+  and name where each binding came from — the consumer''s own declaration, or the
+  chain of declared sources that carried it into the union — so the composer can
+  see the two paths that collided without reading the graph. It shall advise the
+  fix, stating the two remedies the model actually supports: pin the namespace explicitly
+  in the consumer''s own configuration to the single edition intended, so that one
+  binding governs every reference to it; or, when both editions are genuinely required,
+  set an `alias` on the declared source carrying one of them so they compose side
+  by side as the two separate sources they are. The message shall not offer a remedy
+  the model cannot honour — it shall never imply the two editions can be merged into
+  one.'
 rationale: This is the diagnostic half of UR-0005 and the direct answer to the diamond
-  case the re-export feature makes reachable — two sources depending on the same
+  case transitive composition makes reachable — two sources depending on the same
   standard at different editions. Silently merging them is unsound — throughline
   identity is per-source-per-edition, so `SR-0272` at v4.0.3 and at v5.0.0 are different
   items that must not collapse — and silently picking one is the false-clean outcome
@@ -40,6 +41,6 @@ attrs:
   origin: hybrid
   priority: should
   verification: test
-  ratified_by: henry
-  ratified_fingerprint: sha256:ae5d7381ca75bb32f42f07a30f6f7467cfcc15ae8563663ef00c398594476270
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:06e0a4f93bd43396fcf94d60df371c2e987b9586d4d64e5ed6d509f7e3fdaeda
   ratified_backfilled: true

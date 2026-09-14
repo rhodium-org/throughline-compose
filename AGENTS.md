@@ -76,9 +76,10 @@ ref = "v4.0.3"            # pin the exact edition (tag, branch, or commit SHA)
 
 A borrowed item is referenced as `namespace:UID` (e.g. `asvs:SR-0001`); a bare
 UID is always local. Composition never renumbers or copies — imported items keep
-their source-native UID. Composition is **one level deep**: if a source you adopt
-itself cites another namespace, you must also declare that namespace (or
-`reexport` it through the intermediate source). A moved git tag **is** picked up: a
+their source-native UID. Composing a source **composes what it composes**: every
+source it declares, to any depth, is bound under the label its declaring source
+gave it at the pin it set; an `alias` table on the declared source is your one
+lever over those labels (SR-0045). A moved git tag **is** picked up: a
 cached source whose `ref` is a tag or branch is checked against the origin on every
 resolve and refetched if it has moved. A commit-id `ref` skips the check. Set
 `TL_COMPOSE_OFFLINE=1` to compose from the cache without contacting the origin —

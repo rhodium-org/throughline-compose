@@ -8,8 +8,8 @@ text: 'The sources a consumer declares are resolved at the same time, not one af
   directory, so only the first of them runs alongside the rest and the others resolve
   after it, from the warm cache. The union is assembled in declared order whatever
   order the resolutions finish in, and a source that fails is reported as it was
-  before, the first in declared order. Re-exported transitive sources resolve after
-  the sources that carry them, as now. Cache-only mode is unchanged.'
+  before, the first in declared order. Transitive sources resolve after the sources
+  that carry them, as now. Cache-only mode is unchanged.'
 rationale: 'Measured on a consumer of seven sources with a warm cache, the seven
   sequential origin look-ups cost four of the fourteen seconds every command took.
   Run side by side they cost the slowest one. Nothing is cached and nothing is skipped:
@@ -38,4 +38,4 @@ attrs:
   priority: should
   verification: test
   ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:ea3b87483b606a82f67667de785b1dd2a18e843bc0d03efd6f858c403eb970cf
+  ratified_fingerprint: sha256:6a77297008f119b0a64b62ff90fd5de90aabcffe70c8da82557ded3e872df08b

@@ -78,42 +78,51 @@ path = "../house-style"              # a directory relative to this project
   can never silently track a moving default. (A `ref` alongside a `path` is likewise
   rejected: a ref only pins a `url`.)
 
-### Re-exporting a transitive source
+### Transitive sources
 
-Composition is one level deep and flat: if a source you adopt *itself* cites another
-namespace — say `house-style` internally references `asvs:SR-0001` — that `asvs` must
-be a namespace *your* consumer also declares, or the compose fails on an undeclared
-namespace. A **re-export** lets you pull that transitive source forward through the
-intermediate one without restating its `url`/`ref`
-([SR-0014](https://github.com/rhodium-org/throughline-compose/blob/main/idd/system-requirements/SR-0014.yml)):
+Composing a source composes what it composes
+([SR-0045](https://github.com/rhodium-org/throughline-compose/blob/main/idd/system-requirements/SR-0045.yml)).
+If a source you adopt *itself* declares sources — say `house-style` composes
+`asvs` — then `asvs` reaches your union too, and so does everything `asvs` declares,
+to any depth. Each arrives under the label its declaring source gave it, at the
+edition that source pinned; you never restate a `ref` you do not control. The check
+summary lists every bound namespace with the path that carried it in:
+
+```
+tl-compose check · 2 source(s) composed: house-style (path ../house-style) [3f1c…], asvs (https://…@v5.0.0) [a91e…] via house-style
+```
+
+Your one lever over a transitive label is an **alias** on the declared source that
+carries it
+([UR-0005](https://github.com/rhodium-org/throughline-compose/blob/main/idd/user-requirements/UR-0005.yml)):
 
 ```toml
 [[sources]]
 namespace = "house-style"
 path = "../house-style"
-reexport = ["asvs"]                   # pull house-style's `asvs` forward, same name
+alias = { asvs = "owasp" }            # house-style's `asvs` is bound in your union as `owasp`
 ```
 
-The re-exported source **inherits the intermediate source's pin** — you do not (and
-cannot) restate its edition here; it is whatever `house-style` itself declared. An
-array re-exports each namespace under its own name; a table binds a
-consumer-chosen **alias** instead ([UR-0005](https://github.com/rhodium-org/throughline-compose/blob/main/idd/user-requirements/UR-0005.yml)):
+An alias applies throughout that source's subtree, and every reference the source
+wrote against its own label (`asvs:SR-0001`) resolves to the aliased namespace. A
+source's references only ever resolve through its own declarations — a label you
+happen to reuse for a different source can never capture them. Your own items may
+cite any bound namespace, transitive or direct, by its bound label.
 
-```toml
-reexport = { asvs = "owasp" }         # the same source, bound in your union as `owasp`
-```
-
-Every reference the intermediate source wrote against its own label (`asvs:SR-0001`)
-resolves to the aliased union namespace. Re-export is opt-in and per-namespace:
-nothing is hoisted automatically, so adopting a source never silently expands your
-union.
+The same edition reaching your union under two labels is bound once, under the first
+label bound, and the summary says which label was folded into which.
 
 **A namespace bound to two different editions fails fast** — never a silent merge or
 an arbitrary winner ([SR-0015](https://github.com/rhodium-org/throughline-compose/blob/main/idd/system-requirements/SR-0015.yml)). If you declare
-`asvs` directly at one `ref` and also re-export a source's `asvs` at a different
-edition, the compose stops and names both the *why* (the same namespace reaches your
-union at two editions) and the *fix* (pin `asvs` explicitly to one edition, or alias
-the two apart so they coexist).
+`asvs` at one `ref` and a source carries `asvs` at another, or two sources pin the
+same standard differently, the compose stops and names both the *why* (the same
+namespace reaches your union at two editions, and the path each came by) and the
+*fix* (pin `asvs` yourself to the one edition you intend, or set an `alias` on the
+declared source carrying one of them so both compose side by side).
+
+The `reexport` key of earlier releases is withdrawn: in your own `throughline.toml`
+it is refused with a pointer to `alias`; inside a source's it is ignored with a note,
+so a published edition that used it stays composable.
 
 Moving to a new upstream edition is a one-line change to the `ref`; the borrowed graph
 is never edited. See [`rhodium-org/idd-example`](https://github.com/rhodium-org/idd-example)

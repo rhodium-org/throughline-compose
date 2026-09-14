@@ -171,7 +171,7 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 <!-- tl:item SR-0044 -->
 **SR-0044 — Declared sources are resolved side by side** — `system_requirement`, status `implemented`
 
-> The sources a consumer declares are resolved at the same time, not one after another: each look-up of a pinned ref on its origin (SR-0043), and each fetch, runs beside the others. Two declared sources that share a URL and ref share a cache directory, so only the first of them runs alongside the rest and the others resolve after it, from the warm cache. The union is assembled in declared order whatever order the resolutions finish in, and a source that fails is reported as it was before, the first in declared order. Re-exported transitive sources resolve after the sources that carry them, as now. Cache-only mode is unchanged.
+> The sources a consumer declares are resolved at the same time, not one after another: each look-up of a pinned ref on its origin (SR-0043), and each fetch, runs beside the others. Two declared sources that share a URL and ref share a cache directory, so only the first of them runs alongside the rest and the others resolve after it, from the warm cache. The union is assembled in declared order whatever order the resolutions finish in, and a source that fails is reported as it was before, the first in declared order. Transitive sources resolve after the sources that carry them, as now. Cache-only mode is unchanged.
 
 *Rationale:* Measured on a consumer of seven sources with a warm cache, the seven sequential origin look-ups cost four of the fourteen seconds every command took. Run side by side they cost the slowest one. Nothing is cached and nothing is skipped: the same look-ups, the same answers, the same refetch on a moved ref. Rejected: a lock file recording each tag's commit, because it adds state whose invalidation has to be right and changes what a moved tag means; the operator chose to keep SR-0043's contract as it stands. The shared-cache rule exists because two clones into one directory at once would corrupt it. Where a platform cannot start a thread — Python under Pyodide, which is how the throughline editor runs this tool — the sources resolve one after another as they did before: the requirement is about running side by side where that is possible. Found on the first release, 0.16.2, which broke the editor's composed graphs. Verified by test: three sources made slow resolve in about the time of one, bind in declared order, a shared URL and ref is never fetched twice at once, a failing source gives the same error, and without threads they resolve in order.
 
@@ -179,7 +179,7 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 *Refines:* SR-0043
 *Relates:* SR-0006
 
-**origin**: ai · **priority**: should · **verification**: test · **ratified_by**: Henry Grech-Cini · **ratified_fingerprint**: sha256:ea3b87483b606a82f67667de785b1dd2a18e843bc0d03efd6f858c403eb970cf
+**origin**: ai · **priority**: should · **verification**: test · **ratified_by**: Henry Grech-Cini · **ratified_fingerprint**: sha256:6a77297008f119b0a64b62ff90fd5de90aabcffe70c8da82557ded3e872df08b
 <!-- tl:end -->
 
 ## Non-goals
@@ -204,7 +204,7 @@ The table is generated from the graph, so it cannot drift from the actual links.
 | UR-0002 | A composed project is worked as one — one tool, one set of guarantees | SR-0003, SR-0004, SR-0005, SR-0007, SR-0010, SR-0016, SR-0019, SR-0020, SR-0022, SR-0023, SR-0025, SR-0026, SR-0029, SR-0035, SR-0037, SR-0038, SR-0039, SR-0040, SR-0041, SR-0042 |
 | UR-0003 | A source is referenced by origin and pinned to an edition | SR-0006, SR-0008, SR-0018, SR-0043, SR-0044 |
 | UR-0004 | Non-git authorities are composed through pluggable resolvers | SR-0011, SR-0012, SR-0013 |
-| UR-0005 | Transitive sources are pulled forward by re-export and alias, never silently merged | SR-0014, SR-0015 |
+| UR-0005 | Transitive sources reach the union by composing, under labels the consumer controls, never silently merged or captured | SR-0015, SR-0045 |
 | UR-0006 | Composing tolerates a source at an older on-disk format major | SR-0017 |
 | UR-0007 | The published distribution is trustworthy out of the box | SR-0021, SR-0027, SR-0028, SR-0036 |
 | UR-0008 | A contribution states the terms under which it is offered | — |
