@@ -524,6 +524,23 @@ def test_compose_ratify_refuses_to_resign_unchanged_item(consumer_dir, capsys):
     assert "mallory" not in text
 
 
+def test_compose_ratify_forwards_the_correction_flag(consumer_dir, capsys):
+    # SR-0003: `tl-compose ratify --replacing` corrects an unpublished ratifier
+    # exactly as bare `tl` does (core SR-0196). A composed path that accepted the
+    # flag and dropped it would meet core's "nothing to accept" refusal while the
+    # bare tool performed the correction — the same command, two behaviours.
+    subprocess.run(["git", "init", "-q"], cwd=consumer_dir, check=True)
+    p = _write_sr(consumer_dir, "SR-0002", [("toy:INT-0001", "derives_from")])
+    assert tlc_main(["-C", str(consumer_dir), "ratify", "SR-0002", "--by", "aalice"]) == 0
+    capsys.readouterr()
+    rc = tlc_main(["-C", str(consumer_dir), "ratify", "SR-0002", "--by", "alice",
+                   "--replacing"])
+    assert rc == 0, capsys.readouterr().err
+    text = p.read_text(encoding="utf-8")
+    assert "ratified_by: alice" in text
+    assert "ratified_supersedes: aalice" in text   # the correction names what it replaced
+
+
 def test_compose_ratify_restamps_once_the_content_moves(consumer_dir, capsys):
     # The counterpart: when the words change, the old signature no longer covers
     # them, so re-ratifying is exactly what should happen — and rebinds the stamp.
