@@ -1,0 +1,32 @@
+uid: SR-0046
+type: system_requirement
+status: proposed
+title: Ratify over a composed graph takes several items, as bare tl does from 3.3.0
+text: When the consumer declares sources, tl-compose ratify shall accept any number
+  of item identifiers in one invocation, as throughline 3.3.0's ratify does (throughline
+  SR-0199). It shall check that every item named exists in the consumer before it
+  resolves a source, so a mistyped identifier fails before any network is touched;
+  it shall ask for the ratifier once; it shall build the union once; and it shall
+  then sign each item over that union in the order given, writing each to the consumer's
+  own register. A run that cannot complete shall write nothing. Where no item is
+  named it shall behave as it does today. The floor on throughline rises to 3.3.0,
+  because the parsed argument this command reads changed its name and shape in that
+  release.
+rationale: throughline 3.3.0 changed ratify's positional from one optional identifier
+  to a list named uids. This command reads the parsed argument by name, so on that
+  core it would fail with an attribute error for every composed project, and with
+  an older core the list would never arrive. The floor is a paired edition (compose
+  SR-0003 says the two must behave identically; ratify SR-0043 names the same rule),
+  so it moves with core. The per-item rendering and confirmation core performs on
+  a terminal are not reproduced here, which is the gap already known on this command;
+  this change does not widen it.
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0003
+  type: relates
+- target: SR-0004
+  type: relates
+attrs:
+  origin: ai

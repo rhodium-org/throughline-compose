@@ -1158,3 +1158,32 @@ def test_compose_dump_passthrough_without_sources(source_dir, capsys):
     doc = json.loads(capsys.readouterr().out)
     assert "composition" not in doc
     assert not doc["throughline_dump"]["tool_version"].startswith("tl-compose")
+
+
+def test_compose_ratify_takes_several_items_over_one_union(consumer_dir, capsys):
+    # SR-0046: several items in one run, each signed over the same union in the
+    # order given, as core does from 3.3.0 (throughline SR-0199).
+    a = _write_sr(consumer_dir, "SR-0002", [("toy:INT-0001", "derives_from")])
+    b = _write_sr(consumer_dir, "SR-0003", [("toy:INT-0001", "derives_from")])
+    rc = tlc_main(["-C", str(consumer_dir), "ratify", "SR-0003", "SR-0002", "--by", "tester"])
+    assert rc == 0
+    assert capsys.readouterr().out.splitlines() == [
+        "SR-0003 ratified by tester", "SR-0002 ratified by tester"]
+    assert "ratified_by: tester" in a.read_text(encoding="utf-8")
+    assert "ratified_by: tester" in b.read_text(encoding="utf-8")
+
+
+def test_compose_ratify_refuses_the_whole_run_before_writing_anything(consumer_dir, capsys):
+    # SR-0046: a mistyped identifier fails before any source is resolved, and an
+    # item the gate refuses stops the run with nothing written.
+    a = _write_sr(consumer_dir, "SR-0002", [("toy:INT-0001", "derives_from")])
+    rc = tlc_main(["-C", str(consumer_dir), "ratify", "SR-0002", "SR-0099", "--by", "tester"])
+    assert rc == 2
+    assert "SR-0099 does not exist" in capsys.readouterr().err
+    assert "ratified_by" not in a.read_text(encoding="utf-8")
+    b = _write_sr(consumer_dir, "SR-0003", [("SR-0999", "derives_from")])  # ungrounded
+    rc = tlc_main(["-C", str(consumer_dir), "ratify", "SR-0002", "SR-0003", "--by", "tester"])
+    assert rc == 2
+    assert "nothing in this run was ratified" in capsys.readouterr().err
+    assert "ratified_by" not in a.read_text(encoding="utf-8")
+    assert "ratified_by" not in b.read_text(encoding="utf-8")

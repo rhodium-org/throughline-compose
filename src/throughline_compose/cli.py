@@ -67,7 +67,7 @@ from throughline.cli import (
 from throughline.dump import build_dump
 from throughline.fingerprint import fingerprint
 from throughline.graph import Index
-from throughline.grounding import GroundingError, ratify
+from throughline.grounding import ratification_obstacle, GroundingError, ratify
 from throughline.identity import RATIFIED_ID_ATTR, IdentityError, default_ratifier
 from throughline.inject import referenced_uids
 from throughline.model import Item, Link, Project
@@ -939,11 +939,18 @@ def _compose_ratify(args) -> int:
     if not sources:
         return cmd_ratify(args)
 
-    uid = _resolve_uid(consumer, args.uid, "ratify", "UID")
-    if uid is None:
-        return USAGE
-    if consumer.get(uid) is None:  # fail before resolving sources over the network
-        return _err(f"{uid} does not exist")
+    # Several items in one run, as core takes from 3.3.0 (throughline SR-0199,
+    # this SR-0046); the picker still offers one when none is named.
+    uids = list(args.uids)
+    if not uids:
+        uid = _resolve_uid(consumer, None, "ratify", "UID")
+        if uid is None:
+            return USAGE
+        uids = [uid]
+    for uid in uids:
+        if consumer.get(uid) is None:  # fail before resolving sources over the network
+            return _err(f"{uid} does not exist"
+                        + (" — nothing in this run was ratified" if len(uids) > 1 else ""))
     # The same default core offers (SR-0003): the identity this repository already
     # signs with, not the operating-system account name. Restating core's choice
     # here is what let the two drift apart — for a while `tl-compose ratify`
@@ -963,25 +970,35 @@ def _compose_ratify(args) -> int:
     except ComposeError as e:
         return _err(str(e))
 
-    try:
-        # `by_id` travels with the name for the same reason the union does: core
-        # owns what a ratification record contains (SR-0004), and a composed
-        # sign-off that quietly dropped the identifier would be a weaker record
-        # than the identical bare-`tl` one.
-        # `replacing` travels too (core SR-0196): correcting an unpublished
-        # ratifier is a mode of ratify, and a composed path that accepted the
-        # flag and dropped it would refuse the correction with core's
-        # "nothing to accept" while bare `tl` performed it (SR-0003).
-        item = ratify(consumer, uid, by, index=Index.build(union.project),
-                      by_id=getattr(args, "by_id", None),
-                      replacing=getattr(args, "replacing", False))
-    except IdentityError as e:
-        return _err(str(e))
-    except GroundingError as e:
-        return _err(str(e))
-    write_item(item, consumer.register_of(uid))
-    identifier = item.attrs.get(RATIFIED_ID_ATTR)
-    print(f"{uid} ratified by {by}" + (f" ({identifier})" if identifier else ""))
+    # The union is built once for the run; every item is judged against the same
+    # graph (SR-0046). The gate is asked for all of them before any is written, so a
+    # run that cannot complete writes nothing — the property core gives a batch.
+    index = Index.build(union.project)
+    for uid in uids:
+        obstacle = ratification_obstacle(consumer.schema, index, consumer.get(uid),
+                                         replacing=getattr(args, "replacing", False))
+        if obstacle is not None:
+            return _err(obstacle + (" — nothing in this run was ratified" if len(uids) > 1 else ""))
+    for uid in uids:
+        try:
+            # `by_id` travels with the name for the same reason the union does: core
+            # owns what a ratification record contains (SR-0004), and a composed
+            # sign-off that quietly dropped the identifier would be a weaker record
+            # than the identical bare-`tl` one.
+            # `replacing` travels too (core SR-0196): correcting an unpublished
+            # ratifier is a mode of ratify, and a composed path that accepted the
+            # flag and dropped it would refuse the correction with core's
+            # "nothing to accept" while bare `tl` performed it (SR-0003).
+            item = ratify(consumer, uid, by, index=index,
+                          by_id=getattr(args, "by_id", None),
+                          replacing=getattr(args, "replacing", False))
+        except IdentityError as e:
+            return _err(str(e))
+        except GroundingError as e:
+            return _err(str(e))
+        write_item(item, consumer.register_of(uid))
+        identifier = item.attrs.get(RATIFIED_ID_ATTR)
+        print(f"{uid} ratified by {by}" + (f" ({identifier})" if identifier else ""))
     return OK
 
 
