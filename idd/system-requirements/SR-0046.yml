@@ -1,6 +1,6 @@
 uid: SR-0046
 type: system_requirement
-status: proposed
+status: ratified
 title: Ratify over a composed graph takes several items, as bare tl does from 3.3.0
 text: When the consumer declares sources, tl-compose ratify shall accept any number
   of item identifiers in one invocation, as throughline 3.3.0's ratify does (throughline
@@ -30,3 +30,5 @@ links:
   type: relates
 attrs:
   origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:aec3b530acdcc9676ecb06f9fce091be583d9c08bb01713bc064f95d83859e37
