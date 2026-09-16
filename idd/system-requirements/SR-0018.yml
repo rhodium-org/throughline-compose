@@ -18,3 +18,4 @@ attrs:
   ratified_by: henry
   ratified_fingerprint: sha256:59b07d9265f51773608c27d0c41fa2af8ce6ddca95a911b064842f6b84bbc44d
   ratified_backfilled: true
+  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621

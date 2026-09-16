@@ -24,6 +24,9 @@ attrs.origin = { type = "enum", values = ["human", "ai", "hybrid"] }
 
 [types.non_goal]
 attrs.origin = { type = "enum", values = ["human", "ai", "hybrid"] }
+# Excluded scope binds nobody; its items already carry normative: false
+# (throughline SR-0201)
+normative = false
 
 [links]
 types = ["refines", "verifies", "satisfies", "implements", "relates",
@@ -73,3 +76,13 @@ ratified = "ratified"
 invalidated = "rejected"
 suspect = "suspect"
 tombstone = "deleted"
+
+# An intent is the why, not an obligation; its items already carry normative:
+# false (throughline SR-0201)
+[types.intent]
+normative = false
+
+# A business need is the why, not an obligation; its items already carry
+# normative: false (throughline SR-0201)
+[types.business_need]
+normative = false

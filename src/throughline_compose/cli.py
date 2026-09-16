@@ -44,9 +44,11 @@ from pathlib import Path
 from throughline.cli import (
     _by_count,
     _check_summary,
+    _parse_attrs,
     _resolve_uid,
     _resolve_value,
     _subgraph_json,
+    birth_item,
     build_parser,
     cmd_check,
     cmd_context,
@@ -1173,15 +1175,17 @@ def _compose_new(args) -> int:
     else:
         uid = next_uid(reg)
 
-    # The birth status comes from the project's 'initial' role, never a value fixed
-    # in code (SR-0131, SR-0019); --status overrides it explicitly.
-    status = args.status if args.status is not None \
-        else consumer.schema.status_role("initial")
-    item = Item(uid=uid, type=args.type, status=status,
-                title=args.title or "", text=args.text or "")
-    if args.origin:
-        item.attrs["origin"] = args.origin
-    item._register_prefix = reg.prefix
+    # The birth is core's, not a copy of it (SR-0047, throughline SR-0205): the
+    # proposed status for a machine origin, the author's attributes, the schema's
+    # defaults and the type's normative flag all come from the one function
+    # `tl new` itself uses. Only the cross-source grounding below is ours.
+    try:
+        attrs = _parse_attrs(consumer.schema, args.type, args.attr, command="new")
+    except UidError as e:
+        return _err(str(e))
+    item = birth_item(consumer.schema, reg, uid, item_type=args.type,
+                      title=args.title or "", text=args.text or "",
+                      status=args.status, origin=args.origin, attrs=attrs)
 
     # Explicit grounding is always honored and never silently dropped (SR-0091): a
     # local target must exist locally, a namespace-qualified one in the union.

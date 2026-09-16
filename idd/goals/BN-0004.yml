@@ -8,11 +8,11 @@ text: As an open-source project, throughline-compose should let an outside contr
   recorded grant of the rights under which it is offered — so that a contribution
   can be accepted without a later, unanswerable question about the terms on which
   it was given.
-normative: true
+normative: false
 links:
 - target: INT-0001
   type: derives_from
 attrs:
   origin: ai
   ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:205162cd6597c72da1f7a826c54fd1483d2eaf559cea83dc9d5c6288aa0f2b6a
+  ratified_fingerprint: sha256:e5107e02adad91950a4f57d4959fc3b41acaeaaf60c9db6cac0d09e1ef074387

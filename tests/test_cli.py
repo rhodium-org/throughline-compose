@@ -1187,3 +1187,34 @@ def test_compose_ratify_refuses_the_whole_run_before_writing_anything(consumer_d
     assert "nothing in this run was ratified" in capsys.readouterr().err
     assert "ratified_by" not in a.read_text(encoding="utf-8")
     assert "ratified_by" not in b.read_text(encoding="utf-8")
+
+
+# --- birth through core (SR-0047, throughline SR-0205) ------------------------
+
+def test_compose_new_into_a_source_is_born_as_bare_tl_bears_it(consumer_dir, capsys):
+    """A cross-source ground used to carry its own copy of the birth, which had
+    drifted from core: a machine-authored item entered the initial status and
+    escaped ratification, --attr values were dropped, schema defaults were not
+    applied, and the type's normative flag was not read."""
+    # The fixture binds no 'proposed' role; bind one so the machine-origin rule
+    # (throughline SR-0141) has a status to send the item to.
+    cfg = consumer_dir / "throughline.toml"
+    cfg.write_text(cfg.read_text().replace(
+        'initial = "draft"', 'initial = "draft"\nproposed = "proposed"'))
+    assert tlc_main(["-C", str(consumer_dir), "schema", "type", "add",
+                     "system_requirement", "--non-normative",
+                     "--because", "guidance here"]) == 0
+    assert tlc_main(["-C", str(consumer_dir), "schema", "attr", "add",
+                     "system_requirement", "owner", "--default", "nobody",
+                     "--because", "a sentinel"]) == 0
+    rc = tlc_main(["-C", str(consumer_dir), "new", "SR", "--type", "system_requirement",
+                   "--title", "born through core", "--origin", "ai",
+                   "--attr", "priority=must", "--ground", "toy:INT-0001",
+                   "--no-interactive"])
+    assert rc == 0, capsys.readouterr().err
+    from throughline.storage import load_project
+    item = load_project(consumer_dir).get("SR-0002")
+    assert item.status == "proposed"
+    assert item.attrs == {"priority": "must", "origin": "ai", "owner": "nobody"}
+    assert item.normative is False
+    assert [l.target for l in item.links] == ["toy:INT-0001"]
