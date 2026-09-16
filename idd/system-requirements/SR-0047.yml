@@ -1,0 +1,30 @@
+uid: SR-0047
+type: system_requirement
+status: ratified
+title: tl-compose new births an item through core's own birth function
+text: 'When `tl-compose new` creates an item itself, because a grounding target names
+  a borrowed clause, it shall create the item through the birth function core offers
+  (throughline SR-0205) and add only the cross-source grounding, so the item is born
+  exactly as `tl new` would bear it: the proposed status for a machine origin, the
+  author''s attributes, the schema''s defaults, and the normative flag its type declares.
+  This needs throughline 3.5.1.'
+rationale: 'The copy of the birth this command carried had fallen behind core on
+  four rules, and one of them let a machine-authored item grounded into a source
+  enter at the initial status and escape ratification. A composed project is worked
+  as one tool with one set of guarantees (UR-0002), and a rule that holds in bare
+  tl and not in tl-compose is a guarantee that depends on which binary was typed.
+  Calling core''s function is what SR-0003 asks of every forwarded command; this
+  one could not forward because it must validate the target over the union, so it
+  forwards the birth and keeps only the resolution. Who pays: a consumer upgrading
+  takes the throughline 3.5.1 floor, as every seam floor before it.'
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0003
+  type: relates
+attrs:
+  origin: ai
+  priority: must
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:03ff437b9ab66325085892679dd82ca86d5eefd03a1daa37f327e8ed281ae435

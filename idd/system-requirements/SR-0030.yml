@@ -37,3 +37,4 @@ attrs:
     — because GitHub composes those commits with no Signed-off-by trailer and no
     check can supply one. UR-0008 now rests on section 5 of the licence, which needs
     nothing from the contributor per commit.
+  ratified_revision: 09c63bbddbba61ee8ffcec934adf938f68941f76
