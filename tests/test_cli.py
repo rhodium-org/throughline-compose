@@ -1218,3 +1218,72 @@ def test_compose_new_into_a_source_is_born_as_bare_tl_bears_it(consumer_dir, cap
     assert item.attrs == {"priority": "must", "origin": "ai", "owner": "nobody"}
     assert item.normative is False
     assert [l.target for l in item.links] == ["toy:INT-0001"]
+
+
+# --- baseline rules and link operations over the union (SR-0048, SR-0049) -----
+
+def _git(root, *args):
+    return subprocess.run(["git", "-C", str(root), *args], capture_output=True,
+                          text=True, check=True).stdout
+
+
+def test_composed_check_runs_the_baseline_rules_as_bare_tl_does(consumer_dir, capsys):
+    """On 0.20.0 an illegal status move that `tl check` reported passed
+    `tl-compose check` on the same working tree, and --base was ignored."""
+    cfg = consumer_dir / "throughline.toml"
+    cfg.write_text(cfg.read_text() + '\n[transitions]\napproved = ["ratified", '
+                   '"suspect", "rejected", "deleted"]\n')
+    _git(consumer_dir, "init", "-q")
+    _git(consumer_dir, "config", "user.email", "t@t")
+    _git(consumer_dir, "config", "user.name", "t")
+    _git(consumer_dir, "add", "-A")
+    _git(consumer_dir, "commit", "-qm", "baseline")
+    item = consumer_dir / "system-requirements" / "SR-0001.yml"
+    item.write_text(item.read_text().replace("status: approved", "status: draft"))
+    capsys.readouterr()
+    assert tlc_main(["-C", str(consumer_dir), "check"]) == 1
+    out = capsys.readouterr()
+    assert "SR-0001" in out.out and "bad-transition" in out.out
+    assert "not checked" not in out.err
+
+
+def test_composed_check_says_which_rules_did_not_run(consumer_dir, capsys):
+    capsys.readouterr()
+    tlc_main(["-C", str(consumer_dir), "check", "--base", ""])
+    assert ("not checked: tombstone permanence — the baseline was disabled"
+            in capsys.readouterr().err)
+
+
+def test_composed_link_restamps_and_retypes_a_cross_source_edge_in_place(consumer_dir, capsys):
+    """The copy this replaced added a second edge on --stamp and a third on --retype."""
+    from throughline.storage import load_project
+    for _ in range(2):
+        assert tlc_main(["-C", str(consumer_dir), "link", "SR-0001", "toy:SR-0001",
+                         "--type", "relates", "--stamp"]) == 0
+    assert "restamped SR-0001 --relates--> toy:SR-0001" in capsys.readouterr().out
+    assert tlc_main(["-C", str(consumer_dir), "link", "SR-0001", "toy:SR-0001",
+                     "--type", "implements", "--retype"]) == 0
+    edges = [l for l in load_project(consumer_dir).get("SR-0001").links
+             if l.target == "toy:SR-0001"]
+    assert [(l.type, bool(l.stamp)) for l in edges] == [("implements", True)]
+
+
+def test_composed_unlink_judges_grounding_over_the_union(consumer_dir, capsys):
+    """SR-0001 is grounded locally and through a borrowed intent. Removing the local
+    link leaves it grounded in the union, which bare `tl` cannot see."""
+    assert tlc_main(["-C", str(consumer_dir), "link", "SR-0001", "toy:INT-0001",
+                     "--type", "derives_from"]) == 0
+    assert tlc_main(["-C", str(consumer_dir), "new", "SR", "--type", "system_requirement",
+                     "--title", "keeps INT-0001 served", "--ground", "INT-0001",
+                     "--no-interactive"]) == 0
+    capsys.readouterr()
+    assert tl_main(["-C", str(consumer_dir), "unlink", "SR-0001", "INT-0001"]) == 2
+    assert "SR-0001 reaching no root" in capsys.readouterr().err
+    assert tlc_main(["-C", str(consumer_dir), "unlink", "SR-0001", "INT-0001"]) == 0
+    assert "unlinked SR-0001 --derives_from--> INT-0001" in capsys.readouterr().out
+
+
+def test_composed_unlink_refuses_what_would_unground_the_union(consumer_dir, capsys):
+    assert tlc_main(["-C", str(consumer_dir), "unlink", "SR-0001", "INT-0001"]) == 2
+    err = capsys.readouterr().err
+    assert "SR-0001 reaching no root" in err and "INT-0001 served by nothing" in err

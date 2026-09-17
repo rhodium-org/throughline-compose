@@ -55,6 +55,7 @@ from throughline.cli import (
     cmd_docs,
     cmd_dump,
     cmd_link,
+    cmd_unlink,
     cmd_migrate,
     cmd_new,
     cmd_query,
@@ -69,14 +70,17 @@ from throughline.cli import (
 from throughline.dump import build_dump
 from throughline.fingerprint import fingerprint
 from throughline.graph import Index
+from throughline.links import GroundingView, LinkError, add_link, remove_link, retype_link
 from throughline.grounding import ratification_obstacle, GroundingError, ratify
 from throughline.identity import RATIFIED_ID_ATTR, IdentityError, default_ratifier
 from throughline.inject import referenced_uids
 from throughline.model import Item, Link, Project
 from throughline.storage import (
     ProjectError,
+    baseline_note,
     load_project,
     migrate_project,
+    read_baseline,
     write_item,
 )
 from throughline.uid import UidError, next_uid, parse_uid
@@ -495,7 +499,18 @@ def _compose_check(args) -> int:
     # a document may cite a borrowed item, and by the same `[docs] paths` the
     # consumer already configured for `docs`.
     published = referenced_uids(union.project)  # None unless [docs] paths configured
-    findings = validate(union.project, strict=args.strict, published=published)
+    # The baseline rules run over the consumer's own items exactly as bare `tl
+    # check` runs them, read through throughline's own function, and say so when
+    # they could not (SR-0048, throughline SR-0209). Borrowed items are not in the
+    # baseline, so they are never judged by it.
+    try:
+        baseline = read_baseline(consumer, ref=getattr(args, "base", "HEAD"),
+                                 base_dir=getattr(args, "base_dir", None))
+    except ProjectError as e:
+        return _err(str(e))
+    baseline_line = baseline_note(consumer.schema, baseline)
+    findings = validate(union.project, strict=args.strict, baseline=baseline.statuses,
+                        published=published)
     # Report against a borrowed item only what this consumer can act on, and let a
     # local item grounded through a source count as grounded (SR-0026), widened by
     # any rule the consumer declared under [seam] (SR-0035). The same index then
@@ -511,6 +526,8 @@ def _compose_check(args) -> int:
     if getattr(args, "format", "text") == "json":
         import json
         print(json.dumps([f.to_dict() for f in findings], indent=2))
+        if baseline_line:
+            print(baseline_line, file=sys.stderr)
         return FINDINGS if any(f.severity == ERROR for f in findings) else OK
 
     for f in sorted(findings, key=lambda x: (x.severity != ERROR, x.uid)):
@@ -533,6 +550,8 @@ def _compose_check(args) -> int:
               file=sys.stderr)
         for note in res.notices:
             print(f"  note: {note}", file=sys.stderr)
+    if baseline_line:
+        print(f"\n{baseline_line}", file=sys.stderr)
     tally = f"\n{errs} error(s), {warns} warning(s)"
     if not getattr(args, "quiet", False) and errs == 0:
         tally += "  — composed graph is sound" + (" (strict)" if args.strict else "")
@@ -1121,10 +1140,78 @@ def _compose_link(args) -> int:
     ltype = _resolve_value(args.type, "link type", "--type", options=link_types)
     if ltype is None:
         return USAGE
-    stamp = fingerprint(dst, union.project.schema) if args.stamp else None
-    src.links.append(Link(target=dst_uid, type=ltype, stamp=stamp))
-    write_item(src, consumer.register_of(src.uid))
-    print(f"linked {src_uid} --{ltype}--> {dst_uid}" + (" (stamped)" if stamp else ""))
+    # Added, restamped or retyped by throughline's own operation, judged over the
+    # union (SR-0049, throughline SR-0212). The copy this replaces had drifted: a
+    # second --stamp added a duplicate edge and --retype added another link.
+    view = _union_view(union)
+    try:
+        if getattr(args, "retype", False):
+            old_type = retype_link(consumer, src_uid, dst_uid, ltype,
+                                   stamp=args.stamp, view=view)
+            print(f"retyped {src_uid} {dst_uid}: --{old_type}--> is now --{ltype}-->"
+                  + (" (stamped)" if args.stamp else ""))
+            return OK
+        outcome = add_link(consumer, src_uid, dst_uid, ltype, stamp=args.stamp,
+                           view=view)
+    except LinkError as e:
+        return _err(str(e))
+    if outcome == "restamped":
+        print(f"restamped {src_uid} --{ltype}--> {dst_uid}")
+    else:
+        print(f"linked {src_uid} --{ltype}--> {dst_uid}"
+              + (" (stamped)" if args.stamp else ""))
+    return OK
+
+
+def _union_view(union) -> GroundingView:
+    """The union as a link operation judges it (SR-0049): its grounding index, and
+    a target as the composer wrote it found through the same resolution `link`
+    uses. The union rewrites a consumer's namespace-qualified targets to the keys
+    this finds, so the index and the lookup name one edge the same way."""
+    return GroundingView(Index.build(union.project),
+                         lambda target: union.project.get(_union_uid(union, target)))
+
+
+def _compose_unlink(args) -> int:
+    """Remove a link, judged over the union (SR-0049, throughline SR-0211).
+
+    Over the consumer's graph alone an item grounded both locally and through a
+    source would be refused a removal that leaves it grounded, so the refusal is
+    asked of the union instead. The link is removed from *your* item; the source is
+    never written. With no sources declared it is a pure pass-through to core
+    `tl unlink` (SR-0003)."""
+    try:
+        consumer = load_project(args.path)
+    except ProjectError as e:
+        return _err(str(e))
+    try:
+        sources = parse_sources(consumer)
+    except SourceError as e:
+        return _err(str(e))
+    if not sources:
+        return cmd_unlink(args)
+
+    src_uid = _resolve_uid(consumer, args.src, "unlink from (source)", "SRC")
+    if src_uid is None:
+        return USAGE
+    dst_uid = _resolve_uid(consumer, args.dst, "unlink to (destination)", "DST")
+    if dst_uid is None:
+        return USAGE
+    try:
+        res = _resolve_sources(sources, Path(args.path))
+    except ResolverError as e:
+        return _err(str(e))
+    try:
+        union = build_union(consumer, res.projects(), res.labels)
+    except ComposeError as e:
+        return _err(str(e))
+    try:
+        removed = remove_link(consumer, src_uid, dst_uid, args.type,
+                              view=_union_view(union))
+    except LinkError as e:
+        return _err(str(e))
+    for ltype in removed:
+        print(f"unlinked {src_uid} --{ltype}--> {dst_uid}")
     return OK
 
 
@@ -1515,6 +1602,11 @@ _UNION_COMMANDS: dict[str, tuple[Callable[[argparse.Namespace], int], str]] = {
         "a destination inside a source resolves over the union instead of being "
         "refused as unknown. The link is stored on *your* item, namespace-"
         "qualified exactly as typed; the source is never written."),
+    "unlink": (
+        _compose_unlink,
+        "the refusal to leave an item ungrounded is judged over the union, so a "
+        "link to a borrowed clause counts toward an item's grounding. The link is "
+        "removed from *your* item only."),
     "ratify": (
         _compose_ratify,
         "core's accountability gate judges your item against the union, so one "

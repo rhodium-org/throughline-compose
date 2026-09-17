@@ -1,0 +1,27 @@
+uid: SR-0049
+type: system_requirement
+status: ratified
+title: Link and unlink in a composed project go through throughline's link operations
+text: tl-compose link and tl-compose unlink shall add, restamp, retype and remove
+  a link through the operations throughline offers (throughline SR-0212), handing
+  them the union's grounding index and how a namespace-qualified target is found
+  in it. They shall keep only the resolution of a target over the union.
+rationale: 'The copy tl-compose kept had drifted from tl link: on 0.20.0, --stamp
+  on an existing cross-source edge added a second edge instead of refreshing the
+  stamp, and --retype added a third link instead of changing the type. Going through
+  throughline''s operations fixes both and brings the refusal throughline SR-0211
+  requires, judged over the union: over the consumer''s graph alone, an item grounded
+  both locally and through a source would be refused a removal that leaves it grounded.'
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0003
+  type: relates
+- target: SR-0047
+  type: relates
+attrs:
+  origin: ai
+  priority: must
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:4e7477389476d2968652b2e55d79a90737e85d311d74d2a72e0c8eb1b7170c70
