@@ -1,0 +1,28 @@
+uid: SR-0050
+type: system_requirement
+status: ratified
+title: The release workflow uses action runtimes GitHub still supports
+text: The release workflow shall pin each action it uses to a version whose declared
+  runtime GitHub still supports, and an action whose runtime is deprecated shall
+  be moved to a current major, so that a release never depends on the runner's temporary
+  forward-compatibility shim.
+rationale: 'On 0.21.0, actions/upload-artifact@v4 and actions/download-artifact@v4
+  each logged a warning that Node.js 20 is deprecated and the action was forced to
+  run on Node.js 24. They move to upload-artifact@v7 and download-artifact@v8, the
+  commits throughline core''s release workflow runs with the same inputs. The rule
+  mirrors throughline-ratify SR-0017, so the three release workflows in the family
+  are held to one standard. Rejected, citing UR-0007 or SR-0028: both concern the
+  shipped test suite, not the pipeline that publishes it.'
+normative: true
+links:
+- target: UR-0013
+  type: implements
+- target: SR-0028
+  type: relates
+- target: UR-0007
+  type: relates
+attrs:
+  origin: ai
+  priority: should
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:a049c33e468cb8abd28e094c9547ff782d8de3cde4c2b3050480802a5edcb93e

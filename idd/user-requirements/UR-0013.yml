@@ -1,0 +1,21 @@
+uid: UR-0013
+type: user_requirement
+status: ratified
+title: A fix reaches the published package without first repairing the release pipeline
+text: As the maintainer, I want the release workflow to keep publishing throughline-compose
+  as the CI platform retires the runtimes its actions use, so that a fix is not held
+  back because a runtime the pipeline relied on was withdrawn.
+rationale: The release workflow's artifact actions declare Node 20, which GitHub
+  has deprecated. The 0.21.0 release on 17 September 2026 published only because
+  the runner forced them onto Node 24, and that shim is temporary, so the next release
+  after it is withdrawn would fail with the fix already waiting. throughline-ratify
+  records the same obligation as its SR-0017.
+normative: true
+links:
+- target: BN-0002
+  type: derives_from
+attrs:
+  origin: ai
+  priority: should
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:c7428ea39e90e7cdd0cb2df06c000a5d04c0fc2916a81246b2f30f84ed706879

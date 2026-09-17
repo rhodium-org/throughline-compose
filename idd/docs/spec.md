@@ -212,4 +212,5 @@ The table is generated from the graph, so it cannot drift from the actual links.
 | UR-0010 | A newcomer can set up, check and offer a change without asking | SR-0032 |
 | UR-0011 | A vulnerability can be reported without first disclosing it | SR-0033 |
 | UR-0012 | What is expected of participants, and where a breach is taken | SR-0034 |
+| UR-0013 | A fix reaches the published package without first repairing the release pipeline | SR-0050 |
 <!-- tl:end -->
