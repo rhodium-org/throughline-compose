@@ -1,0 +1,26 @@
+uid: SR-0048
+type: system_requirement
+status: ratified
+title: Check over a composed project gates status moves and tombstones as tl check
+  does
+text: tl-compose check shall read the consumer's baseline from the same options as
+  tl check, through throughline's own baseline function, and apply transition legality
+  and tombstone permanence to the consumer's items within the union. It shall say
+  which of those rules it could not run, in throughline's words (throughline SR-0209).
+rationale: 'On throughline 3.6.1 with tl-compose 0.20.0, an illegal status move that
+  bare tl check reported passed tl-compose check on the same working tree, and --base
+  was accepted and ignored, so every composed repository''s gate skipped both rules.
+  A composed project is worked through one command with one set of guarantees (UR-0002).
+  Who pays: a composer''s check now reads the baseline from git, as bare tl check
+  already did.'
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0003
+  type: relates
+attrs:
+  origin: ai
+  priority: must
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:fc1e56988eec89e79450f39f3a34f24f31041a80bfc143a5d44b8039236a0dbe
