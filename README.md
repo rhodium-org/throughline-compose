@@ -1,5 +1,18 @@
 # throughline-compose
 
+> **Since 0.22.0 this package is names only.** Composition lives in
+> [throughline](https://github.com/rhodium-org/throughline) 3.11.1 and later: `tl check`,
+> `tl docs` and the other union-aware commands fetch the declared `[[sources]]`, build the
+> union and validate it, and `tl-compose` is a second name the Tool installs for `tl`.
+> This package installs no command. Each module re-exports the Tool's names under the
+> paths consumers imported before the fold — `throughline_compose.sources`, `spi`,
+> `git_resolver`, `resolve`, `union`, `seam`, `resolver`, `directives`, `cli` — so a
+> consumer that has not moved keeps working unchanged
+> ([SR-0053](https://github.com/rhodium-org/throughline-compose/blob/main/idd/system-requirements/SR-0053.yml)).
+> The re-exports end with the Tool's next major release; import from `throughline`.
+> Everything below describes the design as it was built here, and as it now stands in
+> the Tool.
+
 **Compose one requirements graph from many reusable
 [throughline](https://github.com/rhodium-org/throughline) sources** — a house style
 guide, a platform standard, a regulatory baseline — alongside the requirements you
