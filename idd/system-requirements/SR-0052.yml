@@ -1,6 +1,6 @@
 uid: SR-0052
 type: system_requirement
-status: proposed
+status: ratified
 title: The core floor rises to the release that records what a signature signed and
   leaves room for this package
 text: 'The declared floor on throughline rises to 3.11.1. It is the first release
@@ -15,3 +15,17 @@ links:
   type: implements
 attrs:
   origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:eb3bfd4dccb032239ba08caa0800dc9cf24428170f1a14eba3cc0bacd5c99464
+  ratified_content:
+    type: system_requirement
+    text: 'The declared floor on throughline rises to 3.11.1. It is the first release
+      that both records the content a stamp signed and keeps room in its parser for
+      the names this package adds: below 3.10.0 this package''s ratify writes a record
+      with no content that the core''s own check then calls an error, and 3.11.0
+      refuses to start under this package because it registers agentinfo and --local
+      first. Nothing this package calls has moved.'
+    normative: true
+    derived: false
+    attrs:
+      priority: ''

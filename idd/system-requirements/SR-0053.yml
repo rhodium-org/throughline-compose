@@ -1,6 +1,6 @@
 uid: SR-0053
 type: system_requirement
-status: proposed
+status: ratified
 title: This package hands its command names to the Tool and re-exports the Tool's
   names
 text: 'From this release throughline-compose shall install no command of its own:
@@ -34,3 +34,19 @@ links:
 attrs:
   priority: must
   origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:2222b35efaaed4203261cd8ef742b830fa21cdb72385d4d4c9510df1537e6c9a
+  ratified_content:
+    type: system_requirement
+    text: 'From this release throughline-compose shall install no command of its
+      own: tl-compose and throughline-compose are names the Tool installs, and they
+      run the Tool. Every module a consumer imports from this package — sources,
+      spi, git_resolver, resolve, union, seam, resolver, directives, and the resolution
+      the cli held — shall be a re-export of the Tool''s own names, so a consumer
+      that has not moved keeps working unchanged. The package shall depend on throughline
+      3.11.1 or later. The re-exports end with the Tool''s next major release, by
+      which time each consumer shall import from throughline directly.'
+    normative: true
+    derived: false
+    attrs:
+      priority: must
