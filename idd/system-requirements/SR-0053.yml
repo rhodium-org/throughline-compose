@@ -1,0 +1,52 @@
+uid: SR-0053
+type: system_requirement
+status: ratified
+title: This package hands its command names to the Tool and re-exports the Tool's
+  names
+text: 'From this release throughline-compose shall install no command of its own:
+  tl-compose and throughline-compose are names the Tool installs, and they run the
+  Tool. Every module a consumer imports from this package — sources, spi, git_resolver,
+  resolve, union, seam, resolver, directives, and the resolution the cli held — shall
+  be a re-export of the Tool''s own names, so a consumer that has not moved keeps
+  working unchanged. The package shall depend on throughline 3.11.1 or later. The
+  re-exports end with the Tool''s next major release, by which time each consumer
+  shall import from throughline directly.'
+rationale: |-
+  Composition lives in the Tool from throughline 3.11.1 (throughline UR-0037, SR-0230 to SR-0236): the union, the seam, the resolver interface with its registry and reference resolver, the tl:sourced mirror and the twelve union-aware commands moved there with their behaviour unchanged, and tl-compose became a second name for tl. What this package still has to do is stop competing with that: while it installs its own tl-compose, an environment holding both packages has two owners of one command name, and whichever was installed last wins.
+
+  Four consumers import this package's modules today: throughline-ratify (sources, union, resolve, and the private resolution in cli), the browser editor's worker (git_resolver, spi, sources), throughline-jira (sources, spi, git_resolver) and idd-role-assets (git_resolver, sources, spi, union). Re-exporting the Tool's names under the old paths keeps every one of them working on the day this ships, and each moves in its own time.
+
+  SR-0051, proposed here for issue #5, asked the resolver to refuse in words where git cannot run. The Tool's resolver does that now (throughline SR-0232), and this package's resolver becomes a re-export of it, so that item is not carried forward.
+
+  Rejected — keeping this package's own resolver and commands alive beside the Tool's. Two implementations of one behaviour drift, which is the cost the fold was made to end.
+
+  Who pays: nobody today. A consumer changes its imports before the Tool's next major release; until then the old paths answer.
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0003
+  type: relates
+- target: SR-0052
+  type: relates
+- target: SR-0011
+  type: relates
+attrs:
+  priority: must
+  origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:2222b35efaaed4203261cd8ef742b830fa21cdb72385d4d4c9510df1537e6c9a
+  ratified_content:
+    type: system_requirement
+    text: 'From this release throughline-compose shall install no command of its
+      own: tl-compose and throughline-compose are names the Tool installs, and they
+      run the Tool. Every module a consumer imports from this package — sources,
+      spi, git_resolver, resolve, union, seam, resolver, directives, and the resolution
+      the cli held — shall be a re-export of the Tool''s own names, so a consumer
+      that has not moved keeps working unchanged. The package shall depend on throughline
+      3.11.1 or later. The re-exports end with the Tool''s next major release, by
+      which time each consumer shall import from throughline directly.'
+    normative: true
+    derived: false
+    attrs:
+      priority: must

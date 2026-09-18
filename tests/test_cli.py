@@ -16,53 +16,6 @@ from throughline_compose.cli import main as tlc_main
 from throughline_compose.seam import apply_seam
 
 
-def test_version_reports_compose_not_core(capsys):
-    # `--version` must speak as tl-compose, not forward throughline's `tl X` string.
-    with pytest.raises(SystemExit) as exc:
-        tlc_main(["--version"])
-    assert exc.value.code == 0
-    out = capsys.readouterr().out
-    assert out.startswith("tl-compose ")
-    assert "throughline " in out  # names the core it composes over
-
-
-def test_both_reported_versions_mark_a_working_tree(capsys, monkeypatch):
-    """A composed run is judged by core's validator, so the pair is what someone is
-    trying to establish when they ask. A mismatched pair is invisible while each half
-    reports a clean release number it has departed from (SR-0027), so the marker has
-    to reach the core version too — not just tl-compose's own."""
-    from throughline import version as version_mod
-
-    monkeypatch.setattr(version_mod, "_editable_from_direct_url", lambda _d: True)
-    with pytest.raises(SystemExit):
-        tlc_main(["--version"])
-
-    out = capsys.readouterr().out
-    # Both packages named in the line, both marked — the rule is applied to each.
-    assert out.count("+editable") == 2, out
-
-
-def test_the_version_rule_is_cores_and_is_not_restated_here():
-    """The rule lived in three places — library, CLI, and again here. SR-0027 mirrors
-    SR-0164's objection to that, so this consumes core's helper rather than keeping a
-    fourth copy that can drift on its own."""
-    import inspect
-
-    from throughline.version import distribution_version
-    from throughline_compose import cli
-
-    assert cli.distribution_version is distribution_version
-    # No local re-implementation reading distribution metadata behind our back.
-    assert "PackageNotFoundError" not in inspect.getsource(cli)
-
-
-def test_bare_tl_check_fails_fast_on_qualified_reference(consumer_dir, capsys):
-    # The core cannot resolve `toy:SR-0001`; it must signpost tl-compose (SR-0005).
-    rc = tl_main(["-C", str(consumer_dir), "check", "--base", ""])
-    assert rc == 1
-    assert "namespace-unresolved" in capsys.readouterr().out
-
-
 def test_compose_check_resolves_and_passes(consumer_dir, capsys):
     rc = tlc_main(["-C", str(consumer_dir), "check", "--base", ""])
     assert rc == 0
@@ -136,20 +89,6 @@ def test_the_borrowed_orphan_is_real_but_not_the_consumers_to_answer(
     )
     assert any(f.rule == "orphan" for f in suppressed)
     assert not any(f.rule == "orphan" for f in kept)
-
-
-def test_core_still_labels_the_grounding_line(source_dir):
-    """The rescope finds core's grounding line by its label rather than its
-    position. If core ever renames or reformats it, that must fail here — loudly,
-    at build time — rather than degrade a user's report quietly at runtime."""
-    from throughline.cli import _check_summary
-    from throughline_compose.cli import _GROUNDING_LABEL
-
-    lines = _check_summary(load_project(str(source_dir)))
-    labelled = [ln for ln in lines if ln.startswith(_GROUNDING_LABEL)]
-    assert len(labelled) == 1, (
-        f"core's summary no longer has exactly one {_GROUNDING_LABEL!r} line: {lines}"
-    )
 
 
 def test_compose_check_quiet_suppresses_summary(consumer_dir, capsys):
@@ -358,57 +297,6 @@ def test_compose_docs_sourced_placeholder_when_nothing_is_referenced(source_dir)
     assert "reference no external clause" in ref.read_text(encoding="utf-8")
 
 
-def test_bare_tl_docs_refuses_a_composed_document(consumer_dir):
-    """SR-0039/throughline SR-0186: running bare `tl docs` over an already-rendered
-    composed document fails and overwrites nothing, instead of silently replacing the
-    mirrored clauses with a placeholder and exiting 0.
-
-    In this process throughline_compose is imported, so the directive is registered
-    and the failure is the missing sources; a real `tl` process has no registration
-    and reports the directive as unprovided (covered by throughline's own suite).
-    Both paths must leave the document untouched, which is what this asserts."""
-    from throughline.cli import main as tl_main
-    ref = consumer_dir / "reference.md"
-    ref.write_text(
-        "<!-- tl:sourced uid == 'SR-0001' -->\n<!-- tl:end -->\n", encoding="utf-8")
-    assert tlc_main(["-C", str(consumer_dir), "docs", str(ref)]) == 0
-    rendered = ref.read_text(encoding="utf-8")
-    assert "A normative clause the source offers" in rendered
-
-    assert tl_main(["-C", str(consumer_dir), "docs", str(ref)]) == 2
-    assert ref.read_text(encoding="utf-8") == rendered  # nothing was overwritten
-
-
-def test_compose_docs_sourced_fails_on_an_unmirrorable_reference(consumer_dir):
-    """SR-0039: a referenced clause that cannot be rendered from its declared source
-    fails injection rather than being quietly dropped."""
-    from throughline_compose.directives import render_sourced
-    from throughline.inject import InjectError
-
-    class _NoSources:
-        def mirror_block(self, uid):
-            return None
-
-    class _Item:
-        uid = "SR-0001"
-        is_deleted = False
-        links = [type("L", (), {"target": "toy:SR-9999", "type": "relates"})()]
-
-    class _Proj:
-        def items(self):
-            return [_Item()]
-
-    import throughline_compose.directives as d
-    real = d.matching
-    d.matching = lambda project, expr: [_Item()]
-    try:
-        with pytest.raises(InjectError) as ei:
-            render_sourced(_Proj(), "uid == 'SR-0001'", _NoSources())
-        assert "toy:SR-9999" in str(ei.value)
-    finally:
-        d.matching = real
-
-
 def _write_sr(consumer_dir: Path, uid: str, links: list[tuple[str, str]]) -> Path:
     """Materialise a consumer system_requirement with the given grounding links,
     used to exercise the ratify gate over composition."""
@@ -455,15 +343,6 @@ def test_drift_in_a_source_is_still_reported_through_composition(
     assert rc == 1
     # ...and named in the composer's own vocabulary, not the synthetic prefix.
     assert "toy:SR-0001" in out and "ratified-stale" in out
-
-
-def test_bare_tl_ratify_refuses_cross_source_grounded_item(consumer_dir, capsys):
-    # Grounded only through the source: bare `tl` sees toy:INT-0001 as unresolved and
-    # refuses to ratify what is, under composition, a properly grounded item (SR-0005).
-    _write_sr(consumer_dir, "SR-0002", [("toy:INT-0001", "derives_from")])
-    rc = tl_main(["-C", str(consumer_dir), "ratify", "SR-0002", "--by", "tester"])
-    assert rc == 2
-    assert "not grounded to a root" in capsys.readouterr().err
 
 
 def test_compose_ratify_resolves_cross_source_grounding(consumer_dir, capsys):
@@ -602,15 +481,6 @@ def _unbound_record(consumer_dir: Path, uid: str, links: list[tuple[str, str]],
     return p
 
 
-def test_bare_tl_migrate_declines_a_record_grounded_through_a_source(consumer_dir):
-    # Grounded only through the source, so bare `tl` sees toy:INT-0001 as unresolved
-    # and the item as orphaned. Declining to complete its record is core working, not
-    # failing — it must not bind what it cannot justify (throughline SR-0152).
-    p = _unbound_record(consumer_dir, "SR-0002", [("toy:INT-0001", "derives_from")])
-    assert tl_main(["-C", str(consumer_dir), "migrate"]) == 0
-    assert "ratified_fingerprint" not in p.read_text(encoding="utf-8")
-
-
 def test_compose_migrate_binds_a_record_grounded_through_a_source(consumer_dir, capsys):
     # The fix (SR-0004): tl-compose hands the union to the *unchanged* core repair
     # (throughline SR-0153), which completes the very record it declined without one.
@@ -678,14 +548,6 @@ def test_compose_migrate_passthrough_without_sources(source_dir, capsys):
 
 # ---- link/new: cross-source targets resolve over the union (SR-0004) -----------
 
-def test_bare_tl_link_refuses_cross_source_destination(consumer_dir, capsys):
-    # Bare `tl` cannot see toy:UR-0001; it refuses a link into a borrowed clause.
-    rc = tl_main(["-C", str(consumer_dir), "link", "SR-0001", "toy:UR-0001",
-                  "--type", "relates"])
-    assert rc == 2
-    assert "does not exist" in capsys.readouterr().err
-
-
 def test_compose_link_resolves_cross_source_destination(consumer_dir, capsys):
     # The fix: tl-compose validates the destination over the union and stores the
     # link namespace-qualified on the consumer's own item — the source is untouched.
@@ -719,14 +581,6 @@ def test_compose_link_passthrough_without_sources(source_dir, capsys):
     assert "linked SR-0001 --derives_from--> INT-0001" in capsys.readouterr().out
 
 
-def test_bare_tl_new_refuses_cross_source_ground(consumer_dir, capsys):
-    rc = tl_main(["-C", str(consumer_dir), "new", "SR", "--type", "system_requirement",
-                  "--status", "proposed", "--title", "grounded into a source",
-                  "--ground", "toy:INT-0001", "--no-interactive"])
-    assert rc == 2
-    assert "grounding target toy:INT-0001 does not exist" in capsys.readouterr().err
-
-
 def test_compose_new_grounds_into_source_and_checks(consumer_dir, capsys):
     # The fix: an item can be grounded into a borrowed clause at birth; the result
     # is a properly grounded consumer item the composed check accepts.
@@ -758,24 +612,6 @@ def test_compose_new_local_ground_passthrough(consumer_dir, capsys):
 
 # --- context / agentinfo brief (SR-0016) -------------------------------------
 
-def test_context_appends_composition_section_and_live_sources(consumer_dir, capsys):
-    # SR-0016: over a project that declares sources, `context` emits the core brief
-    # first (the IDD contract) and then the composition section plus the live listing
-    # of every namespace this project's union binds (SR-0045).
-    rc = tlc_main(["-C", str(consumer_dir), "context"])
-    out = capsys.readouterr().out
-    assert rc == 0
-    # Core brief passed through unchanged.
-    assert "The contract: Intent-Driven Development" in out
-    # Composition section appended.
-    assert "Composition: working this project with `tl-compose`" in out
-    assert "Transitive sources" in out
-    # Live listing names the declared source, its location and who declared it.
-    assert "## Namespaces bound in this union" in out
-    assert "`toy`" in out and "path `../toy-source`" in out
-    assert "declared by you" in out
-
-
 def test_agentinfo_is_identical_to_context(consumer_dir, capsys):
     # SR-0016: `agentinfo` is an alias for `context` — byte-identical output.
     tlc_main(["-C", str(consumer_dir), "context"])
@@ -784,60 +620,6 @@ def test_agentinfo_is_identical_to_context(consumer_dir, capsys):
     agent = capsys.readouterr().out
     assert agent == ctx
     assert agent  # non-empty
-
-
-def test_context_without_sources_is_core_plus_short_note(source_dir, capsys):
-    # SR-0016: with no sources declared the brief stays the core's plus a short
-    # 'composition available but unused' note — not the full composition manual.
-    rc = tlc_main(["-C", str(source_dir), "context"])
-    out = capsys.readouterr().out
-    assert rc == 0
-    assert "The contract: Intent-Driven Development" in out
-    assert "declares no `[[sources]]`" in out
-    # The full manual's headings are absent.
-    assert "Transitive sources" not in out
-    assert "## Namespaces bound in this union" not in out
-
-
-def test_every_union_command_is_described_in_the_brief(consumer_dir, capsys):
-    """SR-0025: a command given union behaviour without being described fails here
-    rather than passing silently.
-
-    The dispatch table is the only route to union behaviour and the brief is
-    rendered from it, so this should hold by construction — but 'by construction'
-    is a claim about today's code, and this is the check that keeps it true. If it
-    fails, the command was routed some other way; put it in `_UNION_COMMANDS` with
-    the sentence an agent needs, rather than describing it twice."""
-    from throughline_compose.cli import _UNION_COMMANDS, _compose_uncovered
-
-    assert _compose_uncovered() == []
-    rc = tlc_main(["-C", str(consumer_dir), "context"])
-    out = capsys.readouterr().out
-    assert rc == 0
-    assert "## Union-aware commands" in out
-    for name, (_, note) in _UNION_COMMANDS.items():
-        assert f"- **`{name}`**" in out, f"{name} is not described in the brief"
-        assert note in out
-
-
-def test_brief_states_a_moved_ref_is_revalidated(consumer_dir, capsys):
-    """SR-0025 over SR-0043: the brief is the document an agent is told to trust
-    above all others, so it must describe the cache the tool actually has. It
-    previously warned that a moved ref is never refetched — the opposite of the
-    behaviour — which would send an agent off clearing caches to fix a problem that
-    no longer exists, and teach it to distrust a check that is now sound. Both
-    halves of the rule are asserted, plus the offline switch and the live cache
-    path, so the section cannot drift back to describing only the easy case."""
-    from throughline_compose.resolve import OFFLINE_ENV, cache_root
-
-    rc = tlc_main(["-C", str(consumer_dir), "context"])
-    out = capsys.readouterr().out
-    assert rc == 0
-    assert "## The source cache — a moved ref **is** picked up" in out
-    assert "**A commit id** names one commit for all time" in out  # the cheap half
-    assert "refetches only when it has moved" in out              # the moving half
-    assert OFFLINE_ENV in out
-    assert str(cache_root()) in out
 
 
 def test_brief_states_what_a_consumer_may_write(consumer_dir, capsys):
@@ -1016,20 +798,6 @@ def test_context_with_a_uid_resolves_borrowed_clauses(consumer_dir, capsys):
     assert "TOYSR-0001" not in out
 
 
-def test_context_with_a_uid_keeps_the_core_brief_and_composition_sections(
-    consumer_dir, capsys
-):
-    # SR-0042: the UID adds a section; it does not disturb the brief above it or the
-    # composition manual below it. Order matters — the manual stays last.
-    rc = tlc_main(["-C", str(consumer_dir), "context", "SR-0001"])
-    assert rc == 0
-    out = capsys.readouterr().out
-    assert "The contract: Intent-Driven Development" in out
-    assert "## Namespaces bound in this union" in out
-    assert out.index("## The item you were given") < out.index(
-        "Composition: working this project with `tl-compose`")
-
-
 def test_context_with_a_uid_stops_at_the_source_boundary(consumer_dir, capsys):
     # SR-0042 defers to SR-0041's boundary: the borrowed clause is shown, its own
     # grounding chain is not, so a brief cannot swell to include a whole standard.
@@ -1052,15 +820,6 @@ def test_context_rejects_an_unknown_uid_before_emitting_a_brief(
     captured = capsys.readouterr()
     assert "toy:SR-9999 does not exist" in captured.err
     assert captured.out == ""
-
-
-def test_context_with_a_uid_passes_through_without_sources(source_dir, capsys):
-    # SR-0003: with no sources declared this is core's own behaviour, UID and all.
-    rc = tlc_main(["-C", str(source_dir), "context", "SR-0001"])
-    assert rc == 0
-    out = capsys.readouterr().out
-    assert "## The item you were given: SR-0001" in out
-    assert "declares no `[[sources]]`" in out
 
 
 # ---------------------------------------------------------------------- SR-0040
@@ -1108,14 +867,6 @@ def test_compose_dump_states_the_scope_it_answered_over(consumer_dir, capsys):
     assert source["path"] == "../toy-source"
     assert source["item_count"] == 3
     assert source["fingerprint"]                  # the edition actually read
-
-
-def test_compose_dump_identifies_the_composition_layer(consumer_dir, capsys):
-    # SR-0040: the header named the core alone, so nothing in the file said
-    # composition was involved at all.
-    doc = _dump(consumer_dir, capsys)
-    assert doc["throughline_dump"]["tool_version"].startswith("tl-compose ")
-    assert "throughline " in doc["throughline_dump"]["tool_version"]
 
 
 def test_compose_dump_local_records_that_it_was_narrowed(consumer_dir, capsys):
@@ -1270,15 +1021,13 @@ def test_composed_link_restamps_and_retypes_a_cross_source_edge_in_place(consume
 
 def test_composed_unlink_judges_grounding_over_the_union(consumer_dir, capsys):
     """SR-0001 is grounded locally and through a borrowed intent. Removing the local
-    link leaves it grounded in the union, which bare `tl` cannot see."""
+    link leaves it grounded in the union, so it is allowed."""
     assert tlc_main(["-C", str(consumer_dir), "link", "SR-0001", "toy:INT-0001",
                      "--type", "derives_from"]) == 0
     assert tlc_main(["-C", str(consumer_dir), "new", "SR", "--type", "system_requirement",
                      "--title", "keeps INT-0001 served", "--ground", "INT-0001",
                      "--no-interactive"]) == 0
     capsys.readouterr()
-    assert tl_main(["-C", str(consumer_dir), "unlink", "SR-0001", "INT-0001"]) == 2
-    assert "SR-0001 reaching no root" in capsys.readouterr().err
     assert tlc_main(["-C", str(consumer_dir), "unlink", "SR-0001", "INT-0001"]) == 0
     assert "unlinked SR-0001 --derives_from--> INT-0001" in capsys.readouterr().out
 
