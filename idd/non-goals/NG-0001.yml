@@ -1,6 +1,6 @@
 uid: NG-0001
 type: non_goal
-status: ratified
+status: rejected
 title: Composition is not built into the tl core
 text: Composition — source declaration, pinning, fetching, and merging — is deliberately
   not added to the `throughline` core or its `tl` command. The core stays a single-purpose,
@@ -19,3 +19,5 @@ attrs:
   ratified_fingerprint: sha256:81fa00856e0b72a1b81005b3d7fd1e8997d99c15c50e1186299bbd62c0e59514
   ratified_backfilled: true
   ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  invalidated_reason: composition moves into core; a core non-goal will record what
+    it still will not do
