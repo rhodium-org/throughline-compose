@@ -1,13 +1,14 @@
 uid: SR-0052
 type: system_requirement
 status: proposed
-title: The core floor rises to the release that records what a ratification signed
-text: 'The declared floor on throughline rises to 3.10.0, the release in which every
-  stamp the core writes also records the content it was taken over. This package
-  does not write a stamp itself: tl-compose ratify hands the act to the core''s own
-  ratify, so an install pinned to an older core would write a record with no content
-  through this command, and the core''s own check then reports that record as an
-  error. The floor is what stops the pairing. Nothing this package calls has moved.'
+title: The core floor rises to the release that records what a signature signed and
+  leaves room for this package
+text: 'The declared floor on throughline rises to 3.11.1. It is the first release
+  that both records the content a stamp signed and keeps room in its parser for the
+  names this package adds: below 3.10.0 this package''s ratify writes a record with
+  no content that the core''s own check then calls an error, and 3.11.0 refuses to
+  start under this package because it registers agentinfo and --local first. Nothing
+  this package calls has moved.'
 normative: true
 links:
 - target: UR-0002
