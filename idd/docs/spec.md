@@ -185,11 +185,11 @@ Regenerate with `tl docs` and gate freshness in CI with `tl docs --check`.
 ## Non-goals
 
 <!-- tl:item NG-0001 -->
-**NG-0001 — Composition is not built into the tl core** — `non_goal`, status `ratified`
+**NG-0001 — Composition is not built into the tl core** — `non_goal`, status `rejected`
 
 > Composition — source declaration, pinning, fetching, and merging — is deliberately not added to the `throughline` core or its `tl` command. The core stays a single-purpose, offline-by-default, self-contained tool over one graph; the network, lockfile, untrusted-source, and union concerns live entirely in throughline-compose, which consumes the core as a library. The only concession the core makes to composition is recognising the namespace-qualified reference syntax so it can fail fast on one (SR-0005) — it gains no ability to resolve, fetch, or merge. This is recorded negative space — it exists to keep later design honest, so that a proposal to "just add sources to tl" is measured against a decision already taken rather than reopened by default.
 
-**origin**: human · **ratified_by**: Henry Grech-Cini · **ratified_fingerprint**: sha256:81fa00856e0b72a1b81005b3d7fd1e8997d99c15c50e1186299bbd62c0e59514 · **ratified_backfilled**: True · **ratified_revision**: a5d12a82fa81b6fba16cf3286e98525f6240d621
+**origin**: human · **ratified_by**: Henry Grech-Cini · **ratified_fingerprint**: sha256:81fa00856e0b72a1b81005b3d7fd1e8997d99c15c50e1186299bbd62c0e59514 · **ratified_backfilled**: True · **ratified_revision**: a5d12a82fa81b6fba16cf3286e98525f6240d621 · **invalidated_reason**: composition moves into core; a core non-goal will record what it still will not do
 <!-- tl:end -->
 
 ## Traceability
