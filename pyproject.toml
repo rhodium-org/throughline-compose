@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "throughline-compose"
-version = "0.22.0"
-description = "Names for what throughline provides. Composition moved into throughline 3.11; this package re-exports the Tool's names under the paths consumers imported before, and installs no command of its own."
+version = "0.23.0"
+description = "Deprecated: use throughline. Names for what throughline provides. Composition moved into throughline 3.11; this package re-exports the Tool's names under the paths consumers imported before, and installs no command of its own."
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
@@ -22,7 +22,7 @@ keywords = [
   "throughline",
 ]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 7 - Inactive",
   "Environment :: Console",
   "Intended Audience :: Developers",
   "Operating System :: OS Independent",

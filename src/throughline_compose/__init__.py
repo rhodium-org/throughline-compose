@@ -1,6 +1,9 @@
 # Copyright (c) 2026 Henry J Grech-Cini
 # SPDX-License-Identifier: Apache-2.0
-"""throughline-compose — names for what throughline provides.
+"""throughline-compose — deprecated; names for what throughline provides.
+
+This is the last release (SR-0054). Importing the package raises a
+DeprecationWarning; import from ``throughline`` instead.
 
 Since 0.22.0 this package installs no command and holds no implementation.
 Composition lives in throughline 3.11.1 and later (throughline UR-0037, SR-0230 to
@@ -14,7 +17,15 @@ imported before the fold, so a consumer that has not moved keeps working unchang
 """
 from __future__ import annotations
 
+import warnings
 from importlib.metadata import PackageNotFoundError, version as _dist_version
+
+# Said where a consumer that still imports this package will see it (SR-0054).
+warnings.warn(
+    "throughline-compose is deprecated and this is its last release: composition "
+    "lives in throughline, so import these names from throughline instead. The "
+    "re-exports here end with the next major release of throughline.",
+    DeprecationWarning, stacklevel=2)
 
 # Importing the Tool registers the reference resolver and the tl:sourced directive,
 # which is the side effect entering this package used to have (SR-0039).

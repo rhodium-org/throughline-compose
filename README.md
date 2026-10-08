@@ -1,5 +1,12 @@
 # throughline-compose
 
+> **Deprecated.** 0.23.0 is the last release and this repository is archived. Use
+> [throughline](https://github.com/rhodium-org/throughline): run `tl` where you ran
+> `tl-compose`, and import from `throughline` where you imported from
+> `throughline_compose`. Importing this package raises a `DeprecationWarning`
+> ([SR-0054](https://github.com/rhodium-org/throughline-compose/blob/main/idd/system-requirements/SR-0054.yml)).
+> Earlier releases stay installable. Report issues to throughline.
+
 > **Since 0.22.0 this package is names only.** Composition lives in
 > [throughline](https://github.com/rhodium-org/throughline) 3.11.1 and later: `tl check`,
 > `tl docs` and the other union-aware commands fetch the declared `[[sources]]`, build the
@@ -19,7 +26,7 @@ guide, a platform standard, a regulatory baseline — alongside the requirements
 write yourself, and work the combined graph as one.
 
 This repository is itself a throughline project: its own design is captured as a
-grounded IDD spine of <!-- tl:count.inline type == 'user_requirement' -->13<!-- tl:end --> user requirements and <!-- tl:count.inline type == 'system_requirement' -->49<!-- tl:end --> system requirements 
+grounded IDD spine of <!-- tl:count.inline type == 'user_requirement' -->13<!-- tl:end --> user requirements and <!-- tl:count.inline type == 'system_requirement' -->50<!-- tl:end --> system requirements 
 under [`idd/vision/`](https://github.com/rhodium-org/throughline-compose/tree/main/idd/vision), [`idd/goals/`](https://github.com/rhodium-org/throughline-compose/tree/main/idd/goals),
 [`idd/user-requirements/`](https://github.com/rhodium-org/throughline-compose/tree/main/idd/user-requirements),
 [`idd/system-requirements/`](https://github.com/rhodium-org/throughline-compose/tree/main/idd/system-requirements), and [`idd/non-goals/`](https://github.com/rhodium-org/throughline-compose/tree/main/idd/non-goals), and

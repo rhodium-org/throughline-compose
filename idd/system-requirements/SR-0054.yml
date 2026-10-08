@@ -1,0 +1,45 @@
+uid: SR-0054
+type: system_requirement
+status: implemented
+title: This package is deprecated and says so
+text: Importing throughline_compose shall raise a DeprecationWarning that names throughline
+  as the package to import from. The package metadata shall mark the package inactive.
+  Its description and the first lines of its README shall say that it is deprecated
+  and what to use instead. The re-exports of SR-0053 shall keep working in this release.
+  The release that does this shall be the last, and the repository shall be archived
+  after it. Earlier releases shall stay installable.
+rationale: |-
+  Henry Grech-Cini, 2026-10-08: "fully deprecate throughline-compose". He chose to archive the repository and leave the releases installable.
+
+  Since 0.22.0 the package only re-exports names from throughline (SR-0053). A consumer that still imports it gets no sign that the re-exports end with the next major release of throughline. A warning at import is where that consumer will see it.
+
+  Rejected: yanking the releases. A consumer that has not moved would fail to install.
+
+  Rejected: removing the re-exports now. SR-0053 promised them until the next major release of throughline.
+
+  Who pays: a consumer that imports this package sees a warning, and a test suite that turns warnings into errors fails until it imports from throughline. After the archive, nobody can open an issue here; throughline takes them.
+
+  Verified by test: importing the package raises a DeprecationWarning whose message names throughline; every name SR-0053 re-exports still imports; the metadata carries the inactive classifier.
+normative: true
+links:
+- target: UR-0002
+  type: implements
+- target: SR-0053
+  type: refines
+attrs:
+  origin: ai
+  ratified_by: Henry Grech-Cini
+  ratified_fingerprint: sha256:e5b06453707fd2f48c1f29d939e3e7923feaaac9504482157c8effb6f81d970e
+  ratified_content:
+    type: system_requirement
+    text: Importing throughline_compose shall raise a DeprecationWarning that names
+      throughline as the package to import from. The package metadata shall mark
+      the package inactive. Its description and the first lines of its README shall
+      say that it is deprecated and what to use instead. The re-exports of SR-0053
+      shall keep working in this release. The release that does this shall be the
+      last, and the repository shall be archived after it. Earlier releases shall
+      stay installable.
+    normative: true
+    derived: false
+    attrs:
+      priority: ''
