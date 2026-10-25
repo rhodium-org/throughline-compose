@@ -16,7 +16,20 @@ links:
   type: relates
 attrs:
   origin: hybrid
-  ratified_by: henry
-  ratified_fingerprint: sha256:d620f1b694d911f565a60ad6de80c8a74c78735c54735acd09c7a76bfa74f7c3
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: henry
+  fingerprint: sha256:d620f1b694d911f565a60ad6de80c8a74c78735c54735acd09c7a76bfa74f7c3
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: system_requirement
+    text: tl-compose trace shall render a borrowed clause reached through a composed
+      source as a first-class node, shown by its namespace-qualified name, so a composer
+      sees where a local item grounds into a source. The walk shall stop at the source
+      boundary — a borrowed node is shown but its own source-internal links are not
+      traversed — so a trace does not expand into the whole borrowed standard. Free
+      external references (URLs, uncomposed links) remain leaves.
+    normative: true
+    derived: false
+    attrs:
+      priority: ''

@@ -28,7 +28,25 @@ attrs:
   origin: human
   priority: must
   verification: demonstration
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:2b373a00ffea9407880e36f7a13cafd8cec6ed58c4acf2bb89d8192a66dadc34
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:2b373a00ffea9407880e36f7a13cafd8cec6ed58c4acf2bb89d8192a66dadc34
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: system_requirement
+    text: The composition CLI (`tl-compose`) shall expose every command of the core
+      `tl` CLI, so that a composer in a composed project uses `tl-compose` for everything
+      and never invokes `tl` directly. Commands that concern only the local graph
+      (authoring, ratifying) shall be forwarded to the throughline library unchanged;
+      only the commands whose meaning changes under composition — chiefly `check`,
+      `docs` and `trace`, which must operate over the merged graph — shall be overridden,
+      and `tl-compose` shall add the commands composition introduces (declaring,
+      pinning, and updating sources). `tl-compose` shall obtain the core command
+      set programmatically from the throughline library rather than re-declaring
+      it, so a new core subcommand appears in `tl-compose` automatically and the
+      two surfaces cannot drift apart.
+    normative: true
+    derived: false
+    attrs:
+      priority: must

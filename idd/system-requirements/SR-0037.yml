@@ -59,6 +59,25 @@ attrs:
   priority: must
   verification: test
   origin: ai
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:60d0051d326a4ce8bfc0858382af5214e6ded986da7c81395002985fb9e0aba8
-  ratified_revision: ad564013bcd7c2baede66161d7602922b1b5d479
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:60d0051d326a4ce8bfc0858382af5214e6ded986da7c81395002985fb9e0aba8
+  revision: ad564013bcd7c2baede66161d7602922b1b5d479
+  content:
+    type: system_requirement
+    text: Where throughline-compose lists the items of a composed project, the listing
+      shall be taken over the composed union rather than over the consumer's own
+      graph alone, and a borrowed item shall be identified in the same `<namespace>:<UID>`
+      vocabulary in which findings are reported. The composer shall be able to restrict
+      a listing to their own items explicitly. Every listing shall state the scope
+      it answered over — how many of the items it counted are the consumer's own
+      and how many are borrowed — so that no count can be read as a statement about
+      the whole composed graph unless it is one, and an empty result is never indistinguishable
+      from a graph that genuinely holds nothing. A machine-readable listing shall
+      carry each item's owning source as data, rather than leaving a reader to infer
+      it from a UID prefix. This shall hold identically for every spelling of the
+      listing command.
+    normative: true
+    derived: false
+    attrs:
+      priority: must

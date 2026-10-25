@@ -17,7 +17,21 @@ attrs:
   origin: human
   priority: must
   verification: demonstration
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:06a6cc5243475631b13130bccca2d8f287f5a03ad3088e650c642e132159d726
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:06a6cc5243475631b13130bccca2d8f287f5a03ad3088e650c642e132159d726
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: user_requirement
+    text: In a composed project the composer shall drive everything through a single
+      command surface, never having to decide which of two tools performs a given
+      action or to reason about the consequences of choosing wrong. Every operation
+      available on a standalone throughline shall be available, unchanged, on the
+      composed one; the composed graph shall be validated by exactly the same rules
+      as a standalone graph; and no path shall let the composer receive a false clean
+      result that hides an unresolved cross-source reference.
+    normative: true
+    derived: false
+    attrs:
+      priority: must

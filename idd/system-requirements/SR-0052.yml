@@ -15,9 +15,10 @@ links:
   type: implements
 attrs:
   origin: ai
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:eb3bfd4dccb032239ba08caa0800dc9cf24428170f1a14eba3cc0bacd5c99464
-  ratified_content:
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:eb3bfd4dccb032239ba08caa0800dc9cf24428170f1a14eba3cc0bacd5c99464
+  content:
     type: system_requirement
     text: 'The declared floor on throughline rises to 3.11.1. It is the first release
       that both records the content a stamp signed and keeps room in its parser for
@@ -29,3 +30,4 @@ attrs:
     derived: false
     attrs:
       priority: ''
+  revision: 5fbd434cd0c8f50ecd8866154437bcca82b63ee9

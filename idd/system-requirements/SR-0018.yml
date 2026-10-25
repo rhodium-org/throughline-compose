@@ -15,7 +15,19 @@ attrs:
   priority: must
   verification: test
   origin: hybrid
-  ratified_by: henry
-  ratified_fingerprint: sha256:59b07d9265f51773608c27d0c41fa2af8ce6ddca95a911b064842f6b84bbc44d
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: henry
+  fingerprint: sha256:59b07d9265f51773608c27d0c41fa2af8ce6ddca95a911b064842f6b84bbc44d
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: system_requirement
+    text: tl-compose shall resolve a namespace-qualified reference solely by the
+      source item's published UID, and shall neither read, store, nor compare any
+      source item's identity or fingerprint datum across the compose boundary. A
+      change to a source's internal identity basis therefore cannot alter, invalidate,
+      or raise as suspect any consumer's references.
+    normative: true
+    derived: false
+    attrs:
+      priority: must

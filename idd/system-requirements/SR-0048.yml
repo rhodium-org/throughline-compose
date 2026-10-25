@@ -22,5 +22,18 @@ links:
 attrs:
   origin: ai
   priority: must
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:fc1e56988eec89e79450f39f3a34f24f31041a80bfc143a5d44b8039236a0dbe
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:fc1e56988eec89e79450f39f3a34f24f31041a80bfc143a5d44b8039236a0dbe
+  content:
+    type: system_requirement
+    text: tl-compose check shall read the consumer's baseline from the same options
+      as tl check, through throughline's own baseline function, and apply transition
+      legality and tombstone permanence to the consumer's items within the union.
+      It shall say which of those rules it could not run, in throughline's words
+      (throughline SR-0209).
+    normative: true
+    derived: false
+    attrs:
+      priority: must
+  revision: 657ebaaa070c6ef7bfac422602e5bd53c9da6c37

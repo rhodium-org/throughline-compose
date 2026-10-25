@@ -16,7 +16,20 @@ links:
   type: refines
 attrs:
   origin: hybrid
-  ratified_by: henry
-  ratified_fingerprint: sha256:be111c3c0d8cf83d1244283d3e8b86077270b83dd6ce1ad62e9b9f03b9a6cc21
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: henry
+  fingerprint: sha256:be111c3c0d8cf83d1244283d3e8b86077270b83dd6ce1ad62e9b9f03b9a6cc21
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: system_requirement
+    text: Where tl-compose overrides a core command to resolve it over the union,
+      the override shall preserve that command's interactive behaviour — the same
+      guided prompting and item selection a composer gets from core tl — so the strict-superset
+      promise holds for how a command behaves, not only that the command exists.
+      An omitted item argument is resolved through the same picker, and a new item
+      is born at the schema's initial status role rather than an unset status.
+    normative: true
+    derived: false
+    attrs:
+      priority: ''

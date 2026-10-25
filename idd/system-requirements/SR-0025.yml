@@ -32,6 +32,22 @@ links:
   type: refines
 attrs:
   origin: ai
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:544f95bbf7830d8df7d1fb8a3d619de3c186549659186150ad60e88f6415f110
-  ratified_revision: b2830f596d583ff97cdbedf9368c4b63f316dd51
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:544f95bbf7830d8df7d1fb8a3d619de3c186549659186150ad60e88f6415f110
+  revision: b2830f596d583ff97cdbedf9368c4b63f316dd51
+  content:
+    type: system_requirement
+    text: The composition section of the brief shall describe every mechanic composition
+      adds that an agent must be aware of to work correctly — each command whose
+      behaviour differs over the union, each way a source is declared, pinned, cached
+      or refreshed, each rule governing what an agent may and may not write in a
+      consuming project, and any behaviour that would surprise an agent that had
+      read only the core brief. It shall derive that coverage from the tool's own
+      command surface and the project's declared sources wherever it can, rather
+      than from a list maintained by hand, and a mechanic left undescribed shall
+      fail a check rather than pass silently.
+    normative: true
+    derived: false
+    attrs:
+      priority: ''

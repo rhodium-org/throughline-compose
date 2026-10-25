@@ -20,7 +20,21 @@ attrs:
   origin: hybrid
   priority: should
   verification: test
-  ratified_by: henry
-  ratified_fingerprint: sha256:f60e856ae62e0dd5160cdf9b1915ec0680e13624386bb57d63886f1b992b04e6
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: henry
+  fingerprint: sha256:f60e856ae62e0dd5160cdf9b1915ec0680e13624386bb57d63886f1b992b04e6
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: system_requirement
+    text: The published source distribution shall include every fixture the shipped
+      test suite needs to run — in particular the shared conftest that defines the
+      CLI fixtures — so that running the shipped suite from the sdist passes rather
+      than erroring at collection with a missing fixture. Because the default sdist
+      file set ships modules matching test-star but not conftest, the project shall
+      declare the inclusion explicitly (a MANIFEST directive) rather than relying
+      on that default.
+    normative: true
+    derived: false
+    attrs:
+      priority: should

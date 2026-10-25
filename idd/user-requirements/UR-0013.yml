@@ -17,5 +17,16 @@ links:
 attrs:
   origin: ai
   priority: should
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:c7428ea39e90e7cdd0cb2df06c000a5d04c0fc2916a81246b2f30f84ed706879
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:c7428ea39e90e7cdd0cb2df06c000a5d04c0fc2916a81246b2f30f84ed706879
+  content:
+    type: user_requirement
+    text: As the maintainer, I want the release workflow to keep publishing throughline-compose
+      as the CI platform retires the runtimes its actions use, so that a fix is not
+      held back because a runtime the pipeline relied on was withdrawn.
+    normative: true
+    derived: false
+    attrs:
+      priority: should
+  revision: 2fe89f10ec3575b0ced8bae41927ca55664a3fe6

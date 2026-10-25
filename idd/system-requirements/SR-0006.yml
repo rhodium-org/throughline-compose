@@ -27,7 +27,31 @@ attrs:
   origin: human
   priority: must
   verification: test
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:5baf9ad35105694e18456ae57d3b7cab013b3c27b2bf17bef74673c49d084735
-  ratified_backfilled: true
-  ratified_revision: 24d2bbe83e9b3d53bfbeca2a479608e18ce9198c
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:5baf9ad35105694e18456ae57d3b7cab013b3c27b2bf17bef74673c49d084735
+  backfilled: true
+  revision: 24d2bbe83e9b3d53bfbeca2a479608e18ce9198c
+  content:
+    type: system_requirement
+    text: |-
+      A source entry shall accept either a local path or a git URL with a ref. The ref
+      selects the edition. It is normally a tag, because a source publishes its editions
+      as tags, but a branch or a commit id shall also be accepted.
+
+      On check, tl-compose shall fetch each URL source at its ref into a cache and
+      compose from that checkout. The cache shall be keyed by URL and ref, and shall sit
+      outside the consumer's project directory, because the consumer's item scan reads
+      its whole directory and would otherwise take the source for its own items. The
+      cache is a shared per-user store, like a package manager's.
+
+      A cached source shall be reused rather than cloned again, on the terms SR-0043
+      sets: a commit id with no network call, a tag or branch after re-checking the
+      origin.
+
+      A source shall not set both url and path. A url with no ref shall fail with an
+      error rather than track a default branch.
+    normative: true
+    derived: false
+    attrs:
+      priority: must

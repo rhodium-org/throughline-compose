@@ -30,6 +30,23 @@ links:
   type: relates
 attrs:
   origin: ai
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:aec3b530acdcc9676ecb06f9fce091be583d9c08bb01713bc064f95d83859e37
-  ratified_revision: eabf8d81c13eedf3f1fa77041fb9dec0207f1101
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:aec3b530acdcc9676ecb06f9fce091be583d9c08bb01713bc064f95d83859e37
+  revision: eabf8d81c13eedf3f1fa77041fb9dec0207f1101
+  content:
+    type: system_requirement
+    text: When the consumer declares sources, tl-compose ratify shall accept any
+      number of item identifiers in one invocation, as throughline 3.3.0's ratify
+      does (throughline SR-0199). It shall check that every item named exists in
+      the consumer before it resolves a source, so a mistyped identifier fails before
+      any network is touched; it shall ask for the ratifier once; it shall build
+      the union once; and it shall then sign each item over that union in the order
+      given, writing each to the consumer's own register. A run that cannot complete
+      shall write nothing. Where no item is named it shall behave as it does today.
+      The floor on throughline rises to 3.3.0, because the parsed argument this command
+      reads changed its name and shape in that release.
+    normative: true
+    derived: false
+    attrs:
+      priority: ''

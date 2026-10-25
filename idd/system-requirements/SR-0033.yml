@@ -16,6 +16,20 @@ attrs:
   priority: should
   verification: inspection
   origin: ai
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:ee11f8a216b1d79b3ffc4665d9c85dc69f53789acaf080fdbc577cec3a9ab00d
-  ratified_revision: bdc984e18495c2ffc82e0e2f97db426bb79cd1dd
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:ee11f8a216b1d79b3ffc4665d9c85dc69f53789acaf080fdbc577cec3a9ab00d
+  revision: bdc984e18495c2ffc82e0e2f97db426bb79cd1dd
+  content:
+    type: system_requirement
+    text: A SECURITY.md at the repository root shall direct a reporter to GitHub's
+      private vulnerability reporting rather than a public issue, state which versions
+      are supported, and set the expectation of acknowledgement, of a window to fix
+      before disclosure, and of credit. It shall say what is worth reporting for
+      a tool of this kind — including any way a composed source can be made to resolve
+      to content other than its pinned ref, which is this project's own worst failure
+      and not an obvious one from outside.
+    normative: true
+    derived: false
+    attrs:
+      priority: should

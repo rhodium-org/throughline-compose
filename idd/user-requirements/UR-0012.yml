@@ -14,6 +14,17 @@ attrs:
   priority: should
   verification: inspection
   origin: ai
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:7343b4b7e6faf8dd55fe86fed6b628c3bef6944ee793e3c63c9868af82c41a53
-  ratified_revision: bdc984e18495c2ffc82e0e2f97db426bb79cd1dd
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:7343b4b7e6faf8dd55fe86fed6b628c3bef6944ee793e3c63c9868af82c41a53
+  revision: bdc984e18495c2ffc82e0e2f97db426bb79cd1dd
+  content:
+    type: user_requirement
+    text: The behaviour expected of everyone taking part shall be stated in the repository,
+      with a private route for reporting a breach and a named person answerable for
+      acting on one. An expectation nobody has written down cannot be relied on by
+      the person it exists to protect.
+    normative: true
+    derived: false
+    attrs:
+      priority: should

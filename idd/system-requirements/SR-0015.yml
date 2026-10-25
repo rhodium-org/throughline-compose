@@ -41,7 +41,31 @@ attrs:
   origin: hybrid
   priority: should
   verification: test
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:06e0a4f93bd43396fcf94d60df371c2e987b9586d4d64e5ed6d509f7e3fdaeda
-  ratified_backfilled: true
-  ratified_revision: 6eb464df436149d745e2fe217681ab9ed83bf0e3
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:06e0a4f93bd43396fcf94d60df371c2e987b9586d4d64e5ed6d509f7e3fdaeda
+  backfilled: true
+  revision: 6eb464df436149d745e2fe217681ab9ed83bf0e3
+  content:
+    type: system_requirement
+    text: 'When resolving sources tl-compose shall detect the case where one namespace
+      name is bound to two different editions — for example `asvs` reaching the union
+      at ref `v4.0.3` through one source and at `v5.0.0` through another, whether
+      by direct declaration, by transitive composition (SR-0045), or by any mix —
+      and shall fail fast rather than merge the two graphs or pick an edition on
+      the consumer''s behalf. The failure shall not merely state that a conflict
+      exists. It shall advise the why: it shall name the namespace, name each conflicting
+      edition by its ref, and name where each binding came from — the consumer''s
+      own declaration, or the chain of declared sources that carried it into the
+      union — so the composer can see the two paths that collided without reading
+      the graph. It shall advise the fix, stating the two remedies the model actually
+      supports: pin the namespace explicitly in the consumer''s own configuration
+      to the single edition intended, so that one binding governs every reference
+      to it; or, when both editions are genuinely required, set an `alias` on the
+      declared source carrying one of them so they compose side by side as the two
+      separate sources they are. The message shall not offer a remedy the model cannot
+      honour — it shall never imply the two editions can be merged into one.'
+    normative: true
+    derived: false
+    attrs:
+      priority: should

@@ -17,7 +17,22 @@ links:
   type: derives_from
 attrs:
   origin: hybrid
-  ratified_by: henry
-  ratified_fingerprint: sha256:f1774d580898012f0e67142062419658d3c3cd9c1ae710e337c730aee6b9d542
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: henry
+  fingerprint: sha256:f1774d580898012f0e67142062419658d3c3cd9c1ae710e337c730aee6b9d542
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: business_need
+    text: The composed graph earns its keep only if it connects to where work actually
+      happens and where knowledge is written down — issue trackers, project- and
+      work-management tools, and wikis such as Jira, Confluence, Linear, and Monday.
+      A team must be able to reference an item that lives in one of those systems
+      as a first-class source in the union — pinned to an edition, drift-aware, and
+      identity-stable — so that traceability spans tool boundaries without those
+      systems having to become throughlines themselves or fork the graph. Without
+      this the requirements graph is an island; the delivery and documentation that
+      justify and satisfy the requirements stay disconnected from them.
+    normative: false
+    derived: false
+    attrs: {}

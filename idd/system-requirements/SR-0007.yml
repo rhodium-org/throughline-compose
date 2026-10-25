@@ -33,7 +33,26 @@ attrs:
   origin: hybrid
   priority: should
   verification: test
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:22673db7ea276d7aa6b5f0c393be171754ec3ac391858b0ba5e301595aef7c33
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:22673db7ea276d7aa6b5f0c393be171754ec3ac391858b0ba5e301595aef7c33
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: system_requirement
+    text: When tl-compose docs runs over a project that declares sources, it shall
+      inject the consumer's documents over the local consumer graph — so counts,
+      tables and matrix rows are byte-identical to core tl docs — while resolving
+      each tl:matrix target cell through a resolver backed by the composed union.
+      A relationship cell whose target is a namespace-qualified reference to a borrowed
+      clause shall then render that clause's own attribute (for example its source_ref)
+      via the SR-0110 target-display suffix, instead of a namespace-qualified UID
+      the reader cannot look up. Target liveness and attribute lookup for a borrowed
+      target shall read the loaded source for that namespace; an unqualified local
+      target shall fall through to the consumer graph, so behaviour over local links
+      is identical to core tl docs. When the project declares no sources, tl-compose
+      docs shall be a pure pass-through to core tl docs.
+    normative: true
+    derived: false
+    attrs:
+      priority: should

@@ -24,5 +24,17 @@ links:
 attrs:
   origin: ai
   priority: should
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:a049c33e468cb8abd28e094c9547ff782d8de3cde4c2b3050480802a5edcb93e
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:a049c33e468cb8abd28e094c9547ff782d8de3cde4c2b3050480802a5edcb93e
+  content:
+    type: system_requirement
+    text: The release workflow shall pin each action it uses to a version whose declared
+      runtime GitHub still supports, and an action whose runtime is deprecated shall
+      be moved to a current major, so that a release never depends on the runner's
+      temporary forward-compatibility shim.
+    normative: true
+    derived: false
+    attrs:
+      priority: should
+  revision: 2fe89f10ec3575b0ced8bae41927ca55664a3fe6

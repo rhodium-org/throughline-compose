@@ -1,6 +1,6 @@
 [project]
 name = "throughline-compose"
-format_version = 3
+format_version = 4
 
 # throughline-compose's own IDD, self-hosted. Roots are the vision (intent) and
 # the business needs; every user and system requirement must ground upward to one

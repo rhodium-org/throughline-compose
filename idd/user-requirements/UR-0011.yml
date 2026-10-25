@@ -14,6 +14,17 @@ attrs:
   priority: should
   verification: inspection
   origin: ai
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:7bd65853844f9ee2a77e8d2ab5c8cfbde7aca573e4106cba38023b299dabed10
-  ratified_revision: bdc984e18495c2ffc82e0e2f97db426bb79cd1dd
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:7bd65853844f9ee2a77e8d2ab5c8cfbde7aca573e4106cba38023b299dabed10
+  revision: bdc984e18495c2ffc82e0e2f97db426bb79cd1dd
+  content:
+    type: user_requirement
+    text: A person who believes they have found a security defect shall find a stated
+      private route for reporting it, and shall know what response to expect. The
+      public issue tracker shall not be the only channel, so reporting a defect responsibly
+      never requires publishing it first.
+    normative: true
+    derived: false
+    attrs:
+      priority: should

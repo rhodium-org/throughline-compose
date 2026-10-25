@@ -19,7 +19,24 @@ links:
   type: relates
 attrs:
   origin: hybrid
-  ratified_by: henry
-  ratified_fingerprint: sha256:f3eaf458b9bc323a0ce84fc621e9367b2b5094c5c96d2dc256a2e6b00bf953cd
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: henry
+  fingerprint: sha256:f3eaf458b9bc323a0ce84fc621e9367b2b5094c5c96d2dc256a2e6b00bf953cd
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: non_goal
+    text: 'tl-compose resolves and reads external authorities to build and check
+      the union; it does not write to them. Creating, updating, or deleting a link
+      record inside an issue tracker, PM tool, or wiki — for example storing "this
+      ticket implements UR-0005" as a property on the ticket — belongs to the connector
+      deployables built on top of tl-compose, not to composition. The check and union
+      pipeline stays read-only over its sources, preserving the guarantee that a
+      composition can be validated anywhere, with no side effects and without credentials
+      to mutate a third-party system. This is recorded negative space that extends
+      NG-0001''s spirit: the network-write, authentication-to-mutate, and bidirectional-sync
+      concerns live in the connectors, so a proposal to "just have tl-compose update
+      Jira" is measured against a decision already taken.'
+    normative: false
+    derived: false
+    attrs: {}

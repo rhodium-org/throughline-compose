@@ -17,7 +17,22 @@ attrs:
   origin: human
   priority: must
   verification: demonstration
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:9fd43fa2aef06d845f7d74ac4373983fcecab8955343c0db6988366c8a2bbe06
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:9fd43fa2aef06d845f7d74ac4373983fcecab8955343c0db6988366c8a2bbe06
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: user_requirement
+    text: The consumer shall be able to name each source by where it lives — a git
+      URL it can be fetched from — and pin the exact edition it depends on by a git
+      ref, normally a tag. Composition against a pinned source shall be reproducible
+      run to run and machine to machine, and adopting an upstream revision shall
+      be a matter of moving the pin, never of editing the borrowed graph. A local
+      filesystem path shall remain valid for developing a source and its consumer
+      side by side, but the durable, shareable form of a dependency is an origin
+      plus a pinned ref.
+    normative: true
+    derived: false
+    attrs:
+      priority: must

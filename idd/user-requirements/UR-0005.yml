@@ -44,7 +44,31 @@ attrs:
   origin: hybrid
   priority: should
   verification: demonstration
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:5c08adf752f817df1d4d00cd4a98312da9a1af66d25a8c810719b5740fa7a936
-  ratified_backfilled: true
-  ratified_revision: 6eb464df436149d745e2fe217681ab9ed83bf0e3
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:5c08adf752f817df1d4d00cd4a98312da9a1af66d25a8c810719b5740fa7a936
+  backfilled: true
+  revision: 6eb464df436149d745e2fe217681ab9ed83bf0e3
+  content:
+    type: user_requirement
+    text: 'When a source a consumer composes itself references a further source —
+      a source of its sources — that transitive source shall reach the consumer''s
+      union without the consumer re-authoring its origin and pin by hand: composing
+      a source shall compose what that source composes, to any depth, each at the
+      edition the source that declared it pinned, so an edition is never restated
+      and cannot silently diverge from what the declaring source was authored against.
+      The consumer shall remain in control of the label: a transitive namespace arrives
+      under the name its declaring source gave it, and the consumer may bind it to
+      an alias of their own choosing on the source they declare, exactly as UR-0001
+      lets the consumer name a direct source. Two editions of the same underlying
+      standard shall be composable side by side by aliasing them to distinct namespaces
+      — they are two sources, not one merged one. What the consumer shall never get
+      is a silent merge, a silent edition-pick, or a silent capture: a label that
+      reaches the union at two different editions with no alias to tell them apart
+      is an error the composer is told about and must resolve, and a reference a
+      source wrote against its own label never resolves to a different source that
+      merely shares the name.'
+    normative: true
+    derived: false
+    attrs:
+      priority: should

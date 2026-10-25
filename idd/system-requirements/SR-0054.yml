@@ -28,9 +28,10 @@ links:
   type: refines
 attrs:
   origin: ai
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:e5b06453707fd2f48c1f29d939e3e7923feaaac9504482157c8effb6f81d970e
-  ratified_content:
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:e5b06453707fd2f48c1f29d939e3e7923feaaac9504482157c8effb6f81d970e
+  content:
     type: system_requirement
     text: Importing throughline_compose shall raise a DeprecationWarning that names
       throughline as the package to import from. The package metadata shall mark
@@ -43,3 +44,4 @@ attrs:
     derived: false
     attrs:
       priority: ''
+  revision: 1c0b35b10730a86d929956f74a2a7b3c1927045c

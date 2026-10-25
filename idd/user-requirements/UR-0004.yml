@@ -20,7 +20,24 @@ attrs:
   origin: hybrid
   priority: must
   verification: demonstration
-  ratified_by: henry
-  ratified_fingerprint: sha256:297a9f356072d7fb832283776687dd791b2cbcbddd132d0950a728e6d944a94d
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: henry
+  fingerprint: sha256:297a9f356072d7fb832283776687dd791b2cbcbddd132d0950a728e6d944a94d
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: user_requirement
+    text: 'The consumer shall be able to name a source that is not a git repository
+      of throughline items but an external authority — an issue tracker, a work-
+      or project-management tool, a wiki — and have tl-compose bring items from it
+      into the union through a resolver dedicated to that authority. Whichever authority
+      it is, the source shall carry the same guarantees a git source carries: a stable
+      identity for each borrowed item, an explicit pin to the edition depended on,
+      resolution that is reproducible run to run and machine to machine, and drift
+      detection when an upstream item changes. The set of supported authorities shall
+      be open — adding one shall be a matter of providing a new resolver, not of
+      changing the composition engine, the validator, or the core.'
+    normative: true
+    derived: false
+    attrs:
+      priority: must
