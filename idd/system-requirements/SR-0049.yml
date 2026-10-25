@@ -23,5 +23,17 @@ links:
 attrs:
   origin: ai
   priority: must
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:4e7477389476d2968652b2e55d79a90737e85d311d74d2a72e0c8eb1b7170c70
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:4e7477389476d2968652b2e55d79a90737e85d311d74d2a72e0c8eb1b7170c70
+  content:
+    type: system_requirement
+    text: tl-compose link and tl-compose unlink shall add, restamp, retype and remove
+      a link through the operations throughline offers (throughline SR-0212), handing
+      them the union's grounding index and how a namespace-qualified target is found
+      in it. They shall keep only the resolution of a target over the union.
+    normative: true
+    derived: false
+    attrs:
+      priority: must
+  revision: 657ebaaa070c6ef7bfac422602e5bd53c9da6c37

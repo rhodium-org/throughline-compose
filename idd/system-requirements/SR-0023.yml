@@ -25,7 +25,20 @@ attrs:
   priority: should
   verification: inspection
   origin: ai
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:611ae094c921333dee2f6ec425bbd7c21482fe911352486bcaf7080290c47c78
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:611ae094c921333dee2f6ec425bbd7c21482fe911352486bcaf7080290c47c78
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: system_requirement
+    text: The composition CLI shall install two equivalent console entry points —
+      the short `tl-compose` and the full `throughline-compose` — both invoking the
+      same program, so a composer can call it by either name. This mirrors core throughline,
+      which installs both `tl` and `throughline`, and throughline-ratify, which installs
+      both `tl-ratify` and `throughline-ratify`; the composition layer shall not
+      be the one package in the family that answers to only its short name.
+    normative: true
+    derived: false
+    attrs:
+      priority: should

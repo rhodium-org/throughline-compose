@@ -26,5 +26,19 @@ links:
 attrs:
   origin: ai
   priority: must
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:03ff437b9ab66325085892679dd82ca86d5eefd03a1daa37f327e8ed281ae435
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:03ff437b9ab66325085892679dd82ca86d5eefd03a1daa37f327e8ed281ae435
+  content:
+    type: system_requirement
+    text: 'When `tl-compose new` creates an item itself, because a grounding target
+      names a borrowed clause, it shall create the item through the birth function
+      core offers (throughline SR-0205) and add only the cross-source grounding,
+      so the item is born exactly as `tl new` would bear it: the proposed status
+      for a machine origin, the author''s attributes, the schema''s defaults, and
+      the normative flag its type declares. This needs throughline 3.5.1.'
+    normative: true
+    derived: false
+    attrs:
+      priority: must
+  revision: 457c7d5734273e28c8e7042aa49393a4d69aac8d

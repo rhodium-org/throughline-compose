@@ -40,9 +40,6 @@ attrs:
   origin: hybrid
   priority: should
   verification: test
-  ratified_by: henry
-  ratified_fingerprint: sha256:677499365ec4018a7bc45582c78bf93c3ebf973513073597c97e79d9d1aaf471
-  ratified_backfilled: true
   invalidated_reason: Superseded by SR-0045. Pin inheritance is kept whole there;
     the per-namespace opt-in gate is withdrawn. In use it could not reach past one
     hop (a consumer could neither re-export what an intermediate had itself received
@@ -52,4 +49,31 @@ attrs:
     the wrong graph), and it gated no working configuration, since a source whose
     items cite a namespace cannot compose without it. The `reexport` key is now refused
     at read time; `alias` on a declared source is what remains.
-  ratified_revision: 6eb464df436149d745e2fe217681ab9ed83bf0e3
+ratifications:
+- by: henry
+  fingerprint: sha256:677499365ec4018a7bc45582c78bf93c3ebf973513073597c97e79d9d1aaf471
+  backfilled: true
+  revision: 6eb464df436149d745e2fe217681ab9ed83bf0e3
+  content:
+    type: system_requirement
+    text: 'A source entry in the consumer''s configuration shall accept a declaration
+      that one or more of that source''s own declared namespaces are re-exported
+      into the consuming union. For each re-exported namespace tl-compose shall resolve
+      the transitive source using the origin and ref the intermediate source itself
+      declared for it — the pin is inherited, never restated by the consumer — and
+      fold its items into the union under the same identity and mangling rules a
+      directly declared source receives. A re-export shall be able to carry an alias:
+      the consumer may bind the re-exported source to a namespace name of its own
+      choosing, and thereafter every reference the consumer writes, and every reference
+      the intermediate source wrote against the original name, shall resolve to that
+      one bound source. Re-export shall stay opt-in and per-namespace — tl-compose
+      shall not automatically hoist a source''s sources into the consumer, so the
+      composer''s declared surface remains the complete and only statement of what
+      the union contains (UR-0001, NG-0001 keep resolution the consumer''s decision,
+      not the tool''s). A namespace the consumer both declares directly and receives
+      by re-export, bound to the same edition, shall resolve to a single source;
+      bound to different editions it is the collision SR-0015 governs.'
+    normative: true
+    derived: false
+    attrs:
+      priority: should

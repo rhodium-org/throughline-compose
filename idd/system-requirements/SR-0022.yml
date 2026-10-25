@@ -21,7 +21,24 @@ attrs:
   origin: hybrid
   priority: must
   verification: test
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:dcbce647b60320974d164a8dd3198d8e8bde48ae1f88599b7c51bee482a01916
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:dcbce647b60320974d164a8dd3198d8e8bde48ae1f88599b7c51bee482a01916
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: system_requirement
+    text: After validating the union, tl-compose check shall print the same human-readable
+      graph summary that core tl check prints — items by type, status breakdown,
+      link breakdown and grounding coverage — computed over the composed union, so
+      a composer gets the same picture of what was validated whether or not the project
+      has sources. The summary shall additionally distinguish the consumer's own
+      items from items borrowed through a source, reporting both the union totals
+      and the local subset, so the composer can read their own graph at a glance
+      without the borrowed clauses drowning it. The summary is suppressed by the
+      existing quiet flag exactly as in core, and the machine-readable json output
+      is unaffected.
+    normative: true
+    derived: false
+    attrs:
+      priority: must

@@ -44,6 +44,29 @@ attrs:
   priority: must
   verification: test
   origin: ai
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:e25f34d763881276abe638c7f7fe450c0a80dcd3c0a02a1f9c873baf8ff29f75
-  ratified_revision: 24d2bbe83e9b3d53bfbeca2a479608e18ce9198c
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:e25f34d763881276abe638c7f7fe450c0a80dcd3c0a02a1f9c873baf8ff29f75
+  revision: 24d2bbe83e9b3d53bfbeca2a479608e18ce9198c
+  content:
+    type: system_requirement
+    text: |-
+      tl-compose caches each remote source by URL and ref. Before reusing a cached
+      source it shall confirm the ref still points at the cached commit.
+
+      A commit id never moves. It shall be reused with no network call.
+
+      A tag or branch can be moved by the origin. tl-compose shall look the ref up on
+      the origin. Same commit: reuse the cache. Different commit: fetch again. A lookup
+      needs no clone, so an unmoved ref costs one network call and no download.
+
+      An annotated tag shall resolve to the commit it points at, not the tag object's
+      own id. A ref matching more than one thing shall be an error.
+
+      Re-checking shall be on by default. A cache-only mode shall be available for
+      offline use. Otherwise, if the origin cannot be reached, tl-compose shall fail and
+      name that mode.
+    normative: true
+    derived: false
+    attrs:
+      priority: must

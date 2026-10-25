@@ -14,5 +14,18 @@ links:
   type: derives_from
 attrs:
   origin: ai
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:e5107e02adad91950a4f57d4959fc3b41acaeaaf60c9db6cac0d09e1ef074387
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:e5107e02adad91950a4f57d4959fc3b41acaeaaf60c9db6cac0d09e1ef074387
+  content:
+    type: business_need
+    text: As an open-source project, throughline-compose should let an outside contributor
+      understand how to contribute, how to report a vulnerability privately, and
+      what conduct is expected, and should have each contribution arrive carrying
+      an explicit, recorded grant of the rights under which it is offered — so that
+      a contribution can be accepted without a later, unanswerable question about
+      the terms on which it was given.
+    normative: false
+    derived: false
+    attrs: {}
+  revision: 457c7d5734273e28c8e7042aa49393a4d69aac8d

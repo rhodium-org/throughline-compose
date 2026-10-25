@@ -14,7 +14,18 @@ attrs:
   priority: must
   verification: demonstration
   origin: hybrid
-  ratified_by: henry
-  ratified_fingerprint: sha256:46bf392ab41e3f9b0e253047ed1feeff4906285157e6015957d16330eb76ab5e
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: henry
+  fingerprint: sha256:46bf392ab41e3f9b0e253047ed1feeff4906285157e6015957d16330eb76ab5e
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: user_requirement
+    text: The composer shall be able to compose an external source whose on-disk
+      format major is older than the composer's own tooling, without a hard failure,
+      provided the source is only read. Consuming a source shall never force that
+      source to be migrated first.
+    normative: true
+    derived: false
+    attrs:
+      priority: must

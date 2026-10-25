@@ -29,7 +29,24 @@ attrs:
   origin: human
   priority: must
   verification: test
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:f0c0b60e3d61ae9af1439b398941c5501f6829a7b4d2c90d9f18d1b566d77138
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:f0c0b60e3d61ae9af1439b398941c5501f6829a7b4d2c90d9f18d1b566d77138
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: system_requirement
+    text: throughline-compose shall depend on `throughline` as a pinned library and
+      build the composed graph by merging the sources' items and links into one in-memory
+      `Project`, then run throughline's existing `validate`, `Index`, and `fingerprint`
+      over that union without modification. Composition shall add no second validation
+      engine, no forked copy of the graph model, and no divergent notion of soundness
+      — the rules that hold for a standalone throughline are, by construction, the
+      rules that hold for the composed one. Where composition must extend behaviour
+      (resolving a namespace qualifier to a source's item before validation runs)
+      it shall do so by preparing the union that the unchanged core then checks,
+      not by reimplementing the check.
+    normative: true
+    derived: false
+    attrs:
+      priority: must

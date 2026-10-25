@@ -33,6 +33,22 @@ attrs:
   origin: ai
   priority: must
   verification: test
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:6b04ba61685bb52722c9e3cb2e04a2faf486401dd8fea1962f961a5218222273
-  ratified_revision: 5aac26f9f3d61bf4f86be2f267e25798576e3b24
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:6b04ba61685bb52722c9e3cb2e04a2faf486401dd8fea1962f961a5218222273
+  revision: 5aac26f9f3d61bf4f86be2f267e25798576e3b24
+  content:
+    type: system_requirement
+    text: When the agent brief is asked about a specific UID over a project that
+      declares sources, the item section it appends shall be computed over the composed
+      union and reported in <namespace>:<UID> vocabulary, under the same source boundary
+      the neighbourhood command applies (SR-0041). The core brief above that section
+      shall remain the unchanged core output, and the composition sections below
+      it shall be unaffected. A UID that does not exist in the union shall fail with
+      the same diagnostic the other UID-taking union commands give, before any brief
+      is emitted. When the project declares no sources the command shall remain a
+      pure pass-through to the core tool (SR-0003).
+    normative: true
+    derived: false
+    attrs:
+      priority: must

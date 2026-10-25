@@ -48,6 +48,26 @@ links:
   type: relates
 attrs:
   origin: ai
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:4b349448c2e0321b4f4dd76c4cd4061ec38ce1e200c41d653f78db622973a82a
-  ratified_revision: bdb6a83c1d929017bb1dc184e5c7be46b0f1523e
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:4b349448c2e0321b4f4dd76c4cd4061ec38ce1e200c41d653f78db622973a82a
+  revision: bdb6a83c1d929017bb1dc184e5c7be46b0f1523e
+  content:
+    type: system_requirement
+    text: throughline-compose shall report against a borrowed item only what the
+      consumer can act on. A finding whose sole remedy lies in the graph that owns
+      the item — its statuses and transitions, its attributes, its link vocabulary
+      and endpoint rules, whether it grounds, whether it awaits ratification — shall
+      not be raised in a consumer. The consumer's own items shall be judged under
+      the consumer's own model in full, and its seam judged strictly, so that a reference
+      into a source resolves to an item present and not deleted, a stamp recorded
+      on a borrowed target still matches it, and a grounding chain that leaves the
+      consumer and enters a source counts as grounded. Adopting a source, or moving
+      its pin, shall therefore cost the `[[sources]]` block and nothing else, with
+      no restatement of the source's model anywhere in the consumer's configuration.
+      This shall be composition's own work over throughline's unchanged validator
+      and grounding operations (SR-0004, NG-0001).
+    normative: true
+    derived: false
+    attrs:
+      priority: ''

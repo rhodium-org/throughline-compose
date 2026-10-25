@@ -41,6 +41,21 @@ attrs:
   origin: ai
   priority: should
   verification: test
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:5dd4ce5d3c32d92cbfede13be1c803bfa4fc769a64ee0bd992bd584de8a9c5d5
-  ratified_revision: 5a588850f932e1dfa29374448f0947a509b85bea
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:5dd4ce5d3c32d92cbfede13be1c803bfa4fc769a64ee0bd992bd584de8a9c5d5
+  revision: 5a588850f932e1dfa29374448f0947a509b85bea
+  content:
+    type: system_requirement
+    text: The version the package exports shall be read from the installed distribution's
+      metadata rather than restated in source, so the version a caller imports cannot
+      disagree with the version that was released. Where the running code is not
+      that release — a source tree with no distribution installed, or an installation
+      that resolves back to a working tree — it shall report a value that cannot
+      be mistaken for a published edition, rather than silently naming the one it
+      has departed from. Because the composed toolchain reports the versions it is
+      driving alongside its own, each of those shall be reported under the same rule.
+    normative: true
+    derived: false
+    attrs:
+      priority: should

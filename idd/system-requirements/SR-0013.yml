@@ -19,7 +19,23 @@ attrs:
   origin: hybrid
   priority: must
   verification: demonstration
-  ratified_by: henry
-  ratified_fingerprint: sha256:54677b73ee7ac14561f75994516ae7d4dde0042749d5e8e590ac8b2df7ea5ac2
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: henry
+  fingerprint: sha256:54677b73ee7ac14561f75994516ae7d4dde0042749d5e8e590ac8b2df7ea5ac2
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: system_requirement
+    text: Unlike a borrowed standard, whose clauses the consumer grounds up to, an
+      external work item typically points down to the consumer — a delivery ticket
+      satisfies or implements a requirement the consumer owns. A resolver shall therefore
+      be able to project source items whose links target items in the consumer graph,
+      and the union shall admit such inbound edges and validate them under the consumer's
+      own link rules exactly as it does links authored locally. The direction of
+      a link shall be a property of the composed graph, not a constraint imposed
+      by which side a source sits on; an authority's items are first-class nodes
+      in the union whether they are referenced by, or reference, the consumer's items.
+    normative: true
+    derived: false
+    attrs:
+      priority: must

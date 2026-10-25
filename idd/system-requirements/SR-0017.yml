@@ -14,7 +14,18 @@ attrs:
   priority: must
   verification: test
   origin: hybrid
-  ratified_by: henry
-  ratified_fingerprint: sha256:fc6db7f1c8ece90abc97efc32446d1a104421a2459da84337539200fb36ec498
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: henry
+  fingerprint: sha256:fc6db7f1c8ece90abc97efc32446d1a104421a2459da84337539200fb36ec498
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: system_requirement
+    text: When resolving an external source, tl-compose shall load it through a read-only
+      path that accepts any on-disk format major the tooling is able to read, rather
+      than requiring an exact-major match. The strict single-major migrate gate applies
+      only to a project being written or edited, never to a read-only composed source.
+    normative: true
+    derived: false
+    attrs:
+      priority: must

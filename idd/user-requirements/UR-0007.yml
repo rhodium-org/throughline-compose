@@ -15,7 +15,19 @@ attrs:
   origin: hybrid
   priority: should
   verification: test
-  ratified_by: henry
-  ratified_fingerprint: sha256:778f7839c12d8ffdb56a311b1a4c0443a3feed08da449072733ed2ce15495a97
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: henry
+  fingerprint: sha256:778f7839c12d8ffdb56a311b1a4c0443a3feed08da449072733ed2ce15495a97
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: user_requirement
+    text: A person who installs throughline-compose from its published package shall
+      be able to run the shipped test suite and have it pass, so the package they
+      adopt visibly upholds the tool's own soundness bar rather than presenting failures
+      the moment it is vetted. The published artifact must not ship a test suite
+      it cannot itself run green.
+    normative: true
+    derived: false
+    attrs:
+      priority: should

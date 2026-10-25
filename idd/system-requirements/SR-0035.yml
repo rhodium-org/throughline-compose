@@ -30,6 +30,22 @@ attrs:
   priority: should
   verification: test
   origin: ai
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:96abb1e21442c355cbb31b619ffbfa19e562823fc4e46de7a8d866853552a3e1
-  ratified_revision: 0ad070bf36b4ddb192c11c42f664c3776f212810
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:96abb1e21442c355cbb31b619ffbfa19e562823fc4e46de7a8d866853552a3e1
+  revision: 0ad070bf36b4ddb192c11c42f664c3776f212810
+  content:
+    type: system_requirement
+    text: throughline-compose shall let a consuming project name, in its own configuration,
+      rules that are also reported on borrowed items in addition to the built-in
+      seam set. A rule so named shall be judged on a borrowed item exactly as it
+      is on a local one, and reported in the consumer's own vocabulary. The declaration
+      shall be additive only — the built-in seam rules cannot be switched off, because
+      they are what keeps the assembled union coherent. A project that names nothing
+      shall behave exactly as it does today. A name that matches no rule the validator
+      can emit shall be refused when the configuration is read, rather than accepted
+      and silently never fired.
+    normative: true
+    derived: false
+    attrs:
+      priority: should

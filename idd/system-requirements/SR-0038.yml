@@ -29,6 +29,21 @@ attrs:
   priority: must
   verification: test
   origin: ai
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:71cb8a59293be1c00da94a9167550c7e1a9a4ddc8ae4ed4d7ccc98c60ece214a
-  ratified_revision: 0a114d604d668a4d51108aa906c7ec0bffd69528
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:71cb8a59293be1c00da94a9167550c7e1a9a4ddc8ae4ed4d7ccc98c60ece214a
+  revision: 0a114d604d668a4d51108aa906c7ec0bffd69528
+  content:
+    type: system_requirement
+    text: 'tl-compose check shall judge the composed graph''s publication coverage
+      exactly as a standalone throughline check judges a local graph''s: when the
+      consumer configures published documents, every live normative item it owns
+      shall be required to appear in one of them, and a consumer that configures
+      none shall be unaffected. A finding of this kind against a borrowed item shall
+      stay suppressed at the seam, its remedy lying with the graph that owns it.
+      No path shall leave the rule unfired while the configuration that turns it
+      on is present.'
+    normative: true
+    derived: false
+    attrs:
+      priority: must

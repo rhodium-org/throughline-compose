@@ -38,7 +38,29 @@ attrs:
   origin: hybrid
   priority: should
   verification: test
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:e00b41d3eb0890e0b4bcdb624c89fa51b8d0c8aca90c5cbe026941bcc47bcad7
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:e00b41d3eb0890e0b4bcdb624c89fa51b8d0c8aca90c5cbe026941bcc47bcad7
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: system_requirement
+    text: When tl-compose trace runs over a project that declares sources, it shall
+      walk the composed union graph rather than the bare local graph, so a link whose
+      target is a namespace-qualified borrowed clause (for example gds:SR-0019) is
+      followed into that clause and displayed in the composer's namespace vocabulary
+      — with the borrowed clause's own type, status and title, and its own outgoing
+      grounding chain — instead of dead-ending at the (unresolved) leaf bare tl trace
+      prints for anything outside the local graph. The composer shall be able to
+      trace from either a local UID or a namespace-qualified one as the starting
+      item. A genuinely dangling cross-source reference — a namespace-qualified target
+      with no matching clause at the pinned edition — shall still be reported as
+      unresolved, in that same qualified vocabulary, so the distinction between "resolved
+      into a source" and "points nowhere" is preserved. The walk shall reuse throughline's
+      own graph Index over the union (SR-0004) rather than reimplement traversal,
+      and when the project declares no sources trace shall be a pure pass-through
+      to core tl trace (SR-0003).
+    normative: true
+    derived: false
+    attrs:
+      priority: should

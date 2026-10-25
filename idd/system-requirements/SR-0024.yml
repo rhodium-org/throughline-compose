@@ -33,6 +33,21 @@ attrs:
   origin: ai
   priority: must
   verification: test
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:5b30de800ade29dad5d153e18aa7d6ec717ceaa6d7a8ce5a44882560e46cc743
-  ratified_revision: c65a6a014160f8622e2e01b72f31098b28ddc4c7
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:5b30de800ade29dad5d153e18aa7d6ec717ceaa6d7a8ce5a44882560e46cc743
+  revision: c65a6a014160f8622e2e01b72f31098b28ddc4c7
+  content:
+    type: system_requirement
+    text: Composition shall declare each borrowed item's source-native identity alongside
+      the synthetic one it merges under, so the fingerprint the combined graph computes
+      for that item is the fingerprint it has in the source it came from. The synthetic
+      prefix is an internal device for keeping identity unique within one merged
+      graph; it shall not be observable in anything the combined graph asserts about
+      a borrowed item. A ratification recorded in a source shall therefore read as
+      current in every consumer of that source, and drift shall be reported only
+      where the source's own content has moved.
+    normative: true
+    derived: false
+    attrs:
+      priority: must

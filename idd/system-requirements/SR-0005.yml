@@ -34,7 +34,27 @@ attrs:
   origin: human
   priority: must
   verification: test
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:d27afad348b2ba169790426f34ba0feec33f4fba41a72d7fa034d454ff3c587c
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:d27afad348b2ba169790426f34ba0feec33f4fba41a72d7fa034d454ff3c587c
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: system_requirement
+    text: A namespace-qualified reference (for example `gds:SR-0001`) asserts that
+      its target resolves inside a declared source namespace. The core `tl` does
+      no composition and cannot resolve such a reference, so when `tl check` encounters
+      one it shall fail fast with a message that points the user to `tl-compose`,
+      rather than treat it as an opaque external and report a clean graph. Core shall
+      reach this verdict from the reference's syntax alone — it shall not read the
+      consumer's source configuration and shall remain entirely source-unaware. This
+      rule is scoped to the namespace-qualified form only — a free external target
+      such as a URL or a deliberately out-of-graph pointer (a linked standard, an
+      issue tracker) shall stay opaque and shall not fail the check, because being
+      unresolvable is that form's intended purpose. The resolving `tl-compose check`
+      shall then do the real work — bind the namespace to its pinned source, confirm
+      the target exists, and confirm the link is type-legal over the union.
+    normative: true
+    derived: false
+    attrs:
+      priority: must

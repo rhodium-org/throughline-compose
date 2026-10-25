@@ -19,7 +19,24 @@ links:
   type: relates
 attrs:
   origin: hybrid
-  ratified_by: henry
-  ratified_fingerprint: sha256:22faac205368ef4e5a0ca54b1012658f14068948db1b5bdbcbb4fbbc12bbae1f
-  ratified_backfilled: true
-  ratified_revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+ratifications:
+- by: henry
+  fingerprint: sha256:22faac205368ef4e5a0ca54b1012658f14068948db1b5bdbcbb4fbbc12bbae1f
+  backfilled: true
+  revision: a5d12a82fa81b6fba16cf3286e98525f6240d621
+  content:
+    type: intent
+    text: 'A project''s combined graph is not limited to sources that are themselves
+      throughlines. It also reaches into the live systems where a team''s work and
+      knowledge already exist — issue trackers, work- and project-management tools,
+      and wikis — and treats a referenced item in one of them as just another source
+      in the union: pinned to an edition, identity-stable, and drift-aware. Such
+      a source is read, never written, and is projected into the same shape a native
+      throughline has, so the combined graph spans the boundary between the requirements
+      a team authors and the systems in which those requirements are delivered and
+      documented — without either side forking or re-authoring the other. This is
+      the companion to INT-0001: the same composition, widened to any authority that
+      can be presented in throughline shape.'
+    normative: false
+    derived: false
+    attrs: {}

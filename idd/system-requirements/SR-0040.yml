@@ -61,6 +61,25 @@ attrs:
   priority: must
   verification: test
   origin: ai
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:de24564143c16fda57db18c3d2e915395a75653350251aee688ac1d6ca1bf9f4
-  ratified_revision: 5aac26f9f3d61bf4f86be2f267e25798576e3b24
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:de24564143c16fda57db18c3d2e915395a75653350251aee688ac1d6ca1bf9f4
+  revision: 5aac26f9f3d61bf4f86be2f267e25798576e3b24
+  content:
+    type: system_requirement
+    text: Where throughline-compose exports a composed project as data for another
+      tool to read, the export shall be taken over the composed union rather than
+      over the consumer's own graph alone, so that every reference the export carries
+      resolves inside it. A borrowed item shall appear under the same `<namespace>:<UID>`
+      vocabulary in which findings are reported, and shall carry its owning source
+      as data rather than leaving a reader to infer it from a qualifier. The export
+      shall state the scope it answered over — which sources were composed and at
+      which pinned edition, and how many of the items it carries are the consumer's
+      own — and shall identify the tooling that produced it, the composition layer
+      included. The composer shall be able to restrict an export to their own items,
+      and an export so restricted shall record that restriction in its own data,
+      so that a partial export is never indistinguishable from a whole one.
+    normative: true
+    derived: false
+    attrs:
+      priority: must

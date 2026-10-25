@@ -49,6 +49,22 @@ attrs:
   origin: ai
   priority: must
   verification: test
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:278f7d19d30348513587566194512db92b4ee0895b1fba1e19ca244e6d11bb13
-  ratified_revision: 26efbcd5222553e69484a5172913198dff1abd69
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:278f7d19d30348513587566194512db92b4ee0895b1fba1e19ca244e6d11bb13
+  revision: 26efbcd5222553e69484a5172913198dff1abd69
+  content:
+    type: system_requirement
+    text: Where throughline-compose reports how far the graph is grounded, that figure
+      shall count only items whose grounding the consumer is able to act on. An item
+      borrowed through a source shall not be counted as failing to reach a root,
+      because the consumer cannot link it and the remedy lies in the graph that owns
+      it. The union totals shall remain, so a composer still sees the size of what
+      was validated, but no figure shall report a shortfall against which its reader
+      has no available act. Where a figure is narrowed in this way it shall say what
+      it counts, so the reader is never left to infer the scope of a number from
+      its size.
+    normative: true
+    derived: false
+    attrs:
+      priority: must

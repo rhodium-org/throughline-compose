@@ -34,9 +34,10 @@ links:
 attrs:
   priority: must
   origin: ai
-  ratified_by: Henry Grech-Cini
-  ratified_fingerprint: sha256:2222b35efaaed4203261cd8ef742b830fa21cdb72385d4d4c9510df1537e6c9a
-  ratified_content:
+ratifications:
+- by: Henry Grech-Cini
+  fingerprint: sha256:2222b35efaaed4203261cd8ef742b830fa21cdb72385d4d4c9510df1537e6c9a
+  content:
     type: system_requirement
     text: 'From this release throughline-compose shall install no command of its
       own: tl-compose and throughline-compose are names the Tool installs, and they
@@ -50,3 +51,4 @@ attrs:
     derived: false
     attrs:
       priority: must
+  revision: 5fbd434cd0c8f50ecd8866154437bcca82b63ee9
