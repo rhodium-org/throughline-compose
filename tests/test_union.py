@@ -22,7 +22,7 @@ _SCHEMA = {
     "project": {"name": "c", "format_version": 2},
     "grounding": {"root_types": ["intent"], "delivery_roots": ["intent"],
                   "ground_link_types": ["derives_from", "implements"]},
-    "status": {"values": ["approved"]},
+    "status": {"values": ["proposed"]},
     "links": {"types": ["derives_from", "implements", "relates"]},
 }
 
@@ -39,8 +39,8 @@ def _project(config: dict, regs: dict[str, list[Item]]) -> Project:
 
 
 def _source() -> Project:
-    intent = Item(uid="INT-0001", type="intent", status="approved", normative=False)
-    sr = Item(uid="SR-0001", type="system_requirement", status="approved",
+    intent = Item(uid="INT-0001", type="intent", status="proposed", normative=False)
+    sr = Item(uid="SR-0001", type="system_requirement", status="proposed",
               links=[Link(target="INT-0001", type="derives_from")])
     return _project({"project": {"name": "toy", "format_version": 2}},
                     {"INT": [intent], "SR": [sr]})
@@ -134,7 +134,7 @@ def test_escaping_subdir_rejected():  # SR-0008
 
 def test_qualified_reference_rewritten_and_resolves():
     consumer = _project(_SCHEMA, {"SR": [Item(
-        uid="SR-0001", type="system_requirement", status="approved",
+        uid="SR-0001", type="system_requirement", status="proposed",
         links=[Link(target="toy:SR-0001", type="relates")])]})
     union = build_union(consumer, {"toy": _source()})
 
@@ -155,7 +155,7 @@ def test_source_internal_reference_rewritten():
 
 def test_unbound_namespace_fails_fast():
     consumer = _project(_SCHEMA, {"SR": [Item(
-        uid="SR-0001", type="system_requirement", status="approved",
+        uid="SR-0001", type="system_requirement", status="proposed",
         links=[Link(target="ghost:SR-0001", type="relates")])]})
     with pytest.raises(ComposeError, match="ghost"):
         build_union(consumer, {"toy": _source()})
@@ -163,9 +163,9 @@ def test_unbound_namespace_fails_fast():
 
 def test_composed_graph_validates_clean():
     consumer = _project(_SCHEMA, {
-        "INT": [Item(uid="INT-0001", type="intent", status="approved",
+        "INT": [Item(uid="INT-0001", type="intent", status="proposed",
                      normative=False)],
-        "SR": [Item(uid="SR-0001", type="system_requirement", status="approved",
+        "SR": [Item(uid="SR-0001", type="system_requirement", status="proposed",
                     links=[Link(target="INT-0001", type="derives_from"),
                            Link(target="toy:SR-0001", type="relates")])]})
     union = build_union(consumer, {"toy": _source()})
@@ -175,7 +175,7 @@ def test_composed_graph_validates_clean():
 
 def test_dangling_cross_source_reference_translated_back():
     consumer = _project(_SCHEMA, {"SR": [Item(
-        uid="SR-0001", type="system_requirement", status="approved",
+        uid="SR-0001", type="system_requirement", status="proposed",
         links=[Link(target="toy:SR-9999", type="relates")])]})
     union = build_union(consumer, {"toy": _source()})
     pattern = union.pattern()

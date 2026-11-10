@@ -14,11 +14,14 @@ sanity checks is expected to FAIL on tl-compose 0.16.4 and pass afterwards.
 """
 from __future__ import annotations
 
+import contextlib
+import io
 import subprocess
 from pathlib import Path
 
 import pytest
 
+from throughline.cli import main as tl_main
 from throughline_compose.cli import main as tlc_main
 
 
@@ -33,9 +36,9 @@ _CONSUMER_TAIL = (
     '[grounding]\nroot_types = ["intent"]\ndelivery_roots = ["intent"]\n'
     'ground_link_types = ["derives_from"]\n\n'
     '[links]\ntypes = ["derives_from", "relates"]\n\n'
-    '[status]\nvalues = ["draft", "approved", "ratified", "rejected", "suspect", '
+    '[status]\nvalues = ["proposed", "ratified", "rejected", "suspect", '
     '"deleted"]\n\n'
-    '[status.roles]\ninitial = "draft"\nratified = "ratified"\ninvalidated = "rejected"\n'
+    '[status.roles]\ninitial = "proposed"\nproposed = "proposed"\nratified = "ratified"\ninvalidated = "rejected"\n'
     'suspect = "suspect"\ntombstone = "deleted"\n')
 
 
@@ -44,6 +47,20 @@ def _write(root: Path, files: dict[str, str]) -> Path:
         dst = root / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
         dst.write_text(body, encoding="utf-8")
+    if "[status.roles]" in files.get("throughline.toml", ""):
+        # The consumer declares its lifecycle and is checked --strict, so its own
+        # items carry signatures, written by `tl ratify` so each fingerprint is the
+        # item's (throughline SR-0313). The sources' items are theirs to sign, and
+        # the seam drops their findings. A consumer whose sources do not compose
+        # cannot be signed either: the check its test runs says why, and a sound
+        # consumer left unsigned fails its strict check.
+        quiet = io.StringIO()
+        with contextlib.redirect_stdout(quiet), contextlib.redirect_stderr(quiet):
+            try:
+                tl_main(["-C", str(root), "ratify", "INT-0001", "SR-0001",
+                         "--by", "fixture"])
+            except SystemExit:
+                pass
     return root
 
 
@@ -61,10 +78,10 @@ def _project(name: str, *, cites: list[str] = (), sources: str = "",
         "intents/.register.yml": "prefix: INT\ndigits: 4\n",
         "system-requirements/.register.yml": "prefix: SR\ndigits: 4\n",
         "intents/INT-0001.yml": (
-            f"uid: INT-0001\ntype: intent\nstatus: approved\ntitle: {name} root\n"
+            f"uid: INT-0001\ntype: intent\nstatus: proposed\ntitle: {name} root\n"
             "text: The root.\nnormative: false\n"),
         "system-requirements/SR-0001.yml": (
-            f"uid: SR-0001\ntype: system_requirement\nstatus: approved\n"
+            f"uid: SR-0001\ntype: system_requirement\nstatus: proposed\n"
             f"title: {name} clause\ntext: {clause or name + ' clause.'}\n"
             f"links:\n- target: INT-0001\n  type: derives_from\n{links}"
             "attrs:\n  priority: must\n  origin: human\n"),
