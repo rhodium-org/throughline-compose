@@ -39,23 +39,25 @@ implements   = { from = ["system_requirement"], to = ["user_requirement"] }
 derives_from = { from = ["business_need", "user_requirement"], to = ["intent", "business_need"] }
 
 [status]
-values = ["proposed", "draft", "deferred", "approved", "ratified", "implemented",
-          "verified", "suspect", "rejected", "deleted"]
+# Retired by `tl migrate` (SR-0313): draft, approved stood between proposal and
+# signature. Every item is born proposed and counts only once a person signs it
+# (UR-0046).
+values = ["proposed", "deferred", "ratified", "implemented", "verified",
+          "suspect", "rejected", "deleted"]
 
 # 'proposed', 'draft' and 'deferred' reach 'suspect' because all three are
 # reachable from the birth status, so an item can sit in any of them when the
 # footing under it is withdrawn — and without the route it would carry no record
 # that anything had happened (throughline:SR-0177).
 [transitions]
-proposed    = ["draft", "approved", "ratified", "deferred", "suspect", "rejected", "deleted"]
-draft       = ["approved", "deferred", "suspect", "rejected", "deleted"]
-deferred    = ["draft", "approved", "suspect", "rejected", "deleted"]
-approved    = ["ratified", "implemented", "deferred", "suspect", "rejected", "deleted"]
+proposed = ["ratified", "deferred", "suspect", "rejected", "deleted"]
+deferred = ["proposed", "suspect", "rejected", "deleted"]
 ratified    = ["implemented", "suspect", "rejected", "deleted"]
 implemented = ["verified", "suspect", "rejected", "deleted"]
 verified    = ["implemented", "suspect", "deleted"]
-suspect     = ["approved", "ratified", "implemented", "verified", "rejected", "deleted"]
-rejected    = ["draft", "deleted"]
+suspect = ["proposed", "ratified", "implemented", "verified", "rejected",
+           "deleted"]
+rejected = ["proposed", "deleted"]
 
 # Published documents: `tl docs` regenerates these in place from the graph and
 # `tl docs --check` gates their freshness. Configuring this activates the
@@ -70,7 +72,7 @@ paths = ["docs/*.md", "../README.md"]
 # plays each role the tool's operations act on. Backfilled by
 # `tl migrate`; edit to match your own status vocabulary.
 [status.roles]
-initial = "draft"
+initial = "proposed"
 proposed = "proposed"
 ratified = "ratified"
 invalidated = "rejected"

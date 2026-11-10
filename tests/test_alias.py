@@ -119,12 +119,12 @@ _SCHEMA = {"project": {"name": "c", "format_version": 2},
 def _asvs() -> Project:
     return _mk({"project": {"name": "asvs", "format_version": 2}},
                {"SR": [Item(uid="SR-0001", type="system_requirement",
-                            status="approved")]})
+                            status="proposed")]})
 
 
 def _base_referencing_asvs() -> Project:
     # A source that internally cites another namespace by that namespace's own name.
-    sr = Item(uid="SR-0001", type="system_requirement", status="approved",
+    sr = Item(uid="SR-0001", type="system_requirement", status="proposed",
               links=[Link(target="asvs:SR-0001", type="relates")])
     return _mk({"project": {"name": "base", "format_version": 2}}, {"SR": [sr]})
 
@@ -152,7 +152,7 @@ def test_a_sources_reference_never_falls_through_to_the_union():
 
 def test_a_consumer_reference_to_an_unbound_namespace_names_item_and_bound():
     consumer = _mk(_SCHEMA, {"SR": [Item(
-        uid="SR-0001", type="system_requirement", status="approved",
+        uid="SR-0001", type="system_requirement", status="proposed",
         links=[Link(target="ghost:SR-0001", type="relates")])]})
     with pytest.raises(ComposeError) as e:
         build_union(consumer, {"asvs": _asvs()}, {"asvs": {}})
@@ -176,10 +176,10 @@ def _leaf_source(name: str, clause_text: str) -> dict[str, str]:
         "intents/.register.yml": "prefix: INT\ndigits: 4\n",
         "system-requirements/.register.yml": "prefix: SR\ndigits: 4\n",
         "intents/INT-0001.yml": (
-            "uid: INT-0001\ntype: intent\nstatus: approved\n"
+            "uid: INT-0001\ntype: intent\nstatus: proposed\n"
             f"title: {name} root\ntext: The {name} source root.\nnormative: false\n"),
         "system-requirements/SR-0001.yml": (
-            "uid: SR-0001\ntype: system_requirement\nstatus: approved\n"
+            "uid: SR-0001\ntype: system_requirement\nstatus: proposed\n"
             f"title: {name} clause\ntext: {clause_text}\n"
             "links:\n- target: INT-0001\n  type: derives_from\n"
             "attrs:\n  priority: must\n  origin: human\n"),
@@ -195,10 +195,10 @@ def _base(asvs_entry_extra: str = "") -> dict[str, str]:
         "intents/.register.yml": "prefix: INT\ndigits: 4\n",
         "system-requirements/.register.yml": "prefix: SR\ndigits: 4\n",
         "intents/INT-0001.yml": (
-            "uid: INT-0001\ntype: intent\nstatus: approved\n"
+            "uid: INT-0001\ntype: intent\nstatus: proposed\n"
             "title: base root\ntext: The base source root.\nnormative: false\n"),
         "system-requirements/SR-0001.yml": (
-            "uid: SR-0001\ntype: system_requirement\nstatus: approved\n"
+            "uid: SR-0001\ntype: system_requirement\nstatus: proposed\n"
             "title: base clause leaning on asvs\ntext: The base clause.\n"
             "links:\n- target: INT-0001\n  type: derives_from\n"
             "- target: asvs:SR-0001\n  type: relates\n"
@@ -215,17 +215,17 @@ def _consumer(extra_line: str, ref_target: str) -> dict[str, str]:
             '[grounding]\nroot_types = ["intent"]\n'
             'delivery_roots = ["intent"]\nground_link_types = ["derives_from"]\n\n'
             '[links]\ntypes = ["derives_from", "relates"]\n\n'
-            '[status]\nvalues = ["draft", "approved", "ratified", "rejected", '
+            '[status]\nvalues = ["proposed", "ratified", "rejected", '
             '"suspect", "deleted"]\n\n'
-            '[status.roles]\ninitial = "draft"\nratified = "ratified"\n'
+            '[status.roles]\ninitial = "proposed"\nproposed = "proposed"\nratified = "ratified"\n'
             'invalidated = "rejected"\nsuspect = "suspect"\ntombstone = "deleted"\n'),
         "intents/.register.yml": "prefix: INT\ndigits: 4\n",
         "system-requirements/.register.yml": "prefix: SR\ndigits: 4\n",
         "intents/INT-0001.yml": (
-            "uid: INT-0001\ntype: intent\nstatus: approved\n"
+            "uid: INT-0001\ntype: intent\nstatus: proposed\n"
             "title: consumer root\ntext: The consumer root.\nnormative: false\n"),
         "system-requirements/SR-0001.yml": (
-            "uid: SR-0001\ntype: system_requirement\nstatus: approved\n"
+            "uid: SR-0001\ntype: system_requirement\nstatus: proposed\n"
             "title: consumer clause\ntext: The consumer clause.\n"
             "links:\n- target: INT-0001\n  type: derives_from\n"
             f"- target: {ref_target}\n  type: relates\n"

@@ -166,7 +166,7 @@ def test_compose_trace_starts_from_qualified_uid(consumer_dir, capsys):
     rc = tlc_main(["-C", str(consumer_dir), "trace", "toy:SR-0001"])
     assert rc == 0
     out = capsys.readouterr().out
-    assert out.startswith("toy:SR-0001  [system_requirement/approved]")
+    assert out.startswith("toy:SR-0001  [system_requirement/proposed]")
     assert "TOYSR-0001" not in out
 
 
@@ -188,7 +188,7 @@ def test_compose_trace_passthrough_without_sources(source_dir, capsys):
     rc = tlc_main(["-C", str(source_dir), "trace", "SR-0001"])
     assert rc == 0
     out = capsys.readouterr().out
-    assert out.startswith("SR-0001  [system_requirement/approved]")
+    assert out.startswith("SR-0001  [system_requirement/proposed]")
     assert "(implements) UR-0001" in out
 
 
@@ -705,7 +705,7 @@ def test_compose_subgraph_from_a_borrowed_clause_names_its_local_adopters(
     rc = tlc_main(["-C", str(consumer_dir), "subgraph", "toy:SR-0001"])
     assert rc == 0
     out = capsys.readouterr().out
-    assert out.startswith("toy:SR-0001  [system_requirement/approved]")
+    assert out.startswith("toy:SR-0001  [system_requirement/proposed]")
     assert "depended on by (1):" in out
     assert "SR-0001" in out and "Consumer clause building on the source" in out
     # The named clause is walked one step, and no further: its parent shows, its
@@ -766,7 +766,7 @@ def test_compose_subgraph_passthrough_without_sources(source_dir, capsys):
     rc = tlc_main(["-C", str(source_dir), "subgraph", "SR-0001"])
     assert rc == 0
     out = capsys.readouterr().out
-    assert out.startswith("SR-0001  [system_requirement/approved]")
+    assert out.startswith("SR-0001  [system_requirement/proposed]")
     assert "UR-0001" in out and "INT-0001" in out   # nothing bounds a local walk
 
 
@@ -792,7 +792,7 @@ def test_context_with_a_uid_resolves_borrowed_clauses(consumer_dir, capsys):
     section = out.split("## The item you were given")[1]
     assert section.startswith(": SR-0001")
     graph = section.split("```")[1]
-    assert "toy:SR-0001  [system_requirement/approved]" in graph
+    assert "toy:SR-0001  [system_requirement/proposed]" in graph
     assert "A normative clause the source offers" in graph
     assert "(unresolved)" not in graph
     assert "TOYSR-0001" not in out
@@ -947,11 +947,6 @@ def test_compose_new_into_a_source_is_born_as_bare_tl_bears_it(consumer_dir, cap
     drifted from core: a machine-authored item entered the initial status and
     escaped ratification, --attr values were dropped, schema defaults were not
     applied, and the type's normative flag was not read."""
-    # The fixture binds no 'proposed' role; bind one so the machine-origin rule
-    # (throughline SR-0141) has a status to send the item to.
-    cfg = consumer_dir / "throughline.toml"
-    cfg.write_text(cfg.read_text().replace(
-        'initial = "draft"', 'initial = "draft"\nproposed = "proposed"'))
     assert tlc_main(["-C", str(consumer_dir), "schema", "type", "add",
                      "system_requirement", "--non-normative",
                      "--because", "guidance here"]) == 0
@@ -982,15 +977,14 @@ def test_composed_check_runs_the_baseline_rules_as_bare_tl_does(consumer_dir, ca
     """On 0.20.0 an illegal status move that `tl check` reported passed
     `tl-compose check` on the same working tree, and --base was ignored."""
     cfg = consumer_dir / "throughline.toml"
-    cfg.write_text(cfg.read_text() + '\n[transitions]\napproved = ["ratified", '
-                   '"suspect", "rejected", "deleted"]\n')
+    cfg.write_text(cfg.read_text() + '\n[transitions]\nratified = ["suspect", "deleted"]\n')
     _git(consumer_dir, "init", "-q")
     _git(consumer_dir, "config", "user.email", "t@t")
     _git(consumer_dir, "config", "user.name", "t")
     _git(consumer_dir, "add", "-A")
     _git(consumer_dir, "commit", "-qm", "baseline")
     item = consumer_dir / "system-requirements" / "SR-0001.yml"
-    item.write_text(item.read_text().replace("status: approved", "status: draft"))
+    item.write_text(item.read_text().replace("status: ratified", "status: rejected"))
     capsys.readouterr()
     assert tlc_main(["-C", str(consumer_dir), "check"]) == 1
     out = capsys.readouterr()

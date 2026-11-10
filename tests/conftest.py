@@ -10,9 +10,12 @@ repo's own IDD spine when ``tl-compose check`` runs at the root. Writing them in
 """
 from __future__ import annotations
 
+import contextlib
+import io
 from pathlib import Path
 
 import pytest
+from throughline.cli import main as tl_main
 
 # path (relative to a project root) -> file body.
 _SOURCE: dict[str, str] = {
@@ -30,10 +33,11 @@ ground_link_types = ["derives_from", "implements"]
 types = ["derives_from", "implements"]
 
 [status]
-values = ["proposed", "draft", "approved", "ratified", "rejected", "suspect", "deleted"]
+values = ["proposed", "ratified", "rejected", "suspect", "deleted"]
 
 [status.roles]
-initial = "draft"
+initial = "proposed"
+proposed = "proposed"
 ratified = "ratified"
 invalidated = "rejected"
 suspect = "suspect"
@@ -45,7 +49,7 @@ tombstone = "deleted"
     "intents/INT-0001.yml": """\
 uid: INT-0001
 type: intent
-status: approved
+status: proposed
 title: Toy source purpose
 text: The toy source exists to exercise composition end to end.
 normative: false
@@ -53,7 +57,7 @@ normative: false
     "user-requirements/UR-0001.yml": """\
 uid: UR-0001
 type: user_requirement
-status: approved
+status: proposed
 title: A grouping the source offers
 text: The source shall expose a grouping that consumers can build on.
 links:
@@ -66,7 +70,7 @@ attrs:
     "system-requirements/SR-0001.yml": """\
 uid: SR-0001
 type: system_requirement
-status: approved
+status: proposed
 title: A normative clause the source offers
 text: The source shall provide one concrete, testable clause.
 links:
@@ -108,10 +112,11 @@ implements   = { from = ["system_requirement"], to = ["user_requirement"] }
 derives_from = { from = ["system_requirement", "user_requirement"], to = ["intent"] }
 
 [status]
-values = ["proposed", "draft", "approved", "ratified", "rejected", "suspect", "deleted"]
+values = ["proposed", "ratified", "rejected", "suspect", "deleted"]
 
 [status.roles]
-initial = "draft"
+initial = "proposed"
+proposed = "proposed"
 ratified = "ratified"
 invalidated = "rejected"
 suspect = "suspect"
@@ -122,7 +127,7 @@ tombstone = "deleted"
     "intents/INT-0001.yml": """\
 uid: INT-0001
 type: intent
-status: approved
+status: proposed
 title: Consumer purpose
 text: The consumer builds on a composed source.
 normative: false
@@ -130,7 +135,7 @@ normative: false
     "system-requirements/SR-0001.yml": """\
 uid: SR-0001
 type: system_requirement
-status: approved
+status: proposed
 title: Consumer clause building on the source
 text: The consumer shall ground itself while relating to a source clause.
 links:
@@ -150,6 +155,19 @@ def _write(root: Path, files: dict[str, str]) -> Path:
         dst = root / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
         dst.write_text(body, encoding="utf-8")
+    return root
+
+
+def _signed(root: Path, *uids: str) -> Path:
+    """Sign the consumer's own items. Under throughline 5 every item past
+    proposal counts only once a person signs it (throughline SR-0313), so a
+    fixture that ``check --strict`` must pass carries real signatures, written by
+    ``tl ratify`` so each fingerprint is the item's. The borrowed items are the
+    source's to sign, and the seam drops their findings; the toy source is left
+    unsigned so a test may sign it itself."""
+    with contextlib.redirect_stdout(io.StringIO()):
+        rc = tl_main(["-C", str(root), "ratify", *uids, "--by", "fixture"])
+    assert rc == 0, f"could not sign {uids} in {root}"
     return root
 
 
@@ -233,33 +251,33 @@ def source_dir(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def consumer_dir(tmp_path: Path, source_dir: Path) -> Path:
-    return _write(tmp_path / "consumer", _CONSUMER)
+    return _signed(_write(tmp_path / "consumer", _CONSUMER), "INT-0001", "SR-0001")
 
 
 @pytest.fixture
 def coverage_consumer_dir(tmp_path: Path, source_dir: Path) -> Path:
     """A coverage rule over the union, with the seam left at its default."""
-    return _write(tmp_path / "consumer", _COVERAGE_CONSUMER)
+    return _signed(_write(tmp_path / "consumer", _COVERAGE_CONSUMER), "INT-0001", "SR-0001")
 
 
 @pytest.fixture
 def widened_consumer_dir(tmp_path: Path, source_dir: Path) -> Path:
     """The same, with ``[seam] report_on_borrowed = ["coverage"]``."""
-    return _write(tmp_path / "consumer", _WIDENED_CONSUMER)
+    return _signed(_write(tmp_path / "consumer", _WIDENED_CONSUMER), "INT-0001", "SR-0001")
 
 
 @pytest.fixture
 def lean_consumer_dir(tmp_path: Path, source_dir: Path) -> Path:
-    return _write(tmp_path / "consumer", _LEAN_CONSUMER)
+    return _signed(_write(tmp_path / "consumer", _LEAN_CONSUMER), "INT-0001", "SR-0001")
 
 
 @pytest.fixture
 def publishing_consumer_dir(tmp_path: Path, source_dir: Path) -> Path:
     """``[docs] paths`` configured, and a document that names nothing."""
-    return _write(tmp_path / "consumer", _PUBLISHING_CONSUMER)
+    return _signed(_write(tmp_path / "consumer", _PUBLISHING_CONSUMER), "INT-0001", "SR-0001")
 
 
 @pytest.fixture
 def covered_consumer_dir(tmp_path: Path, source_dir: Path) -> Path:
     """The same, with the local clause actually published."""
-    return _write(tmp_path / "consumer", _COVERED_CONSUMER)
+    return _signed(_write(tmp_path / "consumer", _COVERED_CONSUMER), "INT-0001", "SR-0001")
