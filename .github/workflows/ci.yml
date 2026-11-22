@@ -50,16 +50,16 @@ jobs:
       - name: Install throughline-compose (pulls throughline transitively)
         run: pip install .
 
-      - name: Both console scripts are present (tl-compose is a superset of tl)
-        run: |
-          command -v tl
-          command -v tl-compose
+      # This package installs no command; throughline 6.0.0 stopped installing
+      # tl-compose as a second name for tl, so the gates run on tl.
+      - name: tl is present
+        run: command -v tl
 
       - name: Grounding gate (the graph must stay sound)
-        run: tl-compose -C idd check --strict
+        run: tl -C idd check --strict
 
       - name: Docs freshness gate (idd/docs/spec.md must match the graph)
-        run: tl-compose -C idd docs --check
+        run: tl -C idd docs --check
 
   # The very round-trip that gates publication, run on every change too, so a
   # break is found at the commit that caused it and not at the release (SR-0028).

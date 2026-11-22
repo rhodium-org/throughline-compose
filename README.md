@@ -14,7 +14,8 @@
 > **Since 0.22.0 this package is names only.** Composition lives in
 > [throughline](https://github.com/rhodium-org/throughline) 3.11.1 and later: `tl check`,
 > `tl docs` and the other union-aware commands fetch the declared `[[sources]]`, build the
-> union and validate it, and `tl-compose` is a second name the Tool installs for `tl`.
+> union and validate it, and `tl-compose` was a second name the Tool installed for `tl`
+> until throughline 6.0.0; run `tl`.
 > This package installs no command. Each module re-exports the Tool's names under the
 > paths consumers imported before the fold — `throughline_compose.sources`, `spi`,
 > `git_resolver`, `resolve`, `union`, `seam`, `resolver`, `directives`, `cli` — so a
