@@ -18,6 +18,11 @@ jobs:
           # Prove the supported floor (pyproject says Python >= 3.11).
           - os: ubuntu-latest
             python-version: "3.11"
+          # And every newer Python minor release (SR-0055).
+          - os: ubuntu-latest
+            python-version: "3.13"
+          - os: ubuntu-latest
+            python-version: "3.14"
     steps:
       - uses: actions/checkout@v5
 

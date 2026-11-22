@@ -879,7 +879,14 @@ def test_compose_dump_local_records_that_it_was_narrowed(consumer_dir, capsys):
     # Counted over the union either way: what the numbers exist to say is how much
     # is *missing* from this document.
     assert comp["local_item_count"] == 2
-    assert comp["borrowed_item_count"] == 3
+    if "borrowed_item_count" in comp:
+        assert comp["borrowed_item_count"] == 3
+    else:
+        # From the tl that reads no source for an export of the project's own
+        # items (tl:SR-0345), each source is named as declared and nothing is
+        # counted that nobody measured.
+        assert [s["namespace"] for s in comp["sources"]] and all(
+            "item_count" not in s for s in comp["sources"])
 
 
 def test_compose_dump_is_deterministic(consumer_dir, capsys):
